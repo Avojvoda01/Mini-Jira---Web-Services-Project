@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="frontend/frontend.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="MiniJiraAspire.AppHost/MiniJiraAspire.AppHost.csproj" />
+  <Project Path="MiniJiraAspire.Server/MiniJiraAspire.Server.csproj" />
+</Solution>
