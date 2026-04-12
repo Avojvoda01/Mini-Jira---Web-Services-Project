@@ -1,15 +1,25 @@
+using Microsoft.Extensions.Hosting.Admin.Roles;
+using Microsoft.Extensions.Hosting.Admin.Users;
+using Microsoft.Extensions.Hosting.Auth.Login;
+using Microsoft.Extensions.Hosting.Auth.Register;
+using Microsoft.Extensions.Hosting.Comments;
+using Microsoft.Extensions.Hosting.Epics;
+using Microsoft.Extensions.Hosting.Projects;
+using Microsoft.Extensions.Hosting.Tasks;
+using Microsoft.Extensions.Hosting.Tasks.Actions;
+using Scalar.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
-builder.AddRedisClientBuilder("cache")
-    .WithOutputCache();
 
 // Add services to the container.
 builder.Services.AddProblemDetails();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -19,27 +29,34 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
+    app.MapScalarApiReference();
+
+
 }
 
-app.UseOutputCache();
+// Auth
+app.MapLogin();
+app.MapRegister();
 
-string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
+// Tasks
+app.MapTaskEndpoints();
+app.MapTaskActionEndpoints();
 
-var api = app.MapGroup("/api");
-api.MapGet("weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.CacheOutput(p => p.Expire(TimeSpan.FromSeconds(5)))
-.WithName("GetWeatherForecast");
+// Comments
+app.MapCommentEndpoints();
+
+// Epics
+app.MapEpicEndpoints();
+
+// Projects
+app.MapProjectEndpoints();
+
+// Admin
+app.MapAdminUserEndpoints();
+app.MapAdminRoleEndpoints();
 
 app.MapDefaultEndpoints();
 
