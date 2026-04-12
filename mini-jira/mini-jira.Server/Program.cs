@@ -1,4 +1,7 @@
 using Scalar.AspNetCore;
+using MediatR;
+using Microsoft.Extensions.Hosting.Tasks.Create;
+using Microsoft.Extensions.Hosting.Tasks.Update;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +24,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 
+
 }
 
 
@@ -40,6 +44,10 @@ api.MapGet("weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+//app.MapCreateTask();
+//app.MapUpdateTask();
+
 
 app.MapDefaultEndpoints();
 
