@@ -39,6 +39,7 @@ nunit-*.xml
 CodeCoverage/
 
 # Local app configuration and secrets
+# Keep the base appsettings*.json templates in Git; ignore only machine/local secret variants.
 appsettings.Local.json
 appsettings.*.Secrets.json
 appsettings.Production.json
