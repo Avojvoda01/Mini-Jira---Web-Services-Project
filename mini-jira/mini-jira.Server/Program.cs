@@ -1,5 +1,6 @@
 using Scalar.AspNetCore;
 using MediatR;
+using Microsoft.Extensions.Hosting.Tasks;
 using Microsoft.Extensions.Hosting.Tasks.Create;
 using Microsoft.Extensions.Hosting.Tasks.Update;
 
@@ -13,6 +14,10 @@ builder.Services.AddProblemDetails();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen(); // zusätzlich
+
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 var app = builder.Build();
 
@@ -22,6 +27,9 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
+
     app.MapScalarApiReference();
 
 
@@ -45,7 +53,7 @@ api.MapGet("weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
-//app.MapCreateTask();
+app.MapTaskEndpoints();
 //app.MapUpdateTask();
 
 

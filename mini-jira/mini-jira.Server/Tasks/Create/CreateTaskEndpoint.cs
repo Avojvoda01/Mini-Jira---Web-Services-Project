@@ -5,9 +5,9 @@ namespace Microsoft.Extensions.Hosting.Tasks.Create;
 public static class CreateTaskEndpoint
 {
 
-    public static IEndpointRouteBuilder MapCreateTask(this IEndpointRouteBuilder app)
+    public static void MapCreateTask(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/tasks", async (
+        app.MapPost("/tasks", async (
                 CreateTaskCommand command,
                 ISender sender,
                 CancellationToken ct) =>
@@ -18,8 +18,6 @@ public static class CreateTaskEndpoint
             .WithName("CreateTask")
             .WithTags("Tasks")
             .WithSummary("Create a new task");
-
-        return app;
     }
     
 }
