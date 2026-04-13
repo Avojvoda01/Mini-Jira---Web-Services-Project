@@ -248,74 +248,76 @@
   min-height: 320px;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+.ai-chat-toggle {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  border: none;
+  border-radius: 999px;
+  min-width: 3rem;
+  height: 3rem;
+  padding: 0 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
 }
 
-/* Responsive design */
-@media (max-width: 1024px) {
-  .main-content {
-    grid-template-columns: 1fr;
-    padding: 1rem;
-    gap: 1rem;
-  }
+.ai-chat-panel {
+  position: absolute;
+  right: 1rem;
+  bottom: 4.5rem;
+  width: min(360px, calc(100% - 2rem));
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-soft);
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.6rem;
 }
 
-/* Footer */
-.app-footer {
-  padding: 1.5rem 0;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.ai-chat-header {
+  font-weight: 700;
+  font-size: 0.95rem;
 }
 
-.app-footer > * {
-  max-width: 1400px;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 2rem;
-  gap: 1rem;
+.ai-chat-messages {
+  max-height: 220px;
+  overflow-y: auto;
+  display: grid;
+  gap: 0.45rem;
+  padding-right: 0.2rem;
 }
 
-.app-footer a {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease, transform 0.3s ease;
-  border-bottom: 2px solid transparent;
-  font-size: 0.875rem;
+.ai-chat-message {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
 }
 
-.app-footer a:hover {
-  color: var(--text-primary);
-  border-bottom-color: var(--text-primary);
+.ai-chat-message.assistant {
+  background: #f2f5fb;
 }
 
-.app-footer a:focus-visible {
-  outline: 2px solid var(--text-primary);
-  outline-offset: 4px;
-  border-radius: 2px;
+.ai-chat-message.user {
+  background: #fff2e9;
 }
 
-.github-link {
-  display: inline-flex;
-  align-items: center;
+.ai-chat-input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
   gap: 0.5rem;
 }
 
-.github-link img {
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  filter: brightness(0) invert(1);
+.ai-chat-input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
 }
 
 @keyframes spin {
