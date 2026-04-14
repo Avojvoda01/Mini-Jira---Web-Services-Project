@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 type ChatMessage = {
   id: number;
@@ -9,6 +9,7 @@ type ChatMessage = {
 export function BoardPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [input, setInput] = useState('');
+  const nextMessageIdRef = useRef(2);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
@@ -23,11 +24,16 @@ export function BoardPage() {
       return;
     }
 
+    const userMessageId = nextMessageIdRef.current;
+    nextMessageIdRef.current += 1;
+    const assistantMessageId = nextMessageIdRef.current;
+    nextMessageIdRef.current += 1;
+
     setMessages((current) => [
       ...current,
-      { id: Date.now(), role: 'user', text },
+      { id: userMessageId, role: 'user', text },
       {
-        id: Date.now() + 1,
+        id: assistantMessageId,
         role: 'assistant',
         text: 'Thanks. This is a placeholder response from the board chat scaffold.',
       },
