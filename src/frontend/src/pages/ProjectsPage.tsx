@@ -14,7 +14,7 @@ export function ProjectsPage() {
 
   return (
     <section className="space-y-6">
-      <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/45 p-6 shadow-sm sm:p-8">
+      <div className="relative overflow-hidden rounded-b-3xl rounded-t-none border border-border/70 bg-gradient-to-br from-card via-card to-muted/45 p-6 shadow-sm sm:p-8">
         <div>
           <SignOutButton align="right" className="right-16" />
           <BackToHomeButton align="right" />
@@ -30,9 +30,9 @@ export function ProjectsPage() {
             </Badge>
 
             <div className="space-y-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl lg:text-5xl">Select a Project</h1>
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl lg:text-5xl">Select or Create a Project</h1>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                This is your entry layer before dashboard and board views. Pick a project to open its dedicated workspace context.
+                This is the entry layer before dashboard and board views. Pick a project to open its dedicated workspace context.
               </p>
               <Button className="mt-2 border-0 bg-sky-500 text-white shadow-sm hover:bg-sky-600" onClick={() => setIsCreateProjectOpen(true)}>
                 Create project
@@ -61,7 +61,7 @@ export function ProjectsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="mx-2 grid gap-4 lg:mx-4 lg:grid-cols-3">
         {projectCatalog.map((project) => (
           <Card key={project.name} className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
             <CardHeader className="space-y-3">
