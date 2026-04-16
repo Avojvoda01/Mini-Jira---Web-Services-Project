@@ -5,9 +5,10 @@ import { cn } from '@/lib/utils';
 
 type ModeToggleProps = {
   className?: string;
+  align?: 'left' | 'right';
 };
 
-export function ModeToggle({ className }: ModeToggleProps) {
+export function ModeToggle({ className, align = 'right' }: ModeToggleProps) {
   const { theme, setTheme } = useTheme();
 
   const handleToggle = () => {
@@ -25,6 +26,7 @@ export function ModeToggle({ className }: ModeToggleProps) {
       onClick={handleToggle}
       className={cn(
         'relative border-border/70 bg-background/85 text-foreground shadow-md backdrop-blur-sm hover:bg-background',
+        align === 'right' ? 'ml-auto' : 'mr-auto',
         className,
       )}
       aria-label="Toggle theme"

@@ -123,10 +123,6 @@ export function AppLayout() {
         </Card>
 
         <div className="space-y-3">
-          <div className="flex justify-end">
-            <ModeToggle />
-          </div>
-
           <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Signed in as</p>
             <p className="mt-2 text-sm font-medium text-foreground">{session?.displayName}</p>
@@ -149,6 +145,7 @@ export function AppLayout() {
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <ModeToggle />
             <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
               Sprint 14
             </Badge>
