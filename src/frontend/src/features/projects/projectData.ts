@@ -31,6 +31,14 @@ export const projectCatalog: ProjectSummary[] = [
     owner: 'Insights',
     status: 'Planned',
     tickets: '08 tickets',
+  },  
+  {
+    id: 'nasa-project',
+    name: 'NASA Project',
+    description: 'Collaboration platform for NASA mission planning and execution.',
+    owner: 'NASA',
+    status: 'Planned',
+    tickets: '08 tickets',
   },
 ];
 

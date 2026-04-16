@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ArrowRight, FolderKanban, LayoutGrid, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
@@ -5,12 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { projectCatalog } from '@/features/projects/projectData';
 import { BackToHomeButton } from '@/components/common/BackToHomeButton';
+import { SignOutButton } from '@/components/common/SignOutButton';
+import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
 
 export function ProjectsPage() {
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+
   return (
     <section className="space-y-6">
       <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-muted/45 p-6 shadow-sm sm:p-8">
         <div>
+          <SignOutButton align="right" className="right-16" />
           <BackToHomeButton align="right" />
         </div>
         <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
@@ -28,6 +34,9 @@ export function ProjectsPage() {
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                 This is your entry layer before dashboard and board views. Pick a project to open its dedicated workspace context.
               </p>
+              <Button className="mt-2 border-0 bg-sky-500 text-white shadow-sm hover:bg-sky-600" onClick={() => setIsCreateProjectOpen(true)}>
+                Create project
+              </Button>
             </div>
           </div>
 
@@ -89,6 +98,8 @@ export function ProjectsPage() {
           </Card>
         ))}
       </div>
+
+      <CreateProjectForm open={isCreateProjectOpen} onClose={() => setIsCreateProjectOpen(false)} />
     </section>
   );
 }
