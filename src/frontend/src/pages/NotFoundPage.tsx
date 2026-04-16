@@ -18,7 +18,7 @@ export function NotFoundPage() {
         </CardHeader>
         <CardContent>
           <Button asChild className="shadow-sm">
-            <Link to="/dashboard">Go to dashboard</Link>
+            <Link to="/">Go to homepage</Link>
           </Button>
         </CardContent>
       </Card>

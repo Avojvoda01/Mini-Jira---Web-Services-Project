@@ -1,8 +1,9 @@
-import { ArrowRight, CircleCheckBig, Clock3, Sparkles } from 'lucide-react';
+import { CircleCheckBig, Clock3, Sparkles } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { getProjectById } from '@/features/projects/projectData';
 
 const kpis = [
   { label: 'Open tickets', value: '12', detail: '+2 this week' },
@@ -29,6 +30,9 @@ const activityItems = [
 ];
 
 export function DashboardPage() {
+  const { projectId } = useParams();
+  const project = getProjectById(projectId);
+
   return (
     <section className="space-y-6">
       <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
@@ -37,11 +41,13 @@ export function DashboardPage() {
             <div className="space-y-4">
               <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-muted-foreground">
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                Operational overview
+                {project?.name ?? 'Operational overview'}
               </Badge>
 
               <div className="space-y-2">
-                <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Dashboard</h2>
+                <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                  {project ? `${project.name} Dashboard` : 'Dashboard'}
+                </h2>
                 <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                   A calm, high-signal view of workload, flow health, and delivery momentum.
                 </p>
@@ -82,10 +88,6 @@ export function DashboardPage() {
               <CardTitle>Delivery pulse</CardTitle>
               <CardDescription>Recent flow indicators from the active sprint.</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              View board
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
             {[

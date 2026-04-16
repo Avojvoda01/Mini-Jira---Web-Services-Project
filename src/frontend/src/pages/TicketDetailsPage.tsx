@@ -2,18 +2,22 @@ import { useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { getProjectById } from '@/features/projects/projectData';
 
 export function TicketDetailsPage() {
-  const { ticketId } = useParams();
+  const { ticketId, projectId } = useParams();
+  const project = getProjectById(projectId);
 
   return (
     <section className="space-y-6">
       <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
         <CardHeader>
           <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-muted-foreground">
-            Ticket details
+            {project?.name ?? 'Ticket details'}
           </Badge>
-          <CardTitle className="text-3xl font-semibold tracking-tight sm:text-4xl">{ticketId}</CardTitle>
+          <CardTitle className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            {project ? `${project.name} • ${ticketId}` : ticketId}
+          </CardTitle>
           <CardDescription className="max-w-2xl text-sm leading-6 sm:text-base">
             A detail surface for task metadata, discussion, and the activity trail.
           </CardDescription>

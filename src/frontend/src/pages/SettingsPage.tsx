@@ -1,7 +1,9 @@
 import { Badge } from '@/components/ui/badge';
+import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { getProjectById } from '@/features/projects/projectData';
 
 const preferences = [
   { label: 'Default landing page', value: 'Dashboard' },
@@ -10,14 +12,19 @@ const preferences = [
 ];
 
 export function SettingsPage() {
+  const { projectId } = useParams();
+  const project = getProjectById(projectId);
+
   return (
     <section className="space-y-6">
       <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
         <CardHeader>
           <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-muted-foreground">
-            Workspace controls
+            {project?.name ?? 'Workspace controls'}
           </Badge>
-          <CardTitle className="text-3xl font-semibold tracking-tight sm:text-4xl">Settings</CardTitle>
+          <CardTitle className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            {project ? `${project.name} Settings` : 'Settings'}
+          </CardTitle>
           <CardDescription className="max-w-2xl text-sm leading-6 sm:text-base">
             Configure workspace defaults, communication preferences, and assistant behavior.
           </CardDescription>

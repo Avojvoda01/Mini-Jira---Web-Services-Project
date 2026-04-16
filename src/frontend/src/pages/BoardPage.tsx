@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react';
 import { Bot, Plus, SendHorizontal, Sparkles } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { getProjectById } from '@/features/projects/projectData';
 
 type ChatMessage = {
   id: number;
@@ -52,6 +54,8 @@ const boardColumns: Array<{ title: string; count: number; description: string; t
 ];
 
 export function BoardPage() {
+  const { projectId } = useParams();
+  const project = getProjectById(projectId);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [input, setInput] = useState('');
   const nextMessageIdRef = useRef(2);
@@ -94,11 +98,13 @@ export function BoardPage() {
             <div className="space-y-4">
               <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-muted-foreground">
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                Board view
+                {project?.name ?? 'Board view'}
               </Badge>
 
               <div className="space-y-2">
-                <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Board</h2>
+                <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                  {project ? `${project.name} Board` : 'Board'}
+                </h2>
                 <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                   A structured Kanban surface for prioritization, flow management, and delivery review.
                 </p>

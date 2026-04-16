@@ -1,9 +1,11 @@
 import { Filter, Search, Sparkles } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { getProjectById } from '@/features/projects/projectData';
 
 const backlogItems = [
   {
@@ -33,6 +35,9 @@ const backlogItems = [
 ];
 
 export function BacklogPage() {
+  const { projectId } = useParams();
+  const project = getProjectById(projectId);
+
   return (
     <section className="space-y-6">
       <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
@@ -41,11 +46,13 @@ export function BacklogPage() {
             <div className="space-y-4">
               <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-muted-foreground">
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                Backlog planning
+                {project?.name ?? 'Backlog planning'}
               </Badge>
 
               <div className="space-y-2">
-                <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Backlog</h2>
+                <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                  {project ? `${project.name} Backlog` : 'Backlog'}
+                </h2>
                 <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                   A refinement queue for shaping work before it reaches the board.
                 </p>
