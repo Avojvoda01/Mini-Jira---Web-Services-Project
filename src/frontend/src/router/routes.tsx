@@ -12,7 +12,7 @@ function RouteErrorElement() {
 	const error = useRouteError();
 
 	return (
-		<div className="page-stack">
+		<div className="mx-auto flex min-h-[40vh] w-full max-w-2xl items-center justify-center px-4 py-8">
 			<ErrorState
 				title="Route Error"
 				description={error instanceof Error ? error.message : 'Failed to render route.'}

@@ -1,39 +1,127 @@
+import { BarChart3, LayoutDashboard, ListTodo, Settings2, SquareKanban } from 'lucide-react';
 import { NavLink, Outlet, type NavLinkRenderProps } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
-const navigationItems = [
-  { to: '/board', label: 'Board' },
-  { to: '/backlog', label: 'Backlog' },
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/settings', label: 'Settings' },
+type NavigationItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+};
+
+const navigationItems: NavigationItem[] = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/board', label: 'Board', icon: SquareKanban },
+  { to: '/backlog', label: 'Backlog', icon: ListTodo },
+  { to: '/settings', label: 'Settings', icon: Settings2 },
 ];
 
 export function AppLayout() {
   return (
     <div className="app-shell">
       <aside className="app-sidebar" aria-label="Primary">
-        <div className="brand-block">
-          <p className="brand-kicker">Mini Jira</p>
-          <h1 className="brand-title">Task Workspace</h1>
+        <div className="space-y-5">
+          <div className="space-y-4">
+            <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+              Mini Jira
+            </Badge>
+
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">Task Workspace</h1>
+              <p className="max-w-[18rem] text-sm leading-6 text-muted-foreground">
+                A focused workspace for planning, execution, and release coordination.
+              </p>
+            </div>
+          </div>
+
+          <Separator className="bg-border/70" />
+
+          <nav className="grid gap-2" aria-label="Main navigation">
+            {navigationItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }: NavLinkRenderProps) =>
+                  cn(
+                    'group flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all',
+                    isActive
+                      ? 'border-foreground bg-foreground text-background shadow-sm'
+                      : 'border-transparent bg-transparent text-muted-foreground hover:border-border/70 hover:bg-background/70 hover:text-foreground',
+                  )
+                }
+              >
+                <span
+                  className={cn(
+                    'grid h-8 w-8 place-items-center rounded-xl border transition-colors',
+                    'border-border/60 bg-background/80 text-foreground/80 group-hover:border-border group-hover:bg-background',
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                </span>
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
         </div>
 
-        <nav className="nav-list" aria-label="Main navigation">
-          {navigationItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }: NavLinkRenderProps) => `nav-item ${isActive ? 'active' : ''}`}
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Workspace state</CardTitle>
+            <CardDescription>Current sprint and delivery health.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">Sprint 14</p>
+                <p className="text-xs text-muted-foreground">Delivery on track</p>
+              </div>
+              <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10">Stable</Badge>
+            </div>
+
+            <Separator />
+
+            <div className="grid gap-2 text-sm">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Open tickets</span>
+                <span className="font-medium text-foreground">12</span>
+              </div>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>In progress</span>
+                <span className="font-medium text-foreground">6</span>
+              </div>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Released</span>
+                <span className="font-medium text-foreground">3</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </aside>
 
       <div className="app-main">
         <header className="topbar">
-          <p className="topbar-title">Frontend Foundation</p>
-          <p className="topbar-meta">Vite + React + Jotai + TanStack Query</p>
-        </header>
+          <div className="space-y-1">
+            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Operations Console</p>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Frontend Foundation</h2>
+            <p className="text-sm text-muted-foreground">Vite + React + Jotai + TanStack Query</p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
+              Sprint 14
+            </Badge>
+            <Button variant="outline" size="sm" className="border-border/70 bg-background/80 shadow-sm">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Reports
+            </Button>
+            <Button size="sm" className="shadow-sm">
+              New ticket
+            </Button>
+          </div>
+        </header> 
 
         <main className="content-area">
           <Outlet />
