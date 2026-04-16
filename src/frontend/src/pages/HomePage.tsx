@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ModeToggle } from '@/components/common/ModeToggle';
 
 const highlights = [
   {
@@ -25,7 +26,11 @@ const highlights = [
 
 export function HomePage() {
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+    <main className="relative min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+      <div className="absolute right-4 top-4 z-10 sm:right-6 lg:right-8">
+        <ModeToggle />
+      </div>
+
       <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-7xl items-center gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <section className="space-y-6">
           <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-muted-foreground">
@@ -50,7 +55,7 @@ export function HomePage() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-border/70 bg-background/80 shadow-sm">
+            <Button asChild size="lg" variant="outline" className="hero-action-button border-border/70 bg-background/80 shadow-sm">
               <Link to="/login">Sign in</Link>
             </Button>
             <Button asChild size="lg" variant="ghost" className="text-muted-foreground hover:text-foreground">

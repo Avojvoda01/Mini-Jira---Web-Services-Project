@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ModeToggle } from '@/components/common/ModeToggle';
 import { cn } from '@/lib/utils';
 import { authSessionAtom } from '@/store/authAtoms';
 import { getProjectById } from '@/features/projects/projectData';
@@ -53,7 +54,7 @@ export function AppLayout() {
 
           <Separator className="bg-border/70" />
 
-          <Button asChild variant="outline" className="w-full justify-start border-border/70 bg-background/80 shadow-sm">
+          <Button asChild variant="outline" className="sidebar-action-button w-full justify-start border-border/70 bg-background/80 shadow-sm">
             <NavLink to="/app/projects">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to projects
@@ -122,13 +123,17 @@ export function AppLayout() {
         </Card>
 
         <div className="space-y-3">
+          <div className="flex justify-end">
+            <ModeToggle />
+          </div>
+
           <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Signed in as</p>
             <p className="mt-2 text-sm font-medium text-foreground">{session?.displayName}</p>
             <p className="text-xs text-muted-foreground">{session?.email}</p>
           </div>
 
-          <Button variant="outline" className="w-full justify-start border-border/70 bg-background/80 shadow-sm" onClick={handleSignOut}>
+          <Button variant="outline" className="sidebar-action-button w-full justify-start border-border/70 bg-background/80 shadow-sm" onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </Button>

@@ -14,7 +14,7 @@ export function BackToHomeButton({ align = 'left' }: BackToHomeButtonProps) {
       variant="outline"
       size="icon"
       className={cn(
-        'group absolute top-4 z-10 h-11 w-11 border-border/70 bg-background/85 shadow-sm backdrop-blur-sm',
+        'group absolute top-4 z-10 h-11 w-11 border-border/70 bg-background/85 text-foreground shadow-md backdrop-blur-sm hover:bg-background',
         align === 'right' ? 'right-4' : 'left-4',
       )}
     >

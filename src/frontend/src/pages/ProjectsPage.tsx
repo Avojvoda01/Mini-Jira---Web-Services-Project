@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { projectCatalog } from '@/features/projects/projectData';
 import { BackToHomeButton } from '@/components/common/BackToHomeButton';
 import { SignOutButton } from '@/components/common/SignOutButton';
+import { ModeToggle } from '@/components/common/ModeToggle';
 import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
 
 export function ProjectsPage() {
@@ -16,6 +17,7 @@ export function ProjectsPage() {
     <section className="space-y-6">
       <div className="relative overflow-hidden rounded-b-3xl rounded-t-none border border-border/70 bg-gradient-to-br from-card via-card to-muted/45 p-6 shadow-sm sm:p-8">
         <div>
+          <ModeToggle className="absolute right-28 top-4 z-10 h-11 w-11" />
           <SignOutButton align="right" className="right-16" />
           <BackToHomeButton align="right" />
         </div>

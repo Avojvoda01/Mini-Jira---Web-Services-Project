@@ -10,6 +10,59 @@ body {
     linear-gradient(180deg, #f7f4ee 0%, #f6f8fb 52%, #eef2f7 100%);
 }
 
+.dark body {
+  background:
+    radial-gradient(circle at 12% 12%, rgba(15, 23, 42, 0.7) 0%, transparent 34%),
+    radial-gradient(circle at 88% 14%, rgba(56, 189, 248, 0.16) 0%, transparent 26%),
+    linear-gradient(180deg, #0b1020 0%, #0f172a 52%, #111827 100%);
+}
+
+.dark [data-slot='button'][data-variant='outline'][data-size='icon'],
+.dark [data-slot='button'][data-variant='outline'][data-size='icon-sm'],
+.dark [data-slot='button'][data-variant='outline'][data-size='icon-lg'] {
+  border-color: rgba(82, 82, 91, 0.82);
+  background: rgba(24, 24, 27, 0.96);
+  color: rgb(244, 244, 245);
+}
+
+.dark [data-slot='button'][data-variant='outline'][data-size='icon']:hover,
+.dark [data-slot='button'][data-variant='outline'][data-size='icon-sm']:hover,
+.dark [data-slot='button'][data-variant='outline'][data-size='icon-lg']:hover {
+  background: rgba(39, 39, 42, 0.98);
+}
+
+.dark .sidebar-action-button[data-slot='button'][data-variant='outline'] {
+  border-color: rgba(82, 82, 91, 0.82) !important;
+  background: rgba(24, 24, 27, 0.96) !important;
+  color: rgb(244, 244, 245) !important;
+}
+
+.dark .sidebar-action-button[data-slot='button'][data-variant='outline']:hover {
+  background: rgba(39, 39, 42, 0.98) !important;
+}
+
+.dark .hero-action-button[data-slot='button'][data-variant='outline'] {
+  border-color: rgba(82, 82, 91, 0.82) !important;
+  background: rgba(24, 24, 27, 0.96) !important;
+  color: rgb(244, 244, 245) !important;
+}
+
+.dark .hero-action-button[data-slot='button'][data-variant='outline']:hover {
+  background: rgba(39, 39, 42, 0.98) !important;
+}
+
+.dark button[data-slot='button'][data-variant='ghost'] {
+  color: hsl(var(--foreground));
+}
+
+.dark button[data-slot='button'][data-variant='ghost']:hover {
+  background: rgba(51, 65, 85, 0.34);
+}
+
+.dark .app-shell .text-muted-foreground {
+  color: rgba(226, 232, 240, 0.76);
+}
+
 .app-shell {
   display: grid;
   grid-template-columns: 292px minmax(0, 1fr);
@@ -32,6 +85,11 @@ body {
   gap: 1.5rem;
 }
 
+.dark .app-sidebar {
+  border-right: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.72);
+}
+
 .app-main {
   min-width: 0;
   display: flex;
@@ -50,6 +108,11 @@ body {
   align-items: flex-start;
   background: rgba(248, 250, 252, 0.72);
   backdrop-filter: blur(16px);
+}
+
+.dark .topbar {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.7);
 }
 
 .content-area {
