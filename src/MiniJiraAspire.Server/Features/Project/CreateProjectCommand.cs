@@ -1,6 +1,6 @@
 namespace MiniJiraAspire.Server.Features.Project;
 
-public class CreateProjectCommand
+public class CreateProjectCommand: ICreateProjectCommand
 {
     
 }
