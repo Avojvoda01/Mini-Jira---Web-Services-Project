@@ -3,6 +3,7 @@
     <Build />
     <Deploy />
   </Project>
+  <Project Path="MiniJira.Test\MiniJira.Test.csproj" />
   <Project Path="MiniJiraAspire.AppHost/MiniJiraAspire.AppHost.csproj" />
   <Project Path="MiniJiraAspire.Server/MiniJiraAspire.Server.csproj" />
 </Solution>
