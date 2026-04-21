@@ -1,3 +1,7 @@
+using Microsoft.AspNetCore.Http.HttpResults;
+using MiniJiraAspire.Server.Models;
+using MiniJiraAspire.Server.Persistence.Repositories;
+
 namespace Microsoft.Extensions.Hosting.Epics;
 
 public static class EpicEndpoints
@@ -38,16 +42,19 @@ public static class EpicEndpoints
             .WithTags("Epics")
             .WithSummary("Delete an epic");
 
-        app.MapGet("/api/epics", async (
-                string? projectId,
-                CancellationToken ct) =>
-            {
-                // TODO: implement logic
-                return Results.Ok(Array.Empty<object>());
-            })
+        app.MapGet("/api/epics", GetAllEpics)
+            .Produces<List<EpicDto>>(StatusCodes.Status200OK)
             .WithName("GetEpics")
             .WithTags("Epics")
             .WithSummary("Get all epics");
+    }
+    
+    private static async Task<Ok<List<EpicDto>>> GetAllEpics(
+        IEpicRepository repository,
+        CancellationToken cancellationToken)
+    {
+        var epics = await repository.GetAllAsync(cancellationToken);
+        return TypedResults.Ok(epics);
     }
 }
 

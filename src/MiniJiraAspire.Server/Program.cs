@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting.Projects;
 using Microsoft.Extensions.Hosting.Tasks;
 using Microsoft.Extensions.Hosting.Tasks.Actions;
 using MiniJiraAspire.Server.Migrations;
+using MiniJiraAspire.Server.Persistence.Repositories;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,7 +29,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IEpicRepository, EpicRepository>();
 
 var app = builder.Build();
 
@@ -45,6 +46,8 @@ if (app.Environment.IsDevelopment())
 
 
 }
+
+await DbSeeder.MigrateAndSeedAsync(app.Services);
 
 // Auth
 app.MapLogin();

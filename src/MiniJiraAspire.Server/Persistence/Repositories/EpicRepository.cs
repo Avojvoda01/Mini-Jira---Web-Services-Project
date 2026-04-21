@@ -6,7 +6,7 @@ namespace MiniJiraAspire.Server.Persistence.Repositories;
 
 public class EpicRepository(AppDbContext db) : IEpicRepository
 {
-    public async Task<List<EpicDto>> GetAllAsync(string? city, CancellationToken cancellationToken = default)
+    public async Task<List<EpicDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var query = db.Epics.AsNoTracking().AsQueryable();
         
