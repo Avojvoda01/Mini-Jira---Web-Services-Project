@@ -1,6 +1,6 @@
 namespace MiniJiraAspire.Server.Models;
 
-public class Epics
+public class Epic
 {
     public Guid Id { get; set; }
     public string Name { get; set; }
