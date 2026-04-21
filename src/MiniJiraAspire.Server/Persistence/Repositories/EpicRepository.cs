@@ -32,9 +32,9 @@ public class EpicRepository(AppDbContext db) : IEpicRepository
             throw new Exception("Epic get by id");
         }
 
-        return new EpicDto(epic.Id, epic.Name, epic.Description);
+        return new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty);
     }
-    
+
     public async Task<EpicDto> CreateAsync(CreateEpicRequest request, CancellationToken cancellationToken = default)
     {
         var epic = new Epic
@@ -46,7 +46,7 @@ public class EpicRepository(AppDbContext db) : IEpicRepository
         db.Epics.Add(epic);
         await db.SaveChangesAsync(cancellationToken);
 
-        return new EpicDto(epic.Id, epic.Name, epic.Description);
+        return new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty);
     }
 
     public async Task UpdateAsync(int id, UpdateEpicRequest request, CancellationToken cancellationToken = default)

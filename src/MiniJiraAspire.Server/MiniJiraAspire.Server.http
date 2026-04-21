@@ -17,18 +17,19 @@ POST {{Server_HostAddress}}/api/epics
 Content-Type: application/json
 
 {
-  "name": "New Epic",
-  "description": "Epic description"
+  "name": "Wambo"
+
 }
 
 ###
 
 ### Update epic
-PUT {{Server_HostAddress}}/api/epics/1
+PUT {{Server_HostAddress}}/api/epics/8
 Content-Type: application/json
 
 {
-  "name": "Big King XXL"
+  "name": "Monkeytype",
+  "Description": "eatsleep"
 }
 
 ###
