@@ -1,6 +1,39 @@
 @Server_HostAddress = http://localhost:5413
 
+### Get all epics
 GET {{Server_HostAddress}}/api/epics
 Accept: application/json
+
+###
+
+### Get epic by id
+GET {{Server_HostAddress}}/api/epics/1
+Accept: application/json
+
+###
+
+### Create epic
+POST {{Server_HostAddress}}/api/epics
+Content-Type: application/json
+
+{
+  "name": "New Epic",
+  "description": "Epic description"
+}
+
+###
+
+### Update epic
+PUT {{Server_HostAddress}}/api/epics/1
+Content-Type: application/json
+
+{
+  "name": "Big King XXL"
+}
+
+###
+
+### Delete epic
+DELETE {{Server_HostAddress}}/api/epics/1
 
 ###
