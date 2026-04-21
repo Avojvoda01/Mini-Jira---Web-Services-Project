@@ -23,4 +23,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.7" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.7" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Epic\" />
+  </ItemGroup>
 </Project>
