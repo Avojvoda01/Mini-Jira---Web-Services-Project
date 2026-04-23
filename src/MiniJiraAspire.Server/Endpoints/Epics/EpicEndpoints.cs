@@ -8,32 +8,30 @@ public static class EpicEndpoints
 {
     public static void MapEpicEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/epics", CreateEpic)
+        var group = app.MapGroup("/api/epics")
+            .WithTags("Epics");
+
+        group.MapPost("/", CreateEpic)
             .WithName("CreateEpic")
-            .WithTags("Epics")
             .WithSummary("Create a new epic");
 
-        app.MapPut("/api/epics/{id:int}", UpdateEpic)
+        group.MapPut("/{id:int}", UpdateEpic)
             .WithName("UpdateEpic")
-            .WithTags("Epics")
             .WithSummary("Edit an existing epic");
 
-        app.MapDelete("/api/epics/{id:int}",DeleteEpic)
+        group.MapDelete("/{id:int}", DeleteEpic)
             .WithName("DeleteEpic")
-            .WithTags("Epics")
             .WithSummary("Delete an epic");
 
-        app.MapGet("/api/epics", GetAllEpics)
+        group.MapGet("/", GetAllEpics)
             .Produces<List<EpicDto>>(StatusCodes.Status200OK)
             .WithName("GetEpics")
-            .WithTags("Epics")
             .WithSummary("Get all epics");
-        
-        app.MapGet("/api/epics/{id:int}", GetEpicById)
+
+        group.MapGet("/{id:int}", GetEpicById)
             .Produces<EpicDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Get epic by id");
-
     }
     
     private static async Task<Ok<List<EpicDto>>> GetAllEpics(
