@@ -18,12 +18,24 @@ function getDisplayName(email: string) {
     .trim();
 }
 
+function getSafeRedirectPath(redirect: string | null) {
+  if (!redirect || !redirect.startsWith('/')) {
+    return '/app/projects';
+  }
+
+  if (redirect.startsWith('//') || /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(redirect)) {
+    return '/app/projects';
+  }
+
+  return redirect;
+}
+
 export function LoginPage() {
   const session = useAtomValue(authSessionAtom);
   const setSession = useSetAtom(authSessionAtom);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect') ?? '/app/projects';
+  const redirectTo = getSafeRedirectPath(searchParams.get('redirect'));
   const registered = searchParams.get('registered') === '1';
   const initialEmail = searchParams.get('email') ?? '';
 
