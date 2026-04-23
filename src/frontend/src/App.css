@@ -52,7 +52,7 @@ body {
 }
 
 .dark button[data-slot='button'][data-variant='ghost'] {
-  color: hsl(var(--foreground));
+  color: var(--foreground);
 }
 
 .dark button[data-slot='button'][data-variant='ghost']:hover {
@@ -67,7 +67,7 @@ body {
   display: grid;
   grid-template-columns: 292px minmax(0, 1fr);
   min-height: 100vh;
-  color: hsl(var(--foreground));
+  color: var(--foreground);
 }
 
 .app-sidebar {
