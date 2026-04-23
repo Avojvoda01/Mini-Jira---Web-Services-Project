@@ -12,7 +12,7 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 
-
+DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.

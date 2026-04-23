@@ -24,7 +24,7 @@ Content-Type: application/json
 ###
 
 ### Update epic
-PUT {{Server_HostAddress}}/api/epics/8
+PUT {{Server_HostAddress}}/api/epics/4
 Content-Type: application/json
 
 {
