@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useAtomValue } from 'jotai';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,9 @@ const MAX_DESCRIPTION_LENGTH = 1000;
 
 export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
   const session = useAtomValue(authSessionAtom);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const [form, setForm] = useState<CreateProjectState>({
     name: '',
     owner: '',
@@ -44,6 +47,24 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
       owner: session?.displayName ?? '',
     }));
   }, [open, session?.displayName]);
+
+  useEffect(() => {
+    if (!open) {
+      previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
+      return;
+    }
+
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const focusTimer = window.setTimeout(() => {
+      nameInputRef.current?.focus();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(focusTimer);
+    };
+  }, [open]);
 
   if (!open) {
     return null;
@@ -83,6 +104,48 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
     onClose();
   };
 
+  const handleDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const dialogElement = dialogRef.current;
+    if (!dialogElement) {
+      return;
+    }
+
+    const focusableElements = Array.from(
+      dialogElement.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+
+    if (focusableElements.length === 0) {
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    const activeElement = document.activeElement;
+
+    if (event.shiftKey && activeElement === firstElement) {
+      event.preventDefault();
+      lastElement.focus();
+      return;
+    }
+
+    if (!event.shiftKey && activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-4 py-6"
@@ -90,8 +153,9 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
       aria-modal="true"
       aria-labelledby="create-project-title"
       onClick={onClose}
+      onKeyDown={handleDialogKeyDown}
     >
-      <Card className="w-full max-w-2xl border-border/70 bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <Card ref={dialogRef} className="w-full max-w-2xl border-border/70 bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
         <CardHeader>
           <CardTitle id="create-project-title" className="text-2xl tracking-tight">
             Create project
@@ -107,10 +171,11 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
               </label>
               <Input
                 id="name"
+                ref={nameInputRef}
                 value={form.name}
                 onChange={(event) => updateField('name', event.target.value)}
                 placeholder="Enter a project name"
-                  maxLength={MAX_PROJECT_NAME_LENGTH}
+                maxLength={MAX_PROJECT_NAME_LENGTH}
                 aria-invalid={Boolean(errors.name)}
               />
               <p className="text-xs text-muted-foreground">Up to {MAX_PROJECT_NAME_LENGTH} characters.</p>
