@@ -1,6 +1,40 @@
 @Server_HostAddress = http://localhost:5413
 
-GET {{Server_HostAddress}}/api/weatherforecast/
+### Get all epics
+GET {{Server_HostAddress}}/api/epics
 Accept: application/json
+
+###
+
+### Get epic by id
+GET {{Server_HostAddress}}/api/epics/1
+Accept: application/json
+
+###
+
+### Create epic
+POST {{Server_HostAddress}}/api/epics
+Content-Type: application/json
+
+{
+  "name": "Wambo"
+
+}
+
+###
+
+### Update epic
+PUT {{Server_HostAddress}}/api/epics/4
+Content-Type: application/json
+
+{
+  "name": "Monkeytype",
+  "Description": "eatsleep"
+}
+
+###
+
+### Delete epic
+DELETE {{Server_HostAddress}}/api/epics/1
 
 ###

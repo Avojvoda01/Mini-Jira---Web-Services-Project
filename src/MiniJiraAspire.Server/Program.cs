@@ -7,8 +7,12 @@ using Microsoft.Extensions.Hosting.Epics;
 using Microsoft.Extensions.Hosting.Projects;
 using Microsoft.Extensions.Hosting.Tasks;
 using Microsoft.Extensions.Hosting.Tasks.Actions;
+using MiniJiraAspire.Server.Migrations;
+using MiniJiraAspire.Server.Persistence.Repositories;
 using Scalar.AspNetCore;
+using Microsoft.EntityFrameworkCore;
 
+DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -20,6 +24,12 @@ builder.Services.AddProblemDetails();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
+
+// AddDbContext registers AppDbContext as scoped, which is the right lifetime for one HTTP request.
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IEpicRepository, EpicRepository>();
 
 var app = builder.Build();
 
@@ -36,6 +46,8 @@ if (app.Environment.IsDevelopment())
 
 
 }
+
+await DbSeeder.MigrateAndSeedAsync(app.Services);
 
 // Auth
 app.MapLogin();
