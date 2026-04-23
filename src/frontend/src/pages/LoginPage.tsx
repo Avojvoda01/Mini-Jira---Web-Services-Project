@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { BackToHomeButton } from '@/components/common/BackToHomeButton';
 import { authSessionAtom } from '@/store/authAtoms';
 import { loginUser } from '@/features/auth/authApi';
+import { getSafeRedirectPath } from '@/utils/safeRedirect';
 
 function getDisplayName(email: string) {
   const localPart = email.split('@')[0] ?? email;
@@ -16,18 +17,6 @@ function getDisplayName(email: string) {
     .replace(/[._-]+/g, ' ')
     .replace(/\b\w/g, (character) => character.toUpperCase())
     .trim();
-}
-
-function getSafeRedirectPath(redirect: string | null) {
-  if (!redirect || !redirect.startsWith('/')) {
-    return '/app/projects';
-  }
-
-  if (redirect.startsWith('//') || /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(redirect)) {
-    return '/app/projects';
-  }
-
-  return redirect;
 }
 
 export function LoginPage() {

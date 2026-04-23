@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/button';
 import { BackToHomeButton } from '@/components/common/BackToHomeButton';
 import { authSessionAtom } from '@/store/authAtoms';
 import { registerUser } from '@/features/auth/authApi';
+import { getSafeRedirectPath } from '@/utils/safeRedirect';
 
 export function RegisterPage() {
   const session = useAtomValue(authSessionAtom);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirectTo = searchParams.get('redirect') ?? '/app/projects';
+  const redirectTo = getSafeRedirectPath(searchParams.get('redirect'));
 
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
