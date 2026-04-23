@@ -11,7 +11,7 @@ public class EpicConfiguraiton : IEntityTypeConfiguration<Epic>
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Name)
-            .HasMaxLength(200)
+            .HasMaxLength(100)
             .IsRequired();
 
         builder.Property(e => e.Description)
