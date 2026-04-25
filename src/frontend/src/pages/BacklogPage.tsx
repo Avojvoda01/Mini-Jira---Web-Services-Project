@@ -7,6 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import {
+  useCreateEpicMutation,
+  useDeleteEpicMutation,
+  useEpicsQuery,
+  useUpdateEpicMutation,
+  type EpicDto,
+} from '@/features/epics';
 import { getProjectById } from '@/features/projects/projectData';
 
 type BacklogTicket = {
@@ -18,10 +25,7 @@ type BacklogTicket = {
   estimate: string;
 };
 
-type Epic = {
-  id: string;
-  name: string;
-  description: string;
+type Epic = EpicDto & {
   ticketIds: string[];
 };
 
@@ -60,38 +64,40 @@ const backlogItems: BacklogTicket[] = [
   },
 ];
 
-const initialEpics: Epic[] = [
-  {
-    id: 'epic-ui-foundation',
-    name: 'UI Foundation Stabilization',
-    description: 'Consolidate UX quality and consistency across project views.',
-    ticketIds: ['MJR-141'],
-  },
-];
-
 export function BacklogPage() {
   const { projectId } = useParams();
   const project = getProjectById(projectId);
+  const { data: epicDtos = [], isLoading: isLoadingEpics } = useEpicsQuery();
+  const createEpicMutation = useCreateEpicMutation();
+  const updateEpicMutation = useUpdateEpicMutation();
+  const deleteEpicMutation = useDeleteEpicMutation();
   const [isCreateEpicOpen, setIsCreateEpicOpen] = useState(false);
-  const [epics, setEpics] = useState<Epic[]>(initialEpics);
+  const [ticketAssignmentsByEpic, setTicketAssignmentsByEpic] = useState<Record<number, string[]>>({});
   const [newEpicName, setNewEpicName] = useState('');
   const [newEpicDescription, setNewEpicDescription] = useState('');
   const [newEpicTicketIds, setNewEpicTicketIds] = useState<string[]>([]);
   const [createEpicSearch, setCreateEpicSearch] = useState('');
-  const [assignEpicId, setAssignEpicId] = useState<string | null>(null);
+  const [assignEpicId, setAssignEpicId] = useState<number | null>(null);
   const [assignSearch, setAssignSearch] = useState('');
   const [assignTicketDraft, setAssignTicketDraft] = useState<string[]>([]);
-  const [editEpicId, setEditEpicId] = useState<string | null>(null);
+  const [editEpicId, setEditEpicId] = useState<number | null>(null);
   const [editEpicName, setEditEpicName] = useState('');
   const [editEpicDescription, setEditEpicDescription] = useState('');
-  const [deleteConfirmEpicId, setDeleteConfirmEpicId] = useState<string | null>(null);
+  const [deleteConfirmEpicId, setDeleteConfirmEpicId] = useState<number | null>(null);
+
+  const epics = useMemo<Epic[]>(() => {
+    return epicDtos.map((epic) => ({
+      ...epic,
+      ticketIds: ticketAssignmentsByEpic[epic.id] ?? [],
+    }));
+  }, [epicDtos, ticketAssignmentsByEpic]);
 
   const ticketById = useMemo(() => {
     return new Map(backlogItems.map((ticket) => [ticket.id, ticket]));
   }, []);
 
   const ticketToEpicMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, number>();
     epics.forEach((epic) => {
       epic.ticketIds.forEach((ticketId) => {
         map.set(ticketId, epic.id);
@@ -101,7 +107,7 @@ export function BacklogPage() {
   }, [epics]);
 
   const activeAssignEpic = useMemo(() => {
-    if (!assignEpicId) {
+    if (assignEpicId === null) {
       return undefined;
     }
 
@@ -109,7 +115,7 @@ export function BacklogPage() {
   }, [assignEpicId, epics]);
 
   const activeEditEpic = useMemo(() => {
-    if (!editEpicId) {
+    if (editEpicId === null) {
       return undefined;
     }
 
@@ -117,7 +123,7 @@ export function BacklogPage() {
   }, [editEpicId, epics]);
 
   const epicPendingDelete = useMemo(() => {
-    if (!deleteConfirmEpicId) {
+    if (deleteConfirmEpicId === null) {
       return undefined;
     }
 
@@ -166,26 +172,34 @@ export function BacklogPage() {
     );
   };
 
-  const createEpic = () => {
+  const createEpic = async () => {
     const name = newEpicName.trim();
     const description = newEpicDescription.trim();
     if (name.length < 3) {
       return;
     }
 
-    const epic: Epic = {
-      id: `epic-${Date.now()}`,
-      name,
-      description,
-      ticketIds: newEpicTicketIds,
-    };
+    try {
+      const newEpic = await createEpicMutation.mutateAsync({
+        name,
+        description: description || null,
+      });
 
-    setEpics((current) => [epic, ...current]);
-    setNewEpicName('');
-    setNewEpicDescription('');
-    setNewEpicTicketIds([]);
-    setCreateEpicSearch('');
-    setIsCreateEpicOpen(false);
+      if (newEpicTicketIds.length > 0) {
+        setTicketAssignmentsByEpic((current) => ({
+          ...current,
+          [newEpic.id]: newEpicTicketIds,
+        }));
+      }
+
+      setNewEpicName('');
+      setNewEpicDescription('');
+      setNewEpicTicketIds([]);
+      setCreateEpicSearch('');
+      setIsCreateEpicOpen(false);
+    } catch (error) {
+      console.error('Error creating epic:', error);
+    }
   };
 
   const closeCreateEpicModal = () => {
@@ -214,31 +228,27 @@ export function BacklogPage() {
     setEditEpicDescription('');
   };
 
-  const saveEpicEdit = () => {
+  const saveEpicEdit = async () => {
     const name = editEpicName.trim();
     const description = editEpicDescription.trim();
-    if (!editEpicId || name.length < 3) {
+    if (editEpicId === null || name.length < 3) {
       return;
     }
 
-    setEpics((current) =>
-      current.map((epic) => {
-        if (epic.id !== editEpicId) {
-          return epic;
-        }
+    try {
+      await updateEpicMutation.mutateAsync({
+        id: editEpicId,
+        name,
+        description: description || null,
+      });
 
-        return {
-          ...epic,
-          name,
-          description,
-        };
-      }),
-    );
-
-    closeEditEpicModal();
+      closeEditEpicModal();
+    } catch (error) {
+      console.error('Error updating epic:', error);
+    }
   };
 
-  const openDeleteConfirmModal = (epicId: string) => {
+  const openDeleteConfirmModal = (epicId: number) => {
     setDeleteConfirmEpicId(epicId);
   };
 
@@ -246,13 +256,22 @@ export function BacklogPage() {
     setDeleteConfirmEpicId(null);
   };
 
-  const confirmDeleteEpic = () => {
-    if (!deleteConfirmEpicId) {
+  const confirmDeleteEpic = async () => {
+    if (deleteConfirmEpicId === null) {
       return;
     }
 
-    setEpics((current) => current.filter((epic) => epic.id !== deleteConfirmEpicId));
-    closeDeleteConfirmModal();
+    try {
+      await deleteEpicMutation.mutateAsync(deleteConfirmEpicId);
+      setTicketAssignmentsByEpic((current) => {
+        const next = { ...current };
+        delete next[deleteConfirmEpicId];
+        return next;
+      });
+      closeDeleteConfirmModal();
+    } catch (error) {
+      console.error('Error deleting epic:', error);
+    }
   };
 
   const closeAssignTicketsModal = () => {
@@ -268,39 +287,26 @@ export function BacklogPage() {
   };
 
   const saveAssignedTickets = () => {
-    if (!assignEpicId) {
+    if (assignEpicId === null) {
       return;
     }
 
-    setEpics((current) =>
-      current.map((epic) => {
-        if (epic.id !== assignEpicId) {
-          return epic;
-        }
-
-        return {
-          ...epic,
-          ticketIds: Array.from(new Set([...epic.ticketIds, ...assignTicketDraft])),
-        };
-      }),
-    );
+    setTicketAssignmentsByEpic((current) => {
+      const previous = current[assignEpicId] ?? [];
+      return {
+        ...current,
+        [assignEpicId]: Array.from(new Set([...previous, ...assignTicketDraft])),
+      };
+    });
 
     closeAssignTicketsModal();
   };
 
-  const removeTicketFromEpic = (epicId: string, ticketId: string) => {
-    setEpics((current) =>
-      current.map((epic) => {
-        if (epic.id !== epicId) {
-          return epic;
-        }
-
-        return {
-          ...epic,
-          ticketIds: epic.ticketIds.filter((id) => id !== ticketId),
-        };
-      }),
-    );
+  const removeTicketFromEpic = (epicId: number, ticketId: string) => {
+    setTicketAssignmentsByEpic((current) => ({
+      ...current,
+      [epicId]: (current[epicId] ?? []).filter((id) => id !== ticketId),
+    }));
   };
 
   return (
@@ -346,7 +352,13 @@ export function BacklogPage() {
           </CardHeader>
 
           <CardContent className="space-y-5">
-            {epics.length === 0 ? (
+            {isLoadingEpics ? (
+              <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 p-6 text-sm text-muted-foreground">
+                Loading epics...
+              </div>
+            ) : null}
+
+            {!isLoadingEpics && epics.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 p-6 text-sm text-muted-foreground">
                 No epics created yet. Start with Create epic and group tickets by initiative.
               </div>
@@ -532,7 +544,7 @@ export function BacklogPage() {
                 onCancel={closeEditEpicModal}
                 confirmLabel="Save changes"
                 onConfirm={saveEpicEdit}
-                confirmDisabled={editEpicName.trim().length < 3}
+                confirmDisabled={editEpicName.trim().length < 3 || updateEpicMutation.isPending}
               />
             </CardContent>
           </Card>
@@ -549,7 +561,12 @@ export function BacklogPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <FormActionButtons onCancel={closeDeleteConfirmModal} confirmLabel="Delete epic" onConfirm={confirmDeleteEpic} />
+              <FormActionButtons
+                onCancel={closeDeleteConfirmModal}
+                confirmLabel="Delete epic"
+                onConfirm={confirmDeleteEpic}
+                confirmDisabled={deleteEpicMutation.isPending}
+              />
             </CardContent>
           </Card>
         </div>
@@ -633,7 +650,7 @@ export function BacklogPage() {
                 onCancel={closeCreateEpicModal}
                 confirmLabel="Create epic"
                 onConfirm={createEpic}
-                confirmDisabled={newEpicName.trim().length < 3}
+                confirmDisabled={newEpicName.trim().length < 3 || createEpicMutation.isPending}
               />
             </CardContent>
           </Card>
