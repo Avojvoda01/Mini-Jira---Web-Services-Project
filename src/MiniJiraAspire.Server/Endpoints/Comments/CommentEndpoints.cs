@@ -1,47 +1,60 @@
+using Microsoft.AspNetCore.Http.HttpResults;
+using MiniJiraAspire.Server.Models.CommentDTO.Request;
+using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
+
 namespace Microsoft.Extensions.Hosting.Comments;
 
 public static class CommentEndpoints
 {
     public static void MapCommentEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/tasks/{taskId}/comments", async (
-                string taskId,
-                CreateCommentCommand command,
-                CancellationToken ct) =>
-            {
-                // TODO: implement logic
-                return Results.Created($"/api/tasks/{taskId}/comments/new-id", new { Id = "new-id" });
-            })
+        var group = app.MapGroup("/api/tasks/{taskId}/comments")
+            .WithTags("Comments");
+
+        group.MapPost("/", CreateComment)
+            .Produces<CommentDTO>(StatusCodes.Status201Created)
             .WithName("CreateComment")
-            .WithTags("Comments")
             .WithSummary("Create a comment on a task");
 
-        app.MapPut("/api/tasks/{taskId}/comments/{commentId}", async (
-                string taskId,
-                string commentId,
-                UpdateCommentCommand command,
-                CancellationToken ct) =>
-            {
-                // TODO: implement logic
-                return Results.Ok();
-            })
+        group.MapPut("/{commentId:int}", UpdateComment)
+            .Produces(StatusCodes.Status204NoContent)
             .WithName("UpdateComment")
-            .WithTags("Comments")
             .WithSummary("Edit an existing comment");
 
-        app.MapDelete("/api/tasks/{taskId}/comments/{commentId}", async (
-                string taskId,
-                string commentId,
-                CancellationToken ct) =>
-            {
-                // TODO: implement logic
-                return Results.NoContent();
-            })
+        group.MapDelete("/{commentId:int}", DeleteComment)
+            .Produces(StatusCodes.Status204NoContent)
             .WithName("DeleteComment")
-            .WithTags("Comments")
             .WithSummary("Delete a comment");
     }
-}
 
-public record CreateCommentCommand(string Content);
-public record UpdateCommentCommand(string Content);
+    private static async Task<Created<CommentDTO>> CreateComment(
+        string taskId,
+        CreateCommentRequest request,
+        ICommentRepository repository,
+        CancellationToken cancellationToken)
+    {
+        var comment = await repository.CreateAsync(taskId, request, cancellationToken);
+        return TypedResults.Created($"/api/tasks/{taskId}/comments/{comment.Id}", comment);
+    }
+
+    private static async Task<NoContent> UpdateComment(
+        string taskId,
+        int commentId,
+        UpdateCommentRequest request,
+        ICommentRepository repository,
+        CancellationToken cancellationToken)
+    {
+        await repository.UpdateAsync(taskId, commentId, request, cancellationToken);
+        return TypedResults.NoContent();
+    }
+
+    private static async Task<NoContent> DeleteComment(
+        string taskId,
+        int commentId,
+        ICommentRepository repository,
+        CancellationToken cancellationToken)
+    {
+        await repository.DeleteAsync(taskId, commentId, cancellationToken);
+        return TypedResults.NoContent();
+    }
+}
