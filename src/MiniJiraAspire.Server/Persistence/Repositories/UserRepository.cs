@@ -1,5 +1,3 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting.Admin.Users;
 using MiniJiraAspire.Server.Migrations;
 using MiniJiraAspire.Server.Models;
 
@@ -7,14 +5,14 @@ namespace MiniJiraAspire.Server.Persistence.Repositories;
 
 public class UserRepository(AppDbContext db) : IUserRepository
 {
-    public async Task<UserDto> CreateAsync(CreateUserCommand command, CancellationToken cancellationToken = default)
+    public async Task<UserDto> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
     {
         var user = new User
         {
-            Email = command.Email,
+            Email = request.Email,
             // only temporary, should be hashed in production
-            PasswordHash = command.Password,
-            DisplayName = command.DisplayName,
+            PasswordHash = request.Password,
+            DisplayName = request.DisplayName,
             Role = "Project Member"
         };
 
