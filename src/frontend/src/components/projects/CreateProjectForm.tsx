@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useAtomValue } from 'jotai';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { authSessionAtom } from '@/store/authAtoms';
 
 type CreateProjectProps = {
@@ -213,19 +213,7 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
               {errors.description ? <p className="text-xs text-rose-700">{errors.description}</p> : null}
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                className="border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
-                onClick={onClose}
-                type="button"
-              >
-                Cancel
-              </Button>
-              <Button className="border-0 bg-sky-500 text-white hover:bg-sky-600" type="submit">
-                Create
-              </Button>
-            </div>
+            <FormActionButtons onCancel={onClose} confirmLabel="Create" confirmType="submit" />
           </form>
         </CardContent>
       </Card>
