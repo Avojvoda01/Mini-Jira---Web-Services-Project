@@ -1,56 +1,102 @@
-namespace Microsoft.Extensions.Hosting.Projects;
+using Microsoft.AspNetCore.Http.HttpResults;
+using MiniJiraAspire.Server.Features.Project.CreateProjectCommand;
+using MiniJiraAspire.Server.Features.Project.DeleteProjectCommand;
+using MiniJiraAspire.Server.Features.Project.GetAllProjectsQuery;
+using MiniJiraAspire.Server.Features.Project.GetProjectByIdQuery;
+using MiniJiraAspire.Server.Features.Project.UpdateProjectCommand;
+using MiniJiraAspire.Server.Models;
+
+namespace MiniJiraAspire.Server.Endpoints.Projects;
 
 public static class ProjectEndpoints
 {
     public static void MapProjectEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/projects", async (
-                CreateProjectCommand command,
-                CancellationToken ct) =>
-            {
-                // TODO: implement logic
-                return Results.Created("/api/projects/new-id", new { Id = "new-id" });
-            })
+        var group = app.MapGroup("/api/projects")
+            .WithTags("Projects");
+
+        group.MapPost("/", CreateProject)
             .WithName("CreateProject")
-            .WithTags("Projects")
             .WithSummary("Create a new project");
 
-        app.MapDelete("/api/projects/{projectId}", async (
-                string projectId,
-                CancellationToken ct) =>
-            {
-                // TODO: implement logic
-                return Results.NoContent();
-            })
+        group.MapPut("/{id:int}", UpdateProject)
+            .WithName("UpdateProject")
+            .WithSummary("Edit an existing project");
+
+        group.MapDelete("/{id:int}", DeleteProject)
             .WithName("DeleteProject")
-            .WithTags("Projects")
             .WithSummary("Delete a project");
 
-        app.MapPost("/api/projects/{projectId}/members", async (
-                string projectId,
-                AddProjectMemberCommand command,
-                CancellationToken ct) =>
-            {
-                // TODO: implement logic
-                return Results.Created($"/api/projects/{projectId}/members", new { });
-            })
-            .WithName("AddProjectMember")
-            .WithTags("Projects")
-            .WithSummary("Assign a member to a project");
+        group.MapGet("/", GetAllProjects)
+            .Produces<List<ProjectDto>>(StatusCodes.Status200OK)
+            .WithName("GetProjects")
+            .WithSummary("Get all projects");
 
-        app.MapDelete("/api/projects/{projectId}/members/{userId}", async (
-                string projectId,
-                string userId,
-                CancellationToken ct) =>
-            {
-                // TODO: implement logic
-                return Results.NoContent();
-            })
-            .WithName("RemoveProjectMember")
-            .WithTags("Projects")
-            .WithSummary("Remove a member from a project");
+        group.MapGet("/{id:int}", GetProjectById)
+            .Produces<ProjectDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithSummary("Get project by id");
+    }
+
+    private static async Task<Ok<List<ProjectDto>>> GetAllProjects(
+        IGetAllProjectsQuery query,
+        CancellationToken cancellationToken)
+    {
+        var projects = await query.ExecuteAsync(cancellationToken);
+        return TypedResults.Ok(projects);
+    }
+
+    private static async Task<Results<Ok<ProjectDto>, ProblemHttpResult>> GetProjectById(
+        int id,
+        IGetProjectByIdQuery query,
+        CancellationToken cancellationToken)
+    {
+        var project = await query.ExecuteAsync(id, cancellationToken);
+        if (project is null)
+            return TypedResults.Problem($"Project with id {id} not found", statusCode: StatusCodes.Status404NotFound);
+
+        return TypedResults.Ok(project);
+    }
+
+    private static async Task<Created<ProjectDto>> CreateProject(
+        CreateProjectRequest request,
+        ICreateProjectCommand command,
+        CancellationToken cancellationToken)
+    {
+        var project = await command.ExecuteAsync(request, cancellationToken);
+        return TypedResults.Created($"/api/projects/{project.Id}", project);
+    }
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> UpdateProject(
+        int id,
+        UpdateProjectRequest request,
+        IUpdateProjectCommand command,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await command.ExecuteAsync(id, request, cancellationToken);
+            return TypedResults.NoContent();
+        }
+        catch (Exception ex)
+        {
+            return TypedResults.Problem(ex.Message, statusCode: StatusCodes.Status404NotFound);
+        }
+    }
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> DeleteProject(
+        int id,
+        IDeleteProjectCommand command,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await command.ExecuteAsync(id, cancellationToken);
+            return TypedResults.NoContent();
+        }
+        catch (Exception ex)
+        {
+            return TypedResults.Problem(ex.Message, statusCode: StatusCodes.Status404NotFound);
+        }
     }
 }
-
-public record CreateProjectCommand(string Name, string? Description);
-public record AddProjectMemberCommand(string UserId, string Role);

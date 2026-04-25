@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Epic> Epics => Set<Epic>();
+    public DbSet<Project> Projects => Set<Project>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

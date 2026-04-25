@@ -32,4 +32,8 @@
   <ItemGroup>
     <Folder Include="Features\Epic\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Features\Project\ProjectCommands.cs" />
+  </ItemGroup>
 </Project>
