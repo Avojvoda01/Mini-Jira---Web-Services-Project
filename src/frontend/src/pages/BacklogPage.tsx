@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Filter, Pencil, Plus, Search, Sparkles, Trash2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FormActionButtons } from '@/components/common/FormActionButtons';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+import { BacklogPageHeader } from '@/components/backlog/BacklogPageHeader';
+import { EpicBacklogSection } from '@/components/backlog/EpicBacklogSection';
+import { CreateEpicModal } from '@/components/backlog/CreateEpicModal';
+import { AssignTicketsModal } from '@/components/backlog/AssignTicketsModal';
+import { EditEpicModal } from '@/components/backlog/EditEpicModal';
+import { DeleteEpicModal } from '@/components/backlog/DeleteEpicModal';
 import {
   useCreateEpicMutation,
   useDeleteEpicMutation,
@@ -311,351 +310,71 @@ export function BacklogPage() {
 
   return (
     <section className="space-y-6">
-      <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-        <CardContent className="p-6 sm:p-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-muted-foreground">
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                {project?.name ?? 'Backlog planning'}
-              </Badge>
+      <BacklogPageHeader
+        projectName={project?.name}
+        title={project ? `${project.name} Backlog` : 'Backlog'}
+        description="Group related work into epics, then assign tickets to each initiative."
+        onCreateEpic={() => setIsCreateEpicOpen(true)}
+      />
 
-              <div className="space-y-2">
-                <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                  {project ? `${project.name} Backlog` : 'Backlog'}
-                </h2>
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  Group related work into epics, then assign tickets to each initiative.
-                </p>
-              </div>
-            </div>
+      <EpicBacklogSection
+        isLoading={isLoadingEpics}
+        epics={epics}
+        ticketById={ticketById}
+        onAssignTickets={openAssignTicketsModal}
+        onEdit={openEditEpicModal}
+        onDelete={openDeleteConfirmModal}
+        onRemoveTicket={removeTicketFromEpic}
+      />
 
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="border-border/70 bg-background/80 shadow-sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Filters
-              </Button>
-              <Button className="shadow-sm" onClick={() => setIsCreateEpicOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create epic
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <AssignTicketsModal
+        isOpen={Boolean(activeAssignEpic)}
+        epicName={activeAssignEpic?.name ?? ''}
+        onClose={closeAssignTicketsModal}
+        assignSearch={assignSearch}
+        setAssignSearch={setAssignSearch}
+        assignTicketDraft={assignTicketDraft}
+        toggleAssignDraftTicket={toggleAssignDraftTicket}
+        assignFilteredTickets={assignFilteredTickets}
+        unassignedTickets={unassignedTickets}
+        onSave={saveAssignedTickets}
+      />
 
-      <div>
-        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-          <CardHeader className="space-y-3 pb-4">
-            <CardTitle>Epic backlog</CardTitle>
-            <CardDescription>Manage epics and keep ticket assignment focused per epic.</CardDescription>
-          </CardHeader>
+      <EditEpicModal
+        isOpen={Boolean(activeEditEpic)}
+        epicName={editEpicName}
+        epicDescription={editEpicDescription}
+        onClose={closeEditEpicModal}
+        onChangeName={setEditEpicName}
+        onChangeDescription={setEditEpicDescription}
+        onSave={saveEpicEdit}
+        isPending={updateEpicMutation.isPending}
+      />
 
-          <CardContent className="space-y-5">
-            {isLoadingEpics ? (
-              <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 p-6 text-sm text-muted-foreground">
-                Loading epics...
-              </div>
-            ) : null}
+      <DeleteEpicModal
+        isOpen={Boolean(epicPendingDelete)}
+        epicName={epicPendingDelete?.name ?? ''}
+        onClose={closeDeleteConfirmModal}
+        onConfirm={confirmDeleteEpic}
+        isPending={deleteEpicMutation.isPending}
+      />
 
-            {!isLoadingEpics && epics.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 p-6 text-sm text-muted-foreground">
-                No epics created yet. Start with Create epic and group tickets by initiative.
-              </div>
-            ) : null}
-
-            {epics.map((epic, index) => {
-              const assignedTickets = epic.ticketIds
-                .map((ticketId) => ticketById.get(ticketId))
-                .filter((ticket): ticket is BacklogTicket => Boolean(ticket));
-
-              return (
-                <div key={epic.id}>
-                  {index > 0 ? <Separator className="mb-5" /> : null}
-                  <div className="space-y-4 rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline" className="border-border/70 bg-background/70 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
-                            Epic
-                          </Badge>
-                          <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
-                            {assignedTickets.length} tickets
-                          </Badge>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button size="sm" variant="outline" onClick={() => openAssignTicketsModal(epic)}>
-                            Assign tickets
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => openEditEpicModal(epic)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Edit
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            aria-label={`Delete epic ${epic.name}`}
-                            title={`Delete epic ${epic.name}`}
-                            className="text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                            onClick={() => openDeleteConfirmModal(epic.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <h3 className="text-base font-semibold text-foreground">{epic.name}</h3>
-                      <p className="text-sm leading-6 text-muted-foreground">{epic.description || 'No description provided yet.'}</p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-foreground">Assigned tickets</p>
-                      {assignedTickets.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No tickets assigned yet.</p>
-                      ) : (
-                        <div className="grid gap-2">
-                          {assignedTickets.map((ticket) => (
-                            <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-sm">
-                              <div>
-                                <p className="font-medium text-foreground">
-                                  {ticket.id} - {ticket.title}
-                                </p>
-                                <p className="text-xs text-muted-foreground">{ticket.estimate}</p>
-                              </div>
-                              <Button variant="outline" size="sm" onClick={() => removeTicketFromEpic(epic.id, ticket.id)}>
-                                Remove
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      </div>
-
-      {activeAssignEpic ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-4 py-6" role="dialog" aria-modal="true" onClick={closeAssignTicketsModal}>
-          <Card className="w-full max-w-3xl border-border/70 bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <CardHeader className="space-y-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <CardTitle>Assign tickets to {activeAssignEpic.name}</CardTitle>
-                  <CardDescription>Select tickets to keep this epic scope clear.</CardDescription>
-                </div>
-                <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
-                  {assignTicketDraft.length} selected
-                </Badge>
-              </div>
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  placeholder="Search tickets by id, title, or description"
-                  value={assignSearch}
-                  onChange={(event) => setAssignSearch(event.target.value)}
-                />
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <div className="h-80 space-y-2 overflow-y-auto rounded-2xl border border-border/70 bg-background/70 p-4">
-                {unassignedTickets.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No assignable tickets available right now.</p>
-                ) : assignFilteredTickets.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No tickets found for this search.</p>
-                ) : (
-                  assignFilteredTickets.map((ticket) => {
-                    return (
-                      <label
-                        key={`${activeAssignEpic.id}-${ticket.id}`}
-                        className="flex items-start gap-3 rounded-xl border border-border/50 bg-background px-3 py-2 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          className="mt-1"
-                          checked={assignTicketDraft.includes(ticket.id)}
-                          onChange={() => toggleAssignDraftTicket(ticket.id)}
-                        />
-                        <span className="space-y-1">
-                          <span className="block font-medium text-foreground">
-                            {ticket.id} - {ticket.title}
-                          </span>
-                          <span className="block text-xs text-muted-foreground">
-                            {ticket.status} - {ticket.priority} - {ticket.estimate}
-                          </span>
-                        </span>
-                      </label>
-                    );
-                  })
-                )}
-              </div>
-
-              <FormActionButtons
-                onCancel={closeAssignTicketsModal}
-                confirmLabel="Save assignment"
-                onConfirm={saveAssignedTickets}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-
-      {activeEditEpic ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-4 py-6" role="dialog" aria-modal="true" onClick={closeEditEpicModal}>
-          <Card className="w-full max-w-2xl border-border/70 bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <CardHeader>
-              <CardTitle>Edit epic</CardTitle>
-              <CardDescription>Update the epic details below.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground" htmlFor="edit-epic-name">
-                  Epic name
-                </label>
-                <Input
-                  id="edit-epic-name"
-                  value={editEpicName}
-                  onChange={(event) => setEditEpicName(event.target.value)}
-                  placeholder="Enter epic name"
-                  maxLength={100}
-                />
-                <p className="text-xs text-muted-foreground">Minimum 3, maximum 100 characters.</p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground" htmlFor="edit-epic-description">
-                  Epic description
-                </label>
-                <textarea
-                  id="edit-epic-description"
-                  value={editEpicDescription}
-                  onChange={(event) => setEditEpicDescription(event.target.value)}
-                  placeholder="Describe the scope and expected outcome."
-                  maxLength={2000}
-                  className="min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
-                />
-              </div>
-
-              <FormActionButtons
-                onCancel={closeEditEpicModal}
-                confirmLabel="Save changes"
-                onConfirm={saveEpicEdit}
-                confirmDisabled={editEpicName.trim().length < 3 || updateEpicMutation.isPending}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-
-      {epicPendingDelete ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-4 py-6" role="dialog" aria-modal="true" onClick={closeDeleteConfirmModal}>
-          <Card className="w-full max-w-md border-border/70 bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <CardHeader>
-              <CardTitle>Delete epic?</CardTitle>
-              <CardDescription>
-                This will remove <span className="font-medium text-foreground">{epicPendingDelete.name}</span>. Assigned tickets will remain in backlog as unassigned.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FormActionButtons
-                onCancel={closeDeleteConfirmModal}
-                confirmLabel="Delete epic"
-                onConfirm={confirmDeleteEpic}
-                confirmDisabled={deleteEpicMutation.isPending}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-
-      {isCreateEpicOpen ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-4 py-6" role="dialog" aria-modal="true" onClick={closeCreateEpicModal}>
-          <Card className="w-full max-w-3xl border-border/70 bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <CardHeader>
-              <CardTitle>New epic</CardTitle>
-              <CardDescription>Create an epic and optionally attach unassigned tickets.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground" htmlFor="epic-name">
-                    Epic name
-                  </label>
-                  <Input
-                    id="epic-name"
-                    value={newEpicName}
-                    onChange={(event) => setNewEpicName(event.target.value)}
-                    placeholder="Growth initiative, Reliability wave, ..."
-                    maxLength={100}
-                  />
-                  <p className="text-xs text-muted-foreground">Minimum 3, maximum 100 characters.</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground" htmlFor="epic-description">
-                    Epic description
-                  </label>
-                  <textarea
-                    id="epic-description"
-                    value={newEpicDescription}
-                    onChange={(event) => setNewEpicDescription(event.target.value)}
-                    placeholder="Describe the scope and expected outcome."
-                    maxLength={2000}
-                    className="min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-foreground">Attach unassigned tickets</p>
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    className="pl-9"
-                    placeholder="Search tickets by id, title, or description"
-                    value={createEpicSearch}
-                    onChange={(event) => setCreateEpicSearch(event.target.value)}
-                  />
-                </div>
-                <div className="h-80 space-y-2 overflow-y-auto rounded-2xl border border-border/70 bg-background/70 p-4">
-                  {unassignedTickets.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No unassigned tickets available right now.</p>
-                  ) : createEpicFilteredTickets.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No tickets found for this search.</p>
-                  ) : (
-                    createEpicFilteredTickets.map((ticket) => (
-                      <label key={ticket.id} className="flex items-start gap-3 rounded-xl border border-border/50 bg-background px-3 py-2 text-sm">
-                        <input
-                          type="checkbox"
-                          className="mt-1"
-                          checked={newEpicTicketIds.includes(ticket.id)}
-                          onChange={() => toggleCreateEpicTicket(ticket.id)}
-                        />
-                        <span className="space-y-1">
-                          <span className="block font-medium text-foreground">
-                            {ticket.id} - {ticket.title}
-                          </span>
-                          <span className="block text-xs text-muted-foreground">{ticket.description}</span>
-                        </span>
-                      </label>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <FormActionButtons
-                onCancel={closeCreateEpicModal}
-                confirmLabel="Create epic"
-                onConfirm={createEpic}
-                confirmDisabled={newEpicName.trim().length < 3 || createEpicMutation.isPending}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
+      <CreateEpicModal
+        isOpen={isCreateEpicOpen}
+        onClose={closeCreateEpicModal}
+        newEpicName={newEpicName}
+        setNewEpicName={setNewEpicName}
+        newEpicDescription={newEpicDescription}
+        setNewEpicDescription={setNewEpicDescription}
+        createEpicSearch={createEpicSearch}
+        setCreateEpicSearch={setCreateEpicSearch}
+        newEpicTicketIds={newEpicTicketIds}
+        toggleCreateEpicTicket={toggleCreateEpicTicket}
+        createEpicFilteredTickets={createEpicFilteredTickets}
+        unassignedTickets={unassignedTickets}
+        onCreate={createEpic}
+        isPending={createEpicMutation.isPending}
+      />
     </section>
   );
 }
