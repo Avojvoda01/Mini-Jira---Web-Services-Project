@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { BacklogPageHeader } from '@/components/backlog/BacklogPageHeader';
+import { useEffect, useMemo, useState } from 'react';
+import { Filter, Plus } from 'lucide-react';
 import { EpicBacklogSection } from '@/components/backlog/EpicBacklogSection';
 import { CreateEpicModal } from '@/components/backlog/CreateEpicModal';
 import { AssignTicketsModal } from '@/components/backlog/AssignTicketsModal';
 import { EditEpicModal } from '@/components/backlog/EditEpicModal';
 import { DeleteEpicModal } from '@/components/backlog/DeleteEpicModal';
+import { Button } from '@/components/ui/button';
+import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import {
   useCreateEpicMutation,
   useDeleteEpicMutation,
@@ -13,7 +14,6 @@ import {
   useUpdateEpicMutation,
   type EpicDto,
 } from '@/features/epics';
-import { getProjectById } from '@/features/projects/projectData';
 
 type BacklogTicket = {
   id: string;
@@ -64,8 +64,7 @@ const backlogItems: BacklogTicket[] = [
 ];
 
 export function BacklogPage() {
-  const { projectId } = useParams();
-  const project = getProjectById(projectId);
+  const { setContent } = usePageHeader();
   const { data: epicDtos = [], isLoading: isLoadingEpics } = useEpicsQuery();
   const createEpicMutation = useCreateEpicMutation();
   const updateEpicMutation = useUpdateEpicMutation();
@@ -308,15 +307,29 @@ export function BacklogPage() {
     }));
   };
 
+  useEffect(() => {
+    setContent({
+      title: 'Backlog',
+      description: 'Group related work into epics, then assign tickets to each initiative.',
+      actions: (
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="border-border/70 bg-background/80 shadow-sm">
+            <Filter className="mr-2 h-4 w-4" />
+            Filters
+          </Button>
+          <Button className="shadow-sm" onClick={() => setIsCreateEpicOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create epic
+          </Button>
+        </div>
+      ),
+    });
+
+    return () => setContent({});
+  }, [setContent]);
+
   return (
     <section className="space-y-6">
-      <BacklogPageHeader
-        projectName={project?.name}
-        title={project ? `${project.name} Backlog` : 'Backlog'}
-        description="Group related work into epics, then assign tickets to each initiative."
-        onCreateEpic={() => setIsCreateEpicOpen(true)}
-      />
-
       <EpicBacklogSection
         isLoading={isLoadingEpics}
         epics={epics}
