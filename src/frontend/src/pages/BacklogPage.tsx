@@ -6,6 +6,7 @@ import { AssignTicketsModal } from '@/components/backlog/AssignTicketsModal';
 import { EditEpicModal } from '@/components/backlog/EditEpicModal';
 import { DeleteEpicModal } from '@/components/backlog/DeleteEpicModal';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import {
   useCreateEpicMutation,
@@ -27,6 +28,8 @@ type BacklogTicket = {
 type Epic = EpicDto & {
   ticketIds: string[];
 };
+
+type EpicSortOption = 'newest' | 'oldest' | 'tickets-desc' | 'tickets-asc' | 'name-asc' | 'name-desc';
 
 const backlogItems: BacklogTicket[] = [
   {
@@ -82,6 +85,7 @@ export function BacklogPage() {
   const [editEpicName, setEditEpicName] = useState('');
   const [editEpicDescription, setEditEpicDescription] = useState('');
   const [deleteConfirmEpicId, setDeleteConfirmEpicId] = useState<number | null>(null);
+  const [epicSort, setEpicSort] = useState<EpicSortOption>('newest');
 
   const epics = useMemo<Epic[]>(() => {
     return epicDtos.map((epic) => ({
@@ -89,6 +93,36 @@ export function BacklogPage() {
       ticketIds: ticketAssignmentsByEpic[epic.id] ?? [],
     }));
   }, [epicDtos, ticketAssignmentsByEpic]);
+
+  const sortedEpics = useMemo(() => {
+    const next = [...epics];
+
+    const compareByName = (left: Epic, right: Epic) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+
+    switch (epicSort) {
+      case 'tickets-desc':
+        next.sort((left, right) => right.ticketIds.length - left.ticketIds.length);
+        break;
+      case 'tickets-asc':
+        next.sort((left, right) => left.ticketIds.length - right.ticketIds.length);
+        break;
+      case 'name-asc':
+        next.sort(compareByName);
+        break;
+      case 'name-desc':
+        next.sort((left, right) => compareByName(right, left));
+        break;
+      case 'oldest':
+        next.sort((left, right) => left.id - right.id);
+        break;
+      case 'newest':
+      default:
+        next.sort((left, right) => right.id - left.id);
+        break;
+    }
+
+    return next;
+  }, [epics, epicSort]);
 
   const ticketById = useMemo(() => {
     return new Map(backlogItems.map((ticket) => [ticket.id, ticket]));
@@ -307,16 +341,46 @@ export function BacklogPage() {
     }));
   };
 
+  const epicSortLabel = useMemo(() => {
+    switch (epicSort) {
+      case 'tickets-desc':
+        return 'Most tickets';
+      case 'tickets-asc':
+        return 'Fewest tickets';
+      case 'name-asc':
+        return 'Name A-Z';
+      case 'name-desc':
+        return 'Name Z-A';
+      case 'oldest':
+        return 'Oldest';
+      case 'newest':
+      default:
+        return 'Newest';
+    }
+  }, [epicSort]);
+
   useEffect(() => {
     setContent({
       title: 'Backlog',
       description: 'Group related work into epics, then assign tickets to each initiative.',
       actions: (
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="border-border/70 bg-background/80 shadow-sm">
-            <Filter className="mr-2 h-4 w-4" />
-            Filters
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="border-border/70 bg-background/80 shadow-sm">
+                <Filter className="mr-2 h-4 w-4" />
+                {epicSortLabel}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setEpicSort('newest')}>Newest</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('oldest')}>Oldest</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('tickets-desc')}>Most tickets</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('tickets-asc')}>Fewest tickets</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('name-asc')}>Name A-Z</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('name-desc')}>Name Z-A</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button className="shadow-sm" onClick={() => setIsCreateEpicOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create epic
@@ -326,13 +390,13 @@ export function BacklogPage() {
     });
 
     return () => setContent({});
-  }, [setContent]);
+  }, [epicSortLabel, setContent]);
 
   return (
     <section className="space-y-6">
       <EpicBacklogSection
         isLoading={isLoadingEpics}
-        epics={epics}
+        epics={sortedEpics}
         ticketById={ticketById}
         onAssignTickets={openAssignTicketsModal}
         onEdit={openEditEpicModal}
