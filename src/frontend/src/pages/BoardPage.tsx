@@ -1,13 +1,12 @@
-import { useRef, useState } from 'react';
-import { Bot, Plus, SendHorizontal, Sparkles } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Bot, Plus, SendHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import { cn } from '@/lib/utils';
-import { getProjectById } from '@/features/projects/projectData';
 
 type ChatMessage = {
   id: number;
@@ -54,8 +53,7 @@ const boardColumns: Array<{ title: string; count: number; description: string; t
 ];
 
 export function BoardPage() {
-  const { projectId } = useParams();
-  const project = getProjectById(projectId);
+  const { setContent } = usePageHeader();
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [input, setInput] = useState('');
   const nextMessageIdRef = useRef(2);
@@ -90,50 +88,39 @@ export function BoardPage() {
     setInput('');
   };
 
+  useEffect(() => {
+    setContent({
+      title: 'Board',
+      description: 'A structured Kanban surface for prioritization, flow management, and delivery review.',
+      meta: (
+        <>
+          <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
+            12 tickets active
+          </Badge>
+          <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
+            2 blockers
+          </Badge>
+          <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
+            3 columns
+          </Badge>
+        </>
+      ),
+      actions: (
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="border-border/70 bg-background/80 shadow-sm">
+            <Plus className="mr-2 h-4 w-4" />
+            Add ticket
+          </Button>
+          <Button className="shadow-sm">Review sprint</Button>
+        </div>
+      ),
+    });
+
+    return () => setContent({});
+  }, [setContent]);
+
   return (
     <section className="relative space-y-6">
-      <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-        <CardContent className="p-6 sm:p-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-muted-foreground">
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                {project?.name ?? 'Board view'}
-              </Badge>
-
-              <div className="space-y-2">
-                <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                  {project ? `${project.name} Board` : 'Board'}
-                </h2>
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  A structured Kanban surface for prioritization, flow management, and delivery review.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
-                  12 tickets active
-                </Badge>
-                <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
-                  2 blockers
-                </Badge>
-                <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
-                  3 columns
-                </Badge>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="border-border/70 bg-background/80 shadow-sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add ticket
-              </Button>
-              <Button className="shadow-sm">Review sprint</Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="grid gap-4 lg:grid-cols-3">
         {boardColumns.map((column) => (
           <Card key={column.title} className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">

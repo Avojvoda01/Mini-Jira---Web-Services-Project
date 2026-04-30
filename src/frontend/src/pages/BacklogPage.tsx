@@ -1,15 +1,39 @@
-import { Filter, Search, Sparkles } from 'lucide-react';
-import { useParams } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useMemo, useState } from 'react';
+import { Filter, Plus } from 'lucide-react';
+import { EpicBacklogSection } from '@/components/backlog/EpicBacklogSection';
+import { CreateEpicModal } from '@/components/backlog/CreateEpicModal';
+import { AssignTicketsModal } from '@/components/backlog/AssignTicketsModal';
+import { EditEpicModal } from '@/components/backlog/EditEpicModal';
+import { DeleteEpicModal } from '@/components/backlog/DeleteEpicModal';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { getProjectById } from '@/features/projects/projectData';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { usePageHeader } from '@/components/layout/PageHeaderContext';
+import {
+  useCreateEpicMutation,
+  useDeleteEpicMutation,
+  useEpicsQuery,
+  useUpdateEpicMutation,
+  type EpicDto,
+} from '@/features/epics';
 
-const backlogItems = [
+type BacklogTicket = {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'High' | 'Medium' | 'Low';
+  status: string;
+  estimate: string;
+};
+
+type Epic = EpicDto & {
+  ticketIds: string[];
+};
+
+type EpicSortOption = 'newest' | 'oldest' | 'tickets-desc' | 'tickets-asc' | 'name-asc' | 'name-desc';
+
+const backlogItems: BacklogTicket[] = [
   {
-    ticket: 'MJR-141',
+    id: 'MJR-141',
     title: 'Add project-level quick filters',
     description: 'Make backlog triage faster for product and engineering leads.',
     priority: 'High',
@@ -17,7 +41,7 @@ const backlogItems = [
     estimate: '5 pts',
   },
   {
-    ticket: 'MJR-138',
+    id: 'MJR-138',
     title: 'Improve issue description formatting',
     description: 'Support cleaner acceptance criteria and richer task context.',
     priority: 'Medium',
@@ -25,118 +49,409 @@ const backlogItems = [
     estimate: '3 pts',
   },
   {
-    ticket: 'MJR-135',
+    id: 'MJR-135',
     title: 'Add notification preference controls',
     description: 'Allow workspace users to tune updates without leaving the app.',
     priority: 'Low',
     status: 'Queued',
     estimate: '2 pts',
   },
+  {
+    id: 'MJR-147',
+    title: 'Add audit trail to ticket transitions',
+    description: 'Capture status history for compliance and timeline review.',
+    priority: 'High',
+    status: 'Ready for refinement',
+    estimate: '8 pts',
+  },
 ];
 
 export function BacklogPage() {
-  const { projectId } = useParams();
-  const project = getProjectById(projectId);
+  const { setContent } = usePageHeader();
+  const { data: epicDtos = [], isLoading: isLoadingEpics } = useEpicsQuery();
+  const createEpicMutation = useCreateEpicMutation();
+  const updateEpicMutation = useUpdateEpicMutation();
+  const deleteEpicMutation = useDeleteEpicMutation();
+  const [isCreateEpicOpen, setIsCreateEpicOpen] = useState(false);
+  const [ticketAssignmentsByEpic, setTicketAssignmentsByEpic] = useState<Record<number, string[]>>({});
+  const [newEpicName, setNewEpicName] = useState('');
+  const [newEpicDescription, setNewEpicDescription] = useState('');
+  const [newEpicTicketIds, setNewEpicTicketIds] = useState<string[]>([]);
+  const [createEpicSearch, setCreateEpicSearch] = useState('');
+  const [assignEpicId, setAssignEpicId] = useState<number | null>(null);
+  const [assignSearch, setAssignSearch] = useState('');
+  const [assignTicketDraft, setAssignTicketDraft] = useState<string[]>([]);
+  const [editEpicId, setEditEpicId] = useState<number | null>(null);
+  const [editEpicName, setEditEpicName] = useState('');
+  const [editEpicDescription, setEditEpicDescription] = useState('');
+  const [deleteConfirmEpicId, setDeleteConfirmEpicId] = useState<number | null>(null);
+  const [epicSort, setEpicSort] = useState<EpicSortOption>('newest');
+
+  const epics = useMemo<Epic[]>(() => {
+    return epicDtos.map((epic) => ({
+      ...epic,
+      ticketIds: ticketAssignmentsByEpic[epic.id] ?? [],
+    }));
+  }, [epicDtos, ticketAssignmentsByEpic]);
+
+  const sortedEpics = useMemo(() => {
+    const next = [...epics];
+
+    const compareByName = (left: Epic, right: Epic) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+
+    switch (epicSort) {
+      case 'tickets-desc':
+        next.sort((left, right) => right.ticketIds.length - left.ticketIds.length);
+        break;
+      case 'tickets-asc':
+        next.sort((left, right) => left.ticketIds.length - right.ticketIds.length);
+        break;
+      case 'name-asc':
+        next.sort(compareByName);
+        break;
+      case 'name-desc':
+        next.sort((left, right) => compareByName(right, left));
+        break;
+      case 'oldest':
+        next.sort((left, right) => left.id - right.id);
+        break;
+      case 'newest':
+      default:
+        next.sort((left, right) => right.id - left.id);
+        break;
+    }
+
+    return next;
+  }, [epics, epicSort]);
+
+  const ticketById = useMemo(() => {
+    return new Map(backlogItems.map((ticket) => [ticket.id, ticket]));
+  }, []);
+
+  const ticketToEpicMap = useMemo(() => {
+    const map = new Map<string, number>();
+    epics.forEach((epic) => {
+      epic.ticketIds.forEach((ticketId) => {
+        map.set(ticketId, epic.id);
+      });
+    });
+    return map;
+  }, [epics]);
+
+  const activeAssignEpic = useMemo(() => {
+    if (assignEpicId === null) {
+      return undefined;
+    }
+
+    return epics.find((epic) => epic.id === assignEpicId);
+  }, [assignEpicId, epics]);
+
+  const activeEditEpic = useMemo(() => {
+    if (editEpicId === null) {
+      return undefined;
+    }
+
+    return epics.find((epic) => epic.id === editEpicId);
+  }, [editEpicId, epics]);
+
+  const epicPendingDelete = useMemo(() => {
+    if (deleteConfirmEpicId === null) {
+      return undefined;
+    }
+
+    return epics.find((epic) => epic.id === deleteConfirmEpicId);
+  }, [deleteConfirmEpicId, epics]);
+
+  const unassignedTickets = useMemo(() => {
+    return backlogItems.filter((ticket) => !ticketToEpicMap.has(ticket.id));
+  }, [ticketToEpicMap]);
+
+  const createEpicFilteredTickets = useMemo(() => {
+    const normalizedSearch = createEpicSearch.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return unassignedTickets;
+    }
+
+    return unassignedTickets.filter((ticket) => {
+      return (
+        ticket.id.toLowerCase().includes(normalizedSearch) ||
+        ticket.title.toLowerCase().includes(normalizedSearch) ||
+        ticket.description.toLowerCase().includes(normalizedSearch)
+      );
+    });
+  }, [createEpicSearch, unassignedTickets]);
+
+  const assignFilteredTickets = useMemo(() => {
+    const normalizedSearch = assignSearch.trim().toLowerCase();
+    const source = unassignedTickets;
+
+    if (!normalizedSearch) {
+      return source;
+    }
+
+    return source.filter((ticket) => {
+      return (
+        ticket.id.toLowerCase().includes(normalizedSearch) ||
+        ticket.title.toLowerCase().includes(normalizedSearch) ||
+        ticket.description.toLowerCase().includes(normalizedSearch)
+      );
+    });
+  }, [assignSearch, unassignedTickets]);
+
+  const toggleCreateEpicTicket = (ticketId: string) => {
+    setNewEpicTicketIds((current) =>
+      current.includes(ticketId) ? current.filter((id) => id !== ticketId) : [...current, ticketId],
+    );
+  };
+
+  const createEpic = async () => {
+    const name = newEpicName.trim();
+    const description = newEpicDescription.trim();
+    if (name.length < 3) {
+      return;
+    }
+
+    try {
+      const newEpic = await createEpicMutation.mutateAsync({
+        name,
+        description: description || null,
+      });
+
+      if (newEpicTicketIds.length > 0) {
+        setTicketAssignmentsByEpic((current) => ({
+          ...current,
+          [newEpic.id]: newEpicTicketIds,
+        }));
+      }
+
+      setNewEpicName('');
+      setNewEpicDescription('');
+      setNewEpicTicketIds([]);
+      setCreateEpicSearch('');
+      setIsCreateEpicOpen(false);
+    } catch (error) {
+      console.error('Error creating epic:', error);
+    }
+  };
+
+  const closeCreateEpicModal = () => {
+    setIsCreateEpicOpen(false);
+    setNewEpicName('');
+    setNewEpicDescription('');
+    setNewEpicTicketIds([]);
+    setCreateEpicSearch('');
+  };
+
+  const openAssignTicketsModal = (epic: Epic) => {
+    setAssignEpicId(epic.id);
+    setAssignSearch('');
+    setAssignTicketDraft([]);
+  };
+
+  const openEditEpicModal = (epic: Epic) => {
+    setEditEpicId(epic.id);
+    setEditEpicName(epic.name);
+    setEditEpicDescription(epic.description);
+  };
+
+  const closeEditEpicModal = () => {
+    setEditEpicId(null);
+    setEditEpicName('');
+    setEditEpicDescription('');
+  };
+
+  const saveEpicEdit = async () => {
+    const name = editEpicName.trim();
+    const description = editEpicDescription.trim();
+    if (editEpicId === null || name.length < 3) {
+      return;
+    }
+
+    try {
+      await updateEpicMutation.mutateAsync({
+        id: editEpicId,
+        name,
+        description: description || null,
+      });
+
+      closeEditEpicModal();
+    } catch (error) {
+      console.error('Error updating epic:', error);
+    }
+  };
+
+  const openDeleteConfirmModal = (epicId: number) => {
+    setDeleteConfirmEpicId(epicId);
+  };
+
+  const closeDeleteConfirmModal = () => {
+    setDeleteConfirmEpicId(null);
+  };
+
+  const confirmDeleteEpic = async () => {
+    if (deleteConfirmEpicId === null) {
+      return;
+    }
+
+    try {
+      await deleteEpicMutation.mutateAsync(deleteConfirmEpicId);
+      setTicketAssignmentsByEpic((current) => {
+        const next = { ...current };
+        delete next[deleteConfirmEpicId];
+        return next;
+      });
+      closeDeleteConfirmModal();
+    } catch (error) {
+      console.error('Error deleting epic:', error);
+    }
+  };
+
+  const closeAssignTicketsModal = () => {
+    setAssignEpicId(null);
+    setAssignSearch('');
+    setAssignTicketDraft([]);
+  };
+
+  const toggleAssignDraftTicket = (ticketId: string) => {
+    setAssignTicketDraft((current) =>
+      current.includes(ticketId) ? current.filter((id) => id !== ticketId) : [...current, ticketId],
+    );
+  };
+
+  const saveAssignedTickets = () => {
+    if (assignEpicId === null) {
+      return;
+    }
+
+    setTicketAssignmentsByEpic((current) => {
+      const previous = current[assignEpicId] ?? [];
+      return {
+        ...current,
+        [assignEpicId]: Array.from(new Set([...previous, ...assignTicketDraft])),
+      };
+    });
+
+    closeAssignTicketsModal();
+  };
+
+  const removeTicketFromEpic = (epicId: number, ticketId: string) => {
+    setTicketAssignmentsByEpic((current) => ({
+      ...current,
+      [epicId]: (current[epicId] ?? []).filter((id) => id !== ticketId),
+    }));
+  };
+
+  const epicSortLabel = useMemo(() => {
+    switch (epicSort) {
+      case 'tickets-desc':
+        return 'Most tickets';
+      case 'tickets-asc':
+        return 'Fewest tickets';
+      case 'name-asc':
+        return 'Name A-Z';
+      case 'name-desc':
+        return 'Name Z-A';
+      case 'oldest':
+        return 'Oldest';
+      case 'newest':
+      default:
+        return 'Newest';
+    }
+  }, [epicSort]);
+
+  useEffect(() => {
+    setContent({
+      title: 'Backlog',
+      description: 'Group related work into epics, then assign tickets to each initiative.',
+      actions: (
+        <div className="flex flex-wrap gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="border-border/70 bg-background/80 shadow-sm">
+                <Filter className="mr-2 h-4 w-4" />
+                {epicSortLabel}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setEpicSort('newest')}>Newest</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('oldest')}>Oldest</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('tickets-desc')}>Most tickets</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('tickets-asc')}>Fewest tickets</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('name-asc')}>Name A-Z</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('name-desc')}>Name Z-A</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button className="shadow-sm" onClick={() => setIsCreateEpicOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create epic
+          </Button>
+        </div>
+      ),
+    });
+
+    return () => setContent({});
+  }, [epicSortLabel, setContent]);
 
   return (
     <section className="space-y-6">
-      <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-        <CardContent className="p-6 sm:p-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-muted-foreground">
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                {project?.name ?? 'Backlog planning'}
-              </Badge>
+      <EpicBacklogSection
+        isLoading={isLoadingEpics}
+        epics={sortedEpics}
+        ticketById={ticketById}
+        onAssignTickets={openAssignTicketsModal}
+        onEdit={openEditEpicModal}
+        onDelete={openDeleteConfirmModal}
+        onRemoveTicket={removeTicketFromEpic}
+      />
 
-              <div className="space-y-2">
-                <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                  {project ? `${project.name} Backlog` : 'Backlog'}
-                </h2>
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  A refinement queue for shaping work before it reaches the board.
-                </p>
-              </div>
-            </div>
+      <AssignTicketsModal
+        isOpen={Boolean(activeAssignEpic)}
+        epicName={activeAssignEpic?.name ?? ''}
+        onClose={closeAssignTicketsModal}
+        assignSearch={assignSearch}
+        setAssignSearch={setAssignSearch}
+        assignTicketDraft={assignTicketDraft}
+        toggleAssignDraftTicket={toggleAssignDraftTicket}
+        assignFilteredTickets={assignFilteredTickets}
+        unassignedTickets={unassignedTickets}
+        onSave={saveAssignedTickets}
+      />
 
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="border-border/70 bg-background/80 shadow-sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Filters
-              </Button>
-              <Button className="shadow-sm">Create item</Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <EditEpicModal
+        isOpen={Boolean(activeEditEpic)}
+        epicName={editEpicName}
+        epicDescription={editEpicDescription}
+        onClose={closeEditEpicModal}
+        onChangeName={setEditEpicName}
+        onChangeDescription={setEditEpicDescription}
+        onSave={saveEpicEdit}
+        isPending={updateEpicMutation.isPending}
+      />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-          <CardHeader className="space-y-3 pb-4">
-            <CardTitle>Refinement queue</CardTitle>
-            <CardDescription>Prioritized work that is ready for review and sizing.</CardDescription>
-            <div className="relative max-w-md">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Search backlog items" />
-            </div>
-          </CardHeader>
+      <DeleteEpicModal
+        isOpen={Boolean(epicPendingDelete)}
+        epicName={epicPendingDelete?.name ?? ''}
+        onClose={closeDeleteConfirmModal}
+        onConfirm={confirmDeleteEpic}
+        isPending={deleteEpicMutation.isPending}
+      />
 
-          <CardContent className="space-y-2">
-            {backlogItems.map((item, index) => (
-              <div key={item.ticket}>
-                {index > 0 ? <Separator className="mb-4" /> : null}
-                <div className="grid gap-4 rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className="border-border/70 bg-background/70 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
-                        {item.ticket}
-                      </Badge>
-                      <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
-                        {item.status}
-                      </Badge>
-                    </div>
-                    <h3 className="text-sm font-medium text-foreground">{item.title}</h3>
-                    <p className="text-sm leading-6 text-muted-foreground">{item.description}</p>
-                  </div>
-
-                  <div className="grid gap-2 rounded-2xl border border-border/70 bg-muted/30 p-4 text-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-muted-foreground">Priority</span>
-                      <Badge
-                        className={
-                          item.priority === 'High'
-                            ? 'bg-rose-500/10 text-rose-700 hover:bg-rose-500/10'
-                            : item.priority === 'Medium'
-                              ? 'bg-amber-500/10 text-amber-700 hover:bg-amber-500/10'
-                              : 'bg-slate-500/10 text-slate-700 hover:bg-slate-500/10'
-                        }
-                      >
-                        {item.priority}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-muted-foreground">Estimate</span>
-                      <span className="font-medium text-foreground">{item.estimate}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Refinement rules</CardTitle>
-            <CardDescription>Keep backlog items consistent before they reach the board.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm text-muted-foreground">
-            <p>1. Each item should have a clear owner and measurable scope.</p>
-            <p>2. Estimates should be lightweight and updated before sprint planning.</p>
-            <p>3. Blocked items stay visible until dependency owners confirm a path forward.</p>
-          </CardContent>
-        </Card>
-      </div>
+      <CreateEpicModal
+        isOpen={isCreateEpicOpen}
+        onClose={closeCreateEpicModal}
+        newEpicName={newEpicName}
+        setNewEpicName={setNewEpicName}
+        newEpicDescription={newEpicDescription}
+        setNewEpicDescription={setNewEpicDescription}
+        createEpicSearch={createEpicSearch}
+        setCreateEpicSearch={setCreateEpicSearch}
+        newEpicTicketIds={newEpicTicketIds}
+        toggleCreateEpicTicket={toggleCreateEpicTicket}
+        createEpicFilteredTickets={createEpicFilteredTickets}
+        unassignedTickets={unassignedTickets}
+        onCreate={createEpic}
+        isPending={createEpicMutation.isPending}
+      />
     </section>
   );
 }

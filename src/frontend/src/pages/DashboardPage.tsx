@@ -1,9 +1,9 @@
 import { CircleCheckBig, Clock3, Sparkles } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { getProjectById } from '@/features/projects/projectData';
+import { usePageHeader } from '@/components/layout/PageHeaderContext';
 
 const kpis = [
   { label: 'Open tickets', value: '12', detail: '+2 this week' },
@@ -30,56 +30,43 @@ const activityItems = [
 ];
 
 export function DashboardPage() {
-  const { projectId } = useParams();
-  const project = getProjectById(projectId);
+  const { setContent } = usePageHeader();
+
+  useEffect(() => {
+    setContent({
+      title: 'Dashboard',
+      description: 'A calm, high-signal view of workload, flow health, and delivery momentum.',
+      meta: (
+        <>
+          <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
+            12 open tickets
+          </Badge>
+          <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
+            6 in progress
+          </Badge>
+          <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
+            3 released
+          </Badge>
+        </>
+      ),
+    });
+
+    return () => setContent({});
+  }, [setContent]);
 
   return (
     <section className="space-y-6">
-      <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-        <CardContent className="p-6 sm:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-4">
-              <Badge variant="outline" className="w-fit border-border/70 bg-background/70 text-muted-foreground">
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                {project?.name ?? 'Operational overview'}
-              </Badge>
-
-              <div className="space-y-2">
-                <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                  {project ? `${project.name} Dashboard` : 'Dashboard'}
-                </h2>
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  A calm, high-signal view of workload, flow health, and delivery momentum.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
-                  12 open tickets
-                </Badge>
-                <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
-                  6 in progress
-                </Badge>
-                <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
-                  3 released
-                </Badge>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[24rem] lg:max-w-[24rem]">
-              {kpis.map((kpi) => (
-                <Card key={kpi.label} size="sm" className="border-border/70 bg-background/80 shadow-sm">
-                  <CardContent className="space-y-2 p-4">
-                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{kpi.label}</p>
-                    <p className="text-3xl font-semibold tracking-tight text-foreground">{kpi.value}</p>
-                    <p className="text-xs text-muted-foreground">{kpi.detail}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid gap-3 sm:grid-cols-3 lg:max-w-[24rem]">
+        {kpis.map((kpi) => (
+          <Card key={kpi.label} size="sm" className="border-border/70 bg-background/80 shadow-sm">
+            <CardContent className="space-y-2 p-4">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{kpi.label}</p>
+              <p className="text-3xl font-semibold tracking-tight text-foreground">{kpi.value}</p>
+              <p className="text-xs text-muted-foreground">{kpi.detail}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
         <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
