@@ -1,5 +1,6 @@
 using MiniJiraAspire.Server.Migrations;
 using MiniJiraAspire.Server.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace MiniJiraAspire.Server.Persistence.Repositories;
 
@@ -13,6 +14,7 @@ public class UserRepository(AppDbContext db) : IUserRepository
             // only temporary, should be hashed in production
             PasswordHash = request.Password,
             DisplayName = request.DisplayName,
+            // TODO: replace the string role with an enum once the RoleEndpoint is implemented.
             Role = "Project Member"
         };
 
@@ -42,5 +44,17 @@ public class UserRepository(AppDbContext db) : IUserRepository
 
         db.Users.Remove(user);
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.Trim().ToLower();
+        return db.Users.AnyAsync(user => user.Email.ToLower() == normalizedEmail, cancellationToken);
+    }
+
+    public Task<bool> DisplayNameExistsAsync(string displayName, CancellationToken cancellationToken = default)
+    {
+        var normalizedDisplayName = displayName.Trim().ToLower();
+        return db.Users.AnyAsync(user => user.DisplayName.ToLower() == normalizedDisplayName, cancellationToken);
     }
 }
