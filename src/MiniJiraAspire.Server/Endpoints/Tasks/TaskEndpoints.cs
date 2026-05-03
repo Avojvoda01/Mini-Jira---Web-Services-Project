@@ -1,3 +1,6 @@
+using MediatR;
+using MiniJiraAspire.Server.Features.Tasks;
+
 namespace Microsoft.Extensions.Hosting.Tasks;
 
 public static class TaskEndpoints
@@ -6,10 +9,11 @@ public static class TaskEndpoints
     {
         app.MapPost("/api/tasks", async (
                 CreateTaskCommand command,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
-                return Results.Created($"/api/tasks/new-id", new { Id = "new-id" });
+                var result = await mediator.Send(command, ct);
+                return Results.Created($"/api/tasks/{((dynamic)result).Id}", result);
             })
             .WithName("CreateTask")
             .WithTags("Tasks")
@@ -18,9 +22,10 @@ public static class TaskEndpoints
         app.MapPut("/api/tasks/{taskId}", async (
                 string taskId,
                 UpdateTaskCommand command,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
+                await mediator.Send(command with { TaskId = taskId }, ct);
                 return Results.Ok();
             })
             .WithName("UpdateTask")
@@ -29,9 +34,10 @@ public static class TaskEndpoints
 
         app.MapDelete("/api/tasks/{taskId}", async (
                 string taskId,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
+                await mediator.Send(new DeleteTaskCommand(taskId), ct);
                 return Results.NoContent();
             })
             .WithName("DeleteTask")
@@ -40,10 +46,11 @@ public static class TaskEndpoints
 
         app.MapGet("/api/tasks/{taskId}", async (
                 string taskId,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
-                return Results.Ok(new { Id = taskId });
+                var result = await mediator.Send(new GetTaskQuery(taskId), ct);
+                return Results.Ok(result);
             })
             .WithName("GetTask")
             .WithTags("Tasks")
@@ -55,16 +62,14 @@ public static class TaskEndpoints
                 string? priority,
                 string? assigneeId,
                 string? epicId,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
-                return Results.Ok(Array.Empty<object>());
+                var result = await mediator.Send(new GetTasksQuery(search, status, priority, assigneeId, epicId), ct);
+                return Results.Ok(result);
             })
             .WithName("GetTasks")
             .WithTags("Tasks")
             .WithSummary("Search and filter tasks");
     }
 }
-
-public record CreateTaskCommand(string Title, string? Description, string ProjectId);
-public record UpdateTaskCommand(string Title, string? Description);

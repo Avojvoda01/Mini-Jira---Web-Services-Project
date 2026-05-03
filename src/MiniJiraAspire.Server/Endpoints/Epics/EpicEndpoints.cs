@@ -1,6 +1,7 @@
+using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
+using MiniJiraAspire.Server.Features.Epic;
 using MiniJiraAspire.Server.Models;
-using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace Microsoft.Extensions.Hosting.Epics;
 
@@ -33,49 +34,49 @@ public static class EpicEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Get epic by id");
     }
-    
+
     private static async Task<Ok<List<EpicDto>>> GetAllEpics(
-        IEpicRepository repository,
-        CancellationToken cancellationToken)
+        IMediator mediator,
+        CancellationToken ct)
     {
-        var epics = await repository.GetAllAsync(cancellationToken);
+        var epics = await mediator.Send(new GetAllEpicsQuery(), ct);
         return TypedResults.Ok(epics);
     }
-    
-    private static async Task<Ok<EpicDto>>GetEpicById(int id,
-        IEpicRepository repository,
-        CancellationToken cancellationToken)
+
+    private static async Task<Ok<EpicDto>> GetEpicById(
+        int id,
+        IMediator mediator,
+        CancellationToken ct)
     {
-        var epic = await repository.GetByIdAsync(id, cancellationToken);
+        var epic = await mediator.Send(new GetEpicByIdQuery(id), ct);
         return TypedResults.Ok(epic);
     }
-    
+
     private static async Task<Created<EpicDto>> CreateEpic(
         CreateEpicRequest request,
-        IEpicRepository repository,
-        CancellationToken cancellationToken)
+        IMediator mediator,
+        CancellationToken ct)
     {
-        var epic = await repository.CreateAsync(request, cancellationToken);
+        var epic = await mediator.Send(new CreateEpicCommand(request.Name, request.Description), ct);
         return TypedResults.Created($"/api/epics/{epic.Id}", epic);
+    }
+
+    private static async Task<NoContent> UpdateEpic(
+        int id,
+        UpdateEpicRequest request,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        await mediator.Send(new UpdateEpicCommand(id, request.Name, request.Description), ct);
+        return TypedResults.NoContent();
     }
 
     private static async Task<NoContent> DeleteEpic(
         int id,
-        IEpicRepository repository,
-        CancellationToken cancellationToken)
+        IMediator mediator,
+        CancellationToken ct)
     {
-        await repository.DeleteAsync(id, cancellationToken);
+        await mediator.Send(new DeleteEpicCommand(id), ct);
         return TypedResults.NoContent();
     }
-    
-    private static async Task<NoContent> UpdateEpic(
-        int id,
-        UpdateEpicRequest request,
-        IEpicRepository repository,
-        CancellationToken cancellationToken)
-    {
-        await repository.UpdateAsync(id, request, cancellationToken);
-        return TypedResults.NoContent();
-    }
-
 }

@@ -1,6 +1,7 @@
+using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
+using MiniJiraAspire.Server.Features.Comment;
 using MiniJiraAspire.Server.Models.CommentDTO.Request;
-using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
 
 namespace Microsoft.Extensions.Hosting.Comments;
 
@@ -30,10 +31,10 @@ public static class CommentEndpoints
     private static async Task<Created<CommentDTO>> CreateComment(
         string taskId,
         CreateCommentRequest request,
-        ICommentRepository repository,
-        CancellationToken cancellationToken)
+        IMediator mediator,
+        CancellationToken ct)
     {
-        var comment = await repository.CreateAsync(taskId, request, cancellationToken);
+        var comment = await mediator.Send(new CreateCommentCommand(taskId, request.Content, request.UserId), ct);
         return TypedResults.Created($"/api/tasks/{taskId}/comments/{comment.Id}", comment);
     }
 
@@ -41,20 +42,20 @@ public static class CommentEndpoints
         string taskId,
         int commentId,
         UpdateCommentRequest request,
-        ICommentRepository repository,
-        CancellationToken cancellationToken)
+        IMediator mediator,
+        CancellationToken ct)
     {
-        await repository.UpdateAsync(taskId, commentId, request, cancellationToken);
+        await mediator.Send(new UpdateCommentCommand(taskId, commentId, request.Content), ct);
         return TypedResults.NoContent();
     }
 
     private static async Task<NoContent> DeleteComment(
         string taskId,
         int commentId,
-        ICommentRepository repository,
-        CancellationToken cancellationToken)
+        IMediator mediator,
+        CancellationToken ct)
     {
-        await repository.DeleteAsync(taskId, commentId, cancellationToken);
+        await mediator.Send(new DeleteCommentCommand(taskId, commentId), ct);
         return TypedResults.NoContent();
     }
 }

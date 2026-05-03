@@ -1,3 +1,6 @@
+using MediatR;
+using MiniJiraAspire.Server.Features.Tasks;
+
 namespace Microsoft.Extensions.Hosting.Tasks.Actions;
 
 public static class TaskActionEndpoints
@@ -7,9 +10,10 @@ public static class TaskActionEndpoints
         app.MapPatch("/api/tasks/{taskId}/status", async (
                 string taskId,
                 ChangeStatusCommand command,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
+                await mediator.Send(command with { TaskId = taskId }, ct);
                 return Results.Ok();
             })
             .WithName("ChangeTaskStatus")
@@ -19,9 +23,10 @@ public static class TaskActionEndpoints
         app.MapPatch("/api/tasks/{taskId}/priority", async (
                 string taskId,
                 ChangePriorityCommand command,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
+                await mediator.Send(command with { TaskId = taskId }, ct);
                 return Results.Ok();
             })
             .WithName("ChangeTaskPriority")
@@ -31,9 +36,10 @@ public static class TaskActionEndpoints
         app.MapPatch("/api/tasks/{taskId}/assign-user", async (
                 string taskId,
                 AssignUserCommand command,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
+                await mediator.Send(command with { TaskId = taskId }, ct);
                 return Results.Ok();
             })
             .WithName("AssignUserToTask")
@@ -43,9 +49,10 @@ public static class TaskActionEndpoints
         app.MapPatch("/api/tasks/{taskId}/assign-epic", async (
                 string taskId,
                 AssignEpicCommand command,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
+                await mediator.Send(command with { TaskId = taskId }, ct);
                 return Results.Ok();
             })
             .WithName("AssignEpicToTask")
@@ -53,8 +60,3 @@ public static class TaskActionEndpoints
             .WithSummary("Assign an epic to a task");
     }
 }
-
-public record ChangeStatusCommand(string Status);
-public record ChangePriorityCommand(string Priority);
-public record AssignUserCommand(string UserId);
-public record AssignEpicCommand(string EpicId);

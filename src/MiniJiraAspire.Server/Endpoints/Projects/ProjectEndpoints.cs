@@ -1,3 +1,6 @@
+using MediatR;
+using MiniJiraAspire.Server.Features.Project;
+
 namespace Microsoft.Extensions.Hosting.Projects;
 
 public static class ProjectEndpoints
@@ -6,10 +9,11 @@ public static class ProjectEndpoints
     {
         app.MapPost("/api/projects", async (
                 CreateProjectCommand command,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
-                return Results.Created("/api/projects/new-id", new { Id = "new-id" });
+                var result = await mediator.Send(command, ct);
+                return Results.Created($"/api/projects/{((dynamic)result).Id}", result);
             })
             .WithName("CreateProject")
             .WithTags("Projects")
@@ -17,9 +21,10 @@ public static class ProjectEndpoints
 
         app.MapDelete("/api/projects/{projectId}", async (
                 string projectId,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
+                await mediator.Send(new DeleteProjectCommand(projectId), ct);
                 return Results.NoContent();
             })
             .WithName("DeleteProject")
@@ -29,9 +34,10 @@ public static class ProjectEndpoints
         app.MapPost("/api/projects/{projectId}/members", async (
                 string projectId,
                 AddProjectMemberCommand command,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
+                await mediator.Send(command with { ProjectId = projectId }, ct);
                 return Results.Created($"/api/projects/{projectId}/members", new { });
             })
             .WithName("AddProjectMember")
@@ -41,9 +47,10 @@ public static class ProjectEndpoints
         app.MapDelete("/api/projects/{projectId}/members/{userId}", async (
                 string projectId,
                 string userId,
+                IMediator mediator,
                 CancellationToken ct) =>
             {
-                // TODO: implement logic
+                await mediator.Send(new RemoveProjectMemberCommand(projectId, userId), ct);
                 return Results.NoContent();
             })
             .WithName("RemoveProjectMember")
@@ -51,6 +58,3 @@ public static class ProjectEndpoints
             .WithSummary("Remove a member from a project");
     }
 }
-
-public record CreateProjectCommand(string Name, string? Description);
-public record AddProjectMemberCommand(string UserId, string Role);
