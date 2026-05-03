@@ -1,9 +1,9 @@
 namespace MiniJiraAspire.Server.Models.CommentDTO.Request
 {
     public sealed record CommentDTO(
-        int Id,
+        Guid Id,
         string TaskId,
-        int? UserId,
+        Guid? UserId,
         string Content,
         DateTime CreatedAtUtc,
         DateTime? UpdatedAtUtc);

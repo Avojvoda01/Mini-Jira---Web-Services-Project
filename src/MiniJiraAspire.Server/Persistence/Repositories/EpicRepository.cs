@@ -20,7 +20,7 @@ public class EpicRepository(AppDbContext db) : IEpicRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<EpicDto> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<EpicDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         // Include + ThenInclude lets students inspect how EF loads a graph in one query.
         var epic = await db.Epics
@@ -49,7 +49,7 @@ public class EpicRepository(AppDbContext db) : IEpicRepository
         return new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty);
     }
 
-    public async Task UpdateAsync(int id, UpdateEpicRequest request, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(Guid id, UpdateEpicRequest request, CancellationToken cancellationToken = default)
     {
         var evt = await db.Epics.FindAsync([id], cancellationToken);
 
@@ -64,7 +64,7 @@ public class EpicRepository(AppDbContext db) : IEpicRepository
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var evt = await db.Epics.FindAsync([id], cancellationToken);
 

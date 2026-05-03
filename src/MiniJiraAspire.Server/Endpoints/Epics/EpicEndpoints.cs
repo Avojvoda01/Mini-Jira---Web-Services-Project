@@ -15,11 +15,11 @@ public static class EpicEndpoints
             .WithName("CreateEpic")
             .WithSummary("Create a new epic");
 
-        group.MapPut("/{id:int}", UpdateEpic)
+        group.MapPut("/{id:guid}", UpdateEpic)
             .WithName("UpdateEpic")
             .WithSummary("Edit an existing epic");
 
-        group.MapDelete("/{id:int}", DeleteEpic)
+        group.MapDelete("/{id:guid}", DeleteEpic)
             .WithName("DeleteEpic")
             .WithSummary("Delete an epic");
 
@@ -28,7 +28,7 @@ public static class EpicEndpoints
             .WithName("GetEpics")
             .WithSummary("Get all epics");
 
-        group.MapGet("/{id:int}", GetEpicById)
+        group.MapGet("/{id:guid}", GetEpicById)
             .Produces<EpicDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Get epic by id");
@@ -42,7 +42,7 @@ public static class EpicEndpoints
         return TypedResults.Ok(epics);
     }
     
-    private static async Task<Ok<EpicDto>>GetEpicById(int id,
+    private static async Task<Ok<EpicDto>>GetEpicById(Guid id,
         IEpicRepository repository,
         CancellationToken cancellationToken)
     {
@@ -60,7 +60,7 @@ public static class EpicEndpoints
     }
 
     private static async Task<NoContent> DeleteEpic(
-        int id,
+        Guid id,
         IEpicRepository repository,
         CancellationToken cancellationToken)
     {
@@ -69,7 +69,7 @@ public static class EpicEndpoints
     }
     
     private static async Task<NoContent> UpdateEpic(
-        int id,
+        Guid id,
         UpdateEpicRequest request,
         IEpicRepository repository,
         CancellationToken cancellationToken)

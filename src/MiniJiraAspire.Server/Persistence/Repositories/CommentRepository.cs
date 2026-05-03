@@ -24,7 +24,7 @@ namespace MiniJiraAspire.Server.Persistence.Repositories
             return MapToDto(comment);
         }
 
-        public async Task DeleteAsync(string taskId, int id, CancellationToken cancellationToken = default)
+        public async Task DeleteAsync(string taskId, Guid id, CancellationToken cancellationToken = default)
         {
             var comment = await db.Comments
                 .FirstOrDefaultAsync(x => x.Id == id && x.TaskId == taskId, cancellationToken);
@@ -38,7 +38,7 @@ namespace MiniJiraAspire.Server.Persistence.Repositories
             await db.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<CommentDTO> GetByIdAsync(string taskId, int id, CancellationToken cancellationToken = default)
+        public async Task<CommentDTO> GetByIdAsync(string taskId, Guid id, CancellationToken cancellationToken = default)
         {
             var comment = await db.Comments
                 .AsNoTracking()
@@ -52,7 +52,7 @@ namespace MiniJiraAspire.Server.Persistence.Repositories
             return MapToDto(comment);
         }
 
-        public async Task UpdateAsync(string taskId, int id, UpdateCommentRequest request, CancellationToken cancellationToken = default)
+        public async Task UpdateAsync(string taskId, Guid id, UpdateCommentRequest request, CancellationToken cancellationToken = default)
         {
             var comment = await db.Comments
                 .FirstOrDefaultAsync(x => x.Id == id && x.TaskId == taskId, cancellationToken);
