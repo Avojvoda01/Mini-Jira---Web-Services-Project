@@ -6,7 +6,7 @@ Our architecture combines the following patterns:
 
 | Pattern                    | Purpose                                                |
 | -------------------------- | ------------------------------------------------------ |
-| **Hexagonal Architecture** | Domain at the center, external systems are replaceable |
+| **Onion Architecture** | Domain at the center, external systems are replaceable |
 | **Repository Pattern**     | Abstract database access via interfaces                |
 | **CQRS**                   | Clearly separate read and write operations             |
 | **Mediator (MediatR)**     | Loosely couple commands & queries                      |
@@ -14,9 +14,7 @@ Our architecture combines the following patterns:
 
 ---
 
-## 1. Hexagonal Architecture (Ports & Adapters)
-
-### Core Idea
+## Onion Architecture (Ports & Adapters)
 
 The domain logic sits at the center. All external systems – database, APIs, external services – communicate with the domain via clearly defined **ports** (interfaces). Concrete implementations are **adapters**.
 
@@ -37,11 +35,7 @@ The domain logic sits at the center. All external systems – database, APIs, ex
 * Adapters (e.g., database) can be replaced without changing the domain
 * Highly testable – ports can be easily mocked
 
----
-
-## 2. Repository Pattern
-
-### Core Idea
+### Repository Pattern
 
 The Repository Pattern is the **adapter between the domain and the database**. The application layer only knows the interface (port), never the concrete implementation.
 
@@ -55,17 +49,13 @@ IssueRepository     ← Adapter (EF Core implementation in Infrastructure)
  PostgreSQL
 ```
 
-### Benefits
+#### Benefits
 
 * Business logic is independent of database technology
 * Repository can be replaced with an in-memory mock for testing
 * Fits into hexagonal architecture as an adapter
 
----
-
-## 3. CQRS (Command Query Responsibility Segregation)
-
-### Core Idea
+## CQRS (Command Query Responsibility Segregation)
 
 CQRS separates **write operations (commands)** from **read operations (queries)**. Each operation has its own handler.
 
@@ -87,11 +77,7 @@ Request
 * Clear responsibilities – each handler does exactly one thing
 * Read and write models can scale independently
 
----
-
-## 4. Mediator Pattern (MediatR)
-
-### Core Idea
+## Mediator Pattern (MediatR)
 
 A central **mediator** receives commands and queries and automatically forwards them to the appropriate handler. Controllers and handlers do not know each other directly – they communicate only via the mediator.
 
@@ -105,67 +91,17 @@ Controller
     └── GetIssueByIdQuery    →  GetIssueByIdHandler
 ```
 
-### Pipeline Behaviors
+### Benefits
 
-MediatR supports **pipeline behaviors** – middleware for every request. This cleanly handles cross-cutting concerns:
+* **Decoupling** – Senders and handlers don't know about each other — the mediator sits in between, reducing direct dependencies between components.
+* **Single Responsibility** – Each request/command/query gets its own handler class, keeping logic focused and easy to find.
+* **Testability** – Handlers are plain classes with no framework coupling — easy to unit test in isolation.
+* **Reduced Controller Bloat** – Controllers become thin dispatchers (`mediator.Send(command)`) instead of containing business logic.
 
-```text
-Request → [ValidationBehavior] → [LoggingBehavior] → Handler → Response
-```
 
 ## 5. Vertical Slice Architecture
 
-### Core Idea
-
 Code is organized by **feature** instead of technical layers. Each feature contains everything it needs – command/query, handler, validator, and DTO – in a single folder.
-
-Combined with MediatR, the structure looks like this:
-
-```text
-src/
-├── Domain/                         ← Shared domain (entities, events)
-│   ├── Entities/
-│   │   ├── Issue.cs
-│   │   └── Sprint.cs
-│   └── Events/
-│       └── IssueCreatedEvent.cs
-│
-├── Application/
-│   ├── Ports/                      ← Hexagonal ports (interfaces)
-│   │   ├── IIssueRepository.cs
-│   │   └── IEmailService.cs
-│   │
-│   └── Features/                   ← Vertical slices
-│       ├── Issues/
-│       │   ├── CreateIssue/
-│       │   │   ├── CreateIssueCommand.cs
-│       │   │   ├── CreateIssueHandler.cs
-│       │   │   └── CreateIssueValidator.cs
-│       │   ├── AssignIssue/
-│       │   │   ├── AssignIssueCommand.cs
-│       │   │   └── AssignIssueHandler.cs
-│       │   └── GetIssueById/
-│       │       ├── GetIssueByIdQuery.cs
-│       │       ├── GetIssueByIdHandler.cs
-│       │       └── IssueDto.cs
-│       └── Sprints/
-│           └── CreateSprint/
-│               ├── CreateSprintCommand.cs
-│               └── CreateSprintHandler.cs
-│
-├── Infrastructure/                 ← Hexagonal adapters
-│   ├── Persistence/
-│   │   ├── AppDbContext.cs
-│   │   ├── IssueRepository.cs      ← Adapter for IIssueRepository
-│   │   └── Migrations/
-│   └── ExternalServices/
-│       └── EmailService.cs         ← Adapter for IEmailService
-│
-└── Presentation/
-    └── Controllers/
-        ├── IssueController.cs      ← Thin controller, only ISender.Send()
-        └── SprintController.cs
-```
 
 ### Benefits
 
@@ -173,4 +109,3 @@ src/
 * New feature = new folder, no need to touch existing code
 * Features are isolated – fewer unintended dependencies
 * Scales well for parallel work
-
