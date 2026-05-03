@@ -14,8 +14,7 @@ namespace MiniJiraAspire.Server.Persistence.Repositories
             {
                 TaskId = taskId,
                 UserId = request.UserId,
-                Content = request.Content,
-                CreatedAtUtc = DateTime.UtcNow
+                Content = request.Content
             };
 
             db.Comments.Add(comment);
