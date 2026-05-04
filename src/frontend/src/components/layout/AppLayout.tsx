@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from '@/components/common/ModeToggle';
+import { PageHeaderProvider, usePageHeader } from '@/components/layout/PageHeaderContext';
 import { cn } from '@/lib/utils';
 import { authSessionAtom } from '@/store/authAtoms';
 import { getProjectById } from '@/features/projects/projectData';
@@ -136,31 +137,34 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <div className="app-main">
-        <header className="topbar">
-          <div className="space-y-1">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Operations console</p>
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">{project?.name ?? 'Project workspace'}</h2>
-            <p className="text-sm text-muted-foreground">Vite + React + Jotai + TanStack Query</p>
-          </div>
+      <PageHeaderProvider>
+        <AppMain />
+      </PageHeaderProvider>
+    </div>
+  );
+}
 
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <ModeToggle />
-            <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
-              Sprint 14
-            </Badge>
-            {project ? (
-              <Badge variant="outline" className="border-border/70 bg-background/70 text-muted-foreground">
-                {project.status}
-              </Badge>
-            ) : null}
-          </div>
-        </header>
+function AppMain() {
+  const { content } = usePageHeader();
 
-        <main className="content-area">
-          <Outlet />
-        </main>
-      </div>
+  return (
+    <div className="app-main">
+      <header className="topbar">
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">{content.title ?? 'Workspace'}</h2>
+          {content.description ? <p className="max-w-2xl text-sm text-muted-foreground">{content.description}</p> : null}
+          {content.meta ? <div className="flex flex-wrap gap-2">{content.meta}</div> : null}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {content.actions}
+          <ModeToggle />
+        </div>
+      </header>
+
+      <main className="content-area">
+        <Outlet />
+      </main>
     </div>
   );
 }

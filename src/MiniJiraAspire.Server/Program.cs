@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting.Tasks;
 using Microsoft.Extensions.Hosting.Tasks.Actions;
 using MiniJiraAspire.Server.Migrations;
 using MiniJiraAspire.Server.Persistence.Repositories;
+using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using MiniJiraAspire.Server.Endpoints.Projects;
@@ -36,13 +37,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IEpicRepository, EpicRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
-
-// Project feature handlers
 builder.Services.AddScoped<IGetAllProjectsQuery, GetAllProjectsQuery>();
 builder.Services.AddScoped<IGetProjectByIdQuery, GetProjectByIdQuery>();
 builder.Services.AddScoped<ICreateProjectCommand, CreateProjectCommand>();
 builder.Services.AddScoped<IUpdateProjectCommand, UpdateProjectCommand>();
 builder.Services.AddScoped<IDeleteProjectCommand, DeleteProjectCommand>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
 var app = builder.Build();
 
@@ -88,3 +88,8 @@ app.MapDefaultEndpoints();
 app.UseFileServer();
 
 app.Run();
+
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+{
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+}
