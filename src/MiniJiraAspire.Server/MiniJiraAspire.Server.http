@@ -7,7 +7,7 @@ Accept: application/json
 ###
 
 ### Get epic by id
-GET {{Server_HostAddress}}/api/epics/1
+GET {{Server_HostAddress}}/api/epics/019dec56-e6f9-7566-a4db-77fba07fcd41
 Accept: application/json
 
 ###
@@ -17,24 +17,23 @@ POST {{Server_HostAddress}}/api/epics
 Content-Type: application/json
 
 {
-  "name": "Wambo"
-
+  "name": "Patrick Star"
 }
 
 ###
 
 ### Update epic
-PUT {{Server_HostAddress}}/api/epics/4
+PUT {{Server_HostAddress}}/api/epics/019dec44-f51c-7dbb-b836-ba42d223dfe9
 Content-Type: application/json
 
 {
-  "name": "Monkeytype",
-  "Description": "eatsleep"
+  "name": "king kong",
+  "description": "cheatday i swear"
 }
 
 ###
 
 ### Delete epic
-DELETE {{Server_HostAddress}}/api/epics/1
+DELETE {{Server_HostAddress}}/api/epics/019dec46-0dde-7d8a-9682-0fb372b8ad95
 
 ###
