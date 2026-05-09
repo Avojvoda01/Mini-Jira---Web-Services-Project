@@ -4,7 +4,6 @@ using Microsoft.Extensions.Hosting.Auth.Login;
 using Microsoft.Extensions.Hosting.Auth.Register;
 using Microsoft.Extensions.Hosting.Comments;
 using Microsoft.Extensions.Hosting.Epics;
-using Microsoft.Extensions.Hosting.Projects;
 using Microsoft.Extensions.Hosting.Tasks;
 using Microsoft.Extensions.Hosting.Tasks.Actions;
 using MiniJiraAspire.Server.Migrations;
@@ -12,6 +11,12 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using MiniJiraAspire.Server.Endpoints.Projects;
+using MiniJiraAspire.Server.Features.Project.GetAllProjectsQuery;
+using MiniJiraAspire.Server.Features.Project.GetProjectByIdQuery;
+using MiniJiraAspire.Server.Features.Project.CreateProjectCommand;
+using MiniJiraAspire.Server.Features.Project.UpdateProjectCommand;
+using MiniJiraAspire.Server.Features.Project.DeleteProjectCommand;
 
 DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +36,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IEpicRepository, EpicRepository>();
+builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<IGetAllProjectsQuery, GetAllProjectsQuery>();
+builder.Services.AddScoped<IGetProjectByIdQuery, GetProjectByIdQuery>();
+builder.Services.AddScoped<ICreateProjectCommand, CreateProjectCommand>();
+builder.Services.AddScoped<IUpdateProjectCommand, UpdateProjectCommand>();
+builder.Services.AddScoped<IDeleteProjectCommand, DeleteProjectCommand>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
 var app = builder.Build();

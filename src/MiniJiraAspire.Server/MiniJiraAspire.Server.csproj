@@ -35,4 +35,8 @@
     <Folder Include="Features\Epic\" />
     <Folder Include="Models\CommentDTO\Respond\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Features\Project\ProjectCommands.cs" />
+  </ItemGroup>
 </Project>
