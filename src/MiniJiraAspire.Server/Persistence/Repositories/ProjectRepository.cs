@@ -12,7 +12,7 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
             .OrderBy(p => p.Name)
             .ToListAsync(cancellationToken);
 
-    public Task<Project?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public Task<Project?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.Projects
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
@@ -24,7 +24,7 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
         return project;
     }
 
-    public async Task<Project> UpdateAsync(int id, string name, string description, CancellationToken cancellationToken = default)
+    public async Task<Project> UpdateAsync(Guid id, string name, string description, CancellationToken cancellationToken = default)
     {
         var project = await db.Projects.FindAsync([id], cancellationToken);
         if (project is null)
@@ -36,7 +36,7 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
         return project;
     }
 
-    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var project = await db.Projects.FindAsync([id], cancellationToken);
         if (project is null)

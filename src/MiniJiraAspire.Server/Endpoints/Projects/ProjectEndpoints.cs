@@ -19,7 +19,7 @@ public static class ProjectEndpoints
             .WithName("CreateProject")
             .WithSummary("Create a new project");
 
-        group.MapPut("/{id:int}", UpdateProject)
+        group.MapPut("/{id:guid}", UpdateProject)
             .WithName("UpdateProject")
             .WithSummary("Edit an existing project");
 
@@ -32,7 +32,7 @@ public static class ProjectEndpoints
             .WithName("GetProjects")
             .WithSummary("Get all projects");
 
-        group.MapGet("/{id:int}", GetProjectById)
+        group.MapGet("/{id:guid}", GetProjectById)
             .Produces<ProjectDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithSummary("Get project by id");
@@ -47,7 +47,7 @@ public static class ProjectEndpoints
     }
 
     private static async Task<Results<Ok<ProjectDto>, ProblemHttpResult>> GetProjectById(
-        int id,
+        Guid id,
         IGetProjectByIdQuery query,
         CancellationToken cancellationToken)
     {
@@ -68,7 +68,7 @@ public static class ProjectEndpoints
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> UpdateProject(
-        int id,
+        Guid id,
         UpdateProjectRequest request,
         IUpdateProjectCommand command,
         CancellationToken cancellationToken)
@@ -85,7 +85,7 @@ public static class ProjectEndpoints
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> DeleteProject(
-        int id,
+        Guid id,
         IDeleteProjectCommand command,
         CancellationToken cancellationToken)
     {

@@ -24,7 +24,7 @@ namespace MiniJiraAspire.Server.Migrations
 
             modelBuilder.Entity("MiniJiraAspire.Server.Models.Comment", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
@@ -76,7 +76,7 @@ namespace MiniJiraAspire.Server.Migrations
 
             modelBuilder.Entity("MiniJiraAspire.Server.Models.Project", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 

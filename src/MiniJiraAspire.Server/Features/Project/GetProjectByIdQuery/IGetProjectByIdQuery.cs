@@ -4,5 +4,5 @@ namespace MiniJiraAspire.Server.Features.Project.GetProjectByIdQuery;
 
 public interface IGetProjectByIdQuery
 {
-    Task<ProjectDto?> ExecuteAsync(int id, CancellationToken cancellationToken = default);
+    Task<ProjectDto?> ExecuteAsync(Guid id, CancellationToken cancellationToken = default);
 }
