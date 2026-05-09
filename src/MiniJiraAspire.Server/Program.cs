@@ -12,11 +12,6 @@ using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using MiniJiraAspire.Server.Endpoints.Projects;
-using MiniJiraAspire.Server.Features.Project.GetAllProjectsQuery;
-using MiniJiraAspire.Server.Features.Project.GetProjectByIdQuery;
-using MiniJiraAspire.Server.Features.Project.CreateProjectCommand;
-using MiniJiraAspire.Server.Features.Project.UpdateProjectCommand;
-using MiniJiraAspire.Server.Features.Project.DeleteProjectCommand;
 
 DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
@@ -37,12 +32,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IEpicRepository, EpicRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
-builder.Services.AddScoped<IGetAllProjectsQuery, GetAllProjectsQuery>();
-builder.Services.AddScoped<IGetProjectByIdQuery, GetProjectByIdQuery>();
-builder.Services.AddScoped<ICreateProjectCommand, CreateProjectCommand>();
-builder.Services.AddScoped<IUpdateProjectCommand, UpdateProjectCommand>();
-builder.Services.AddScoped<IDeleteProjectCommand, DeleteProjectCommand>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 var app = builder.Build();
 
