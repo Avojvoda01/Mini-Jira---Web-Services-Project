@@ -4,7 +4,7 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Epic;
 
-public record GetEpicByIdQuery(int Id) : IRequest<EpicDto>;
+public record GetEpicByIdQuery(Guid Id) : IRequest<EpicDto>;
 
 public class GetEpicByIdHandler(IEpicRepository repository) : IRequestHandler<GetEpicByIdQuery, EpicDto>
 {

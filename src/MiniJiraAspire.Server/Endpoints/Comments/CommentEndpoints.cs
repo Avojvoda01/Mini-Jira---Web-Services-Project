@@ -17,12 +17,12 @@ public static class CommentEndpoints
             .WithName("CreateComment")
             .WithSummary("Create a comment on a task");
 
-        group.MapPut("/{commentId:int}", UpdateComment)
+        group.MapPut("/{commentId:guid}", UpdateComment)
             .Produces(StatusCodes.Status204NoContent)
             .WithName("UpdateComment")
             .WithSummary("Edit an existing comment");
 
-        group.MapDelete("/{commentId:int}", DeleteComment)
+        group.MapDelete("/{commentId:guid}", DeleteComment)
             .Produces(StatusCodes.Status204NoContent)
             .WithName("DeleteComment")
             .WithSummary("Delete a comment");
@@ -40,7 +40,7 @@ public static class CommentEndpoints
 
     private static async Task<NoContent> UpdateComment(
         string taskId,
-        int commentId,
+        Guid commentId,
         UpdateCommentRequest request,
         IMediator mediator,
         CancellationToken ct)
@@ -51,7 +51,7 @@ public static class CommentEndpoints
 
     private static async Task<NoContent> DeleteComment(
         string taskId,
-        int commentId,
+        Guid commentId,
         IMediator mediator,
         CancellationToken ct)
     {

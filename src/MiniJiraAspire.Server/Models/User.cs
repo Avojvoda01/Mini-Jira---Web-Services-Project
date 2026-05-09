@@ -1,7 +1,6 @@
 ﻿namespace MiniJiraAspire.Server.Models
 {
-    public record User
+    public class User : BaseEntity
     {
-        public int Id { get; init; }
     }
 }

@@ -4,7 +4,7 @@ using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
 
 namespace MiniJiraAspire.Server.Features.Comment;
 
-public record UpdateCommentCommand(string TaskId, int CommentId, string Content) : IRequest;
+public record UpdateCommentCommand(string TaskId, Guid CommentId, string Content) : IRequest;
 
 public class UpdateCommentHandler(ICommentRepository repository) : IRequestHandler<UpdateCommentCommand>
 {

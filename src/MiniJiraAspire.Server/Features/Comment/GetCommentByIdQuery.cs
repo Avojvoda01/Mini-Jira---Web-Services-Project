@@ -4,7 +4,7 @@ using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
 
 namespace MiniJiraAspire.Server.Features.Comment;
 
-public record GetCommentByIdQuery(string TaskId, int CommentId) : IRequest<CommentDTO>;
+public record GetCommentByIdQuery(string TaskId, Guid CommentId) : IRequest<CommentDTO>;
 
 public class GetCommentByIdHandler(ICommentRepository repository) : IRequestHandler<GetCommentByIdQuery, CommentDTO>
 {

@@ -8,11 +8,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace MiniJiraAspire.Server.Migrations
+namespace MiniJiraAspire.Server.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260421074645_MakeEpicDescriptionNullable")]
-    partial class MakeEpicDescriptionNullable
+    [Migration("20260425085032_AddProjectsTable")]
+    partial class AddProjectsTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -38,12 +38,33 @@ namespace MiniJiraAspire.Server.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Epics");
+                });
+
+            modelBuilder.Entity("MiniJiraAspire.Server.Models.Project", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Projects");
                 });
 #pragma warning restore 612, 618
         }

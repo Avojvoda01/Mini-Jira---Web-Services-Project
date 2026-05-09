@@ -1,6 +1,6 @@
 using MediatR;
 
-namespace MiniJiraAspire.Server.Features.Project;
+namespace MiniJiraAspire.Server.Features.Project.Commands;
 
 public record AddProjectMemberCommand(string ProjectId, string UserId, string Role) : IRequest;
 

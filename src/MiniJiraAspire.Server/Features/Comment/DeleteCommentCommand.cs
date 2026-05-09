@@ -3,7 +3,7 @@ using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
 
 namespace MiniJiraAspire.Server.Features.Comment;
 
-public record DeleteCommentCommand(string TaskId, int CommentId) : IRequest;
+public record DeleteCommentCommand(string TaskId, Guid CommentId) : IRequest;
 
 public class DeleteCommentHandler(ICommentRepository repository) : IRequestHandler<DeleteCommentCommand>
 {

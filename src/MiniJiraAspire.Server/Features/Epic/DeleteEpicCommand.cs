@@ -3,7 +3,7 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Epic;
 
-public record DeleteEpicCommand(int Id) : IRequest;
+public record DeleteEpicCommand(Guid Id) : IRequest;
 
 public class DeleteEpicHandler(IEpicRepository repository) : IRequestHandler<DeleteEpicCommand>
 {

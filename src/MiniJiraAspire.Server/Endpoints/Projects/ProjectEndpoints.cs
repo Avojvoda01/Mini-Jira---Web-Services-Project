@@ -1,60 +1,114 @@
 using MediatR;
-using MiniJiraAspire.Server.Features.Project;
+using Microsoft.AspNetCore.Http.HttpResults;
+using MiniJiraAspire.Server.Features.Project.Commands;
+using MiniJiraAspire.Server.Features.Project.Queries;
+using MiniJiraAspire.Server.Models;
 
-namespace Microsoft.Extensions.Hosting.Projects;
+namespace MiniJiraAspire.Server.Endpoints.Projects;
 
 public static class ProjectEndpoints
 {
     public static void MapProjectEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/projects", async (
-                CreateProjectCommand command,
+        var group = app.MapGroup("/api/projects")
+            .WithTags("Projects");
+
+        group.MapPost("/", async (
+                CreateProjectRequest request,
                 IMediator mediator,
                 CancellationToken ct) =>
             {
-                var result = await mediator.Send(command, ct);
-                return Results.Created($"/api/projects/{((dynamic)result).Id}", result);
+                var result = await mediator.Send(new CreateProjectCommand(request.Name, request.Description), ct);
+                return TypedResults.Created($"/api/projects/{result.Id}", result);
             })
             .WithName("CreateProject")
-            .WithTags("Projects")
             .WithSummary("Create a new project");
 
-        app.MapDelete("/api/projects/{projectId}", async (
-                string projectId,
+        group.MapPut("/{id:guid}", async (
+                Guid id,
+                UpdateProjectRequest request,
                 IMediator mediator,
                 CancellationToken ct) =>
             {
-                await mediator.Send(new DeleteProjectCommand(projectId), ct);
-                return Results.NoContent();
+                try
+                {
+                    var result = await mediator.Send(new UpdateProjectCommand(id, request.Name, request.Description), ct);
+                    return Results.NoContent();
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(ex.Message, statusCode: StatusCodes.Status404NotFound);
+                }
+            })
+            .WithName("UpdateProject")
+            .WithSummary("Edit an existing project");
+
+        group.MapDelete("/{id:guid}", async (
+                Guid id,
+                IMediator mediator,
+                CancellationToken ct) =>
+            {
+                try
+                {
+                    await mediator.Send(new DeleteProjectCommand(id), ct);
+                    return Results.NoContent();
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(ex.Message, statusCode: StatusCodes.Status404NotFound);
+                }
             })
             .WithName("DeleteProject")
-            .WithTags("Projects")
             .WithSummary("Delete a project");
 
-        app.MapPost("/api/projects/{projectId}/members", async (
-                string projectId,
+        group.MapGet("/", async (
+                IMediator mediator,
+                CancellationToken ct) =>
+            {
+                var projects = await mediator.Send(new GetAllProjectsQuery(), ct);
+                return TypedResults.Ok(projects);
+            })
+            .Produces<List<ProjectDto>>(StatusCodes.Status200OK)
+            .WithName("GetProjects")
+            .WithSummary("Get all projects");
+
+        group.MapGet("/{id:guid}", async (
+                Guid id,
+                IMediator mediator,
+                CancellationToken ct) =>
+            {
+                var project = await mediator.Send(new GetProjectByIdQuery(id), ct);
+                if (project is null)
+                    return Results.Problem($"Project with id {id} not found", statusCode: StatusCodes.Status404NotFound);
+
+                return Results.Ok(project);
+            })
+            .Produces<ProjectDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithSummary("Get project by id");
+
+        group.MapPost("/{projectId:guid}/members", async (
+                Guid projectId,
                 AddProjectMemberCommand command,
                 IMediator mediator,
                 CancellationToken ct) =>
             {
-                await mediator.Send(command with { ProjectId = projectId }, ct);
+                await mediator.Send(command with { ProjectId = projectId.ToString() }, ct);
                 return Results.Created($"/api/projects/{projectId}/members", new { });
             })
             .WithName("AddProjectMember")
-            .WithTags("Projects")
             .WithSummary("Assign a member to a project");
 
-        app.MapDelete("/api/projects/{projectId}/members/{userId}", async (
-                string projectId,
+        group.MapDelete("/{projectId:guid}/members/{userId}", async (
+                Guid projectId,
                 string userId,
                 IMediator mediator,
                 CancellationToken ct) =>
             {
-                await mediator.Send(new RemoveProjectMemberCommand(projectId, userId), ct);
+                await mediator.Send(new RemoveProjectMemberCommand(projectId.ToString(), userId), ct);
                 return Results.NoContent();
             })
             .WithName("RemoveProjectMember")
-            .WithTags("Projects")
             .WithSummary("Remove a member from a project");
     }
 }
