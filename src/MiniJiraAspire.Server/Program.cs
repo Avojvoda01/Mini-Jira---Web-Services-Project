@@ -26,11 +26,15 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddCors(options =>
-    options.AddPolicy("FrontendDev", policy =>
-        policy.WithOrigins("http://localhost:5173")
-            .AllowAnyHeader()
-            .AllowAnyMethod()));
+// CORS policy for development - allows the frontend running on localhost:5173 to access the API.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddCors(options =>
+        options.AddPolicy("FrontendDev", policy =>
+            policy.WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod()));
+}
 
 // AddDbContext registers AppDbContext as scoped, which is the right lifetime for one HTTP request.
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -48,7 +52,12 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
-app.UseCors("FrontendDev");
+
+// Enable CORS for development environment
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("FrontendDev");
+}
 
 if (app.Environment.IsDevelopment())
 {
