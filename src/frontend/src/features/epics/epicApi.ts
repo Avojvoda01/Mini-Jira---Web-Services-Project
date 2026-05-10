@@ -19,6 +19,6 @@ export async function updateEpic(input: UpdateEpicInput): Promise<void> {
   return apiClient.put<void>(`/epics/${id}`, request);
 }
 
-export async function deleteEpic(id: number): Promise<void> {
+export async function deleteEpic(id: string): Promise<void> {
   return apiClient.delete<void>(`/epics/${id}`);
 }

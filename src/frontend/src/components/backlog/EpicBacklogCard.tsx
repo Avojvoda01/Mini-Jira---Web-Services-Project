@@ -12,9 +12,11 @@ type BacklogTicket = {
 
 type EpicBacklogCardProps = {
   epic: {
-    id: number;
+    id: string;
     name: string;
     description: string;
+    createdAtUtc?: string;
+    updatedAtUtc?: string | null;
   };
   assignedTickets: BacklogTicket[];
   onAssignTickets: () => void;

@@ -1,7 +1,9 @@
 export type EpicDto = {
-  id: number;
+  id: string;
   name: string;
   description: string;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
 };
 
 export type CreateEpicInput = {
@@ -10,7 +12,7 @@ export type CreateEpicInput = {
 };
 
 export type UpdateEpicInput = {
-  id: number;
+  id: string;
   name: string;
   description: string | null;
 };

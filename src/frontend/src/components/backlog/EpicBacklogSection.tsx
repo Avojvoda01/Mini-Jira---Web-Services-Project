@@ -8,9 +8,11 @@ type BacklogTicket = {
 };
 
 type Epic = {
-  id: number;
+  id: string;
   name: string;
   description: string;
+  createdAtUtc?: string;
+  updatedAtUtc?: string | null;
   ticketIds: string[];
 };
 
@@ -20,8 +22,8 @@ type EpicBacklogSectionProps = {
   ticketById: Map<string, BacklogTicket>;
   onAssignTickets: (epic: Epic) => void;
   onEdit: (epic: Epic) => void;
-  onDelete: (epicId: number) => void;
-  onRemoveTicket: (epicId: number, ticketId: string) => void;
+  onDelete: (epicId: string) => void;
+  onRemoveTicket: (epicId: string, ticketId: string) => void;
 };
 
 export function EpicBacklogSection({ isLoading, epics, ticketById, onAssignTickets, onEdit, onDelete, onRemoveTicket }: EpicBacklogSectionProps) {
