@@ -1,5 +1,7 @@
 using MediatR;
-using MiniJiraAspire.Server.Features.Tasks;
+using MiniJiraAspire.Server.Features.Tasks.Commands;
+using MiniJiraAspire.Server.Features.Tasks.Queries;
+using MiniJiraAspire.Server.Models;
 
 namespace Microsoft.Extensions.Hosting.Tasks;
 
@@ -13,7 +15,7 @@ public static class TaskEndpoints
                 CancellationToken ct) =>
             {
                 var result = await mediator.Send(command, ct);
-                return Results.Created($"/api/tasks/{((dynamic)result).Id}", result);
+                return Results.Created($"/api/tasks/{result.Id}", result);
             })
             .WithName("CreateTask")
             .WithTags("Tasks")
@@ -50,8 +52,12 @@ public static class TaskEndpoints
                 CancellationToken ct) =>
             {
                 var result = await mediator.Send(new GetTaskQuery(taskId), ct);
+                if (result is null)
+                    return Results.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound);
                 return Results.Ok(result);
             })
+            .Produces<TaskItemDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("GetTask")
             .WithTags("Tasks")
             .WithSummary("Get a single task by ID");
@@ -68,6 +74,7 @@ public static class TaskEndpoints
                 var result = await mediator.Send(new GetTasksQuery(search, status, priority, assigneeId, epicId), ct);
                 return Results.Ok(result);
             })
+            .Produces<TaskItemDto[]>(StatusCodes.Status200OK)
             .WithName("GetTasks")
             .WithTags("Tasks")
             .WithSummary("Search and filter tasks");

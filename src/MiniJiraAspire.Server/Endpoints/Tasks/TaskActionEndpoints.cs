@@ -1,5 +1,5 @@
 using MediatR;
-using MiniJiraAspire.Server.Features.Tasks;
+using MiniJiraAspire.Server.Features.Tasks.Commands;
 
 namespace Microsoft.Extensions.Hosting.Tasks.Actions;
 
