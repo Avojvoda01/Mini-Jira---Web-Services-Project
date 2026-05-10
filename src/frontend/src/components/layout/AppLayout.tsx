@@ -9,7 +9,7 @@ import { ModeToggle } from '@/components/common/ModeToggle';
 import { PageHeaderProvider, usePageHeader } from '@/components/layout/PageHeaderContext';
 import { cn } from '@/lib/utils';
 import { authSessionAtom } from '@/store/authAtoms';
-import { getProjectById } from '@/features/projects/projectData';
+import { useProjectsQuery } from '@/features/projects';
 
 type NavigationItem = {
   to: string;
@@ -29,7 +29,8 @@ export function AppLayout() {
   const setSession = useSetAtom(authSessionAtom);
   const navigate = useNavigate();
   const { projectId } = useParams();
-  const project = getProjectById(projectId);
+  const { data: projects = [], isLoading: isLoadingProjects } = useProjectsQuery();
+  const project = projects.find((item) => item.id === projectId);
 
   const handleSignOut = () => {
     setSession(null);
@@ -48,7 +49,11 @@ export function AppLayout() {
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">Task Workspace</h1>
               <p className="max-w-[18rem] text-sm leading-6 text-muted-foreground">
-                {project ? project.name : 'Choose a project to open its workspace.'}
+                {isLoadingProjects
+                  ? 'Loading project...'
+                  : project
+                    ? project.name
+                    : 'Choose a project to open its workspace.'}
               </p>
             </div>
           </div>
