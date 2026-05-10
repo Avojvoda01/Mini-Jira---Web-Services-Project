@@ -29,7 +29,7 @@ export function AppLayout() {
   const setSession = useSetAtom(authSessionAtom);
   const navigate = useNavigate();
   const { projectId } = useParams();
-  const { data: projects = [], isLoading: isLoadingProjects } = useProjectsQuery();
+  const { data: projects = [], error, isError, isLoading: isLoadingProjects } = useProjectsQuery();
   const project = projects.find((item) => item.id === projectId);
 
   const handleSignOut = () => {
@@ -51,9 +51,13 @@ export function AppLayout() {
               <p className="max-w-[18rem] text-sm leading-6 text-muted-foreground">
                 {isLoadingProjects
                   ? 'Loading project...'
-                  : project
-                    ? project.name
-                    : 'Choose a project to open its workspace.'}
+                  : isError
+                    ? error instanceof Error
+                      ? error.message
+                      : 'Unable to load projects.'
+                    : project
+                      ? project.name
+                      : 'Choose a project to open its workspace.'}
               </p>
             </div>
           </div>

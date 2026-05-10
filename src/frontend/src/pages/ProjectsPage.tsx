@@ -21,7 +21,7 @@ import {
 type ProjectSortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
 
 export function ProjectsPage() {
-  const { data: projects = [], isLoading } = useProjectsQuery();
+  const { data: projects = [], isError, isLoading, error, refetch } = useProjectsQuery();
   const updateProjectMutation = useUpdateProjectMutation();
   const deleteProjectMutation = useDeleteProjectMutation();
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
@@ -211,6 +211,18 @@ export function ProjectsPage() {
             <CardHeader>
               <CardTitle className="text-xl tracking-tight">Loading projects...</CardTitle>
               <CardDescription>Fetching your project list.</CardDescription>
+            </CardHeader>
+          </Card>
+        ) : isError ? (
+          <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+            <CardHeader className="space-y-3">
+              <div>
+                <CardTitle className="text-xl tracking-tight">Unable to load projects</CardTitle>
+                <CardDescription>{error instanceof Error ? error.message : 'Try again in a moment.'}</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>
+                Retry
+              </Button>
             </CardHeader>
           </Card>
         ) : projects.length === 0 ? (
