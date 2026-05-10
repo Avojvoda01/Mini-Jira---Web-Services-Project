@@ -2,6 +2,8 @@ export type ProjectDto = {
   id: string;
   name: string;
   description: string;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
 };
 
 export type CreateProjectInput = {

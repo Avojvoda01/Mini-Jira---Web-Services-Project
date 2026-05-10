@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { ArrowRight, FolderKanban, LayoutGrid, Sparkles } from 'lucide-react';
+import { ArrowRight, Filter, FolderKanban, LayoutGrid, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { BackToHomeButton } from '@/components/common/BackToHomeButton';
 import { SignOutButton } from '@/components/common/SignOutButton';
 import { ModeToggle } from '@/components/common/ModeToggle';
@@ -17,6 +18,8 @@ import {
   type ProjectDto,
 } from '@/features/projects';
 
+type ProjectSortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
+
 export function ProjectsPage() {
   const { data: projects = [], isLoading } = useProjectsQuery();
   const updateProjectMutation = useUpdateProjectMutation();
@@ -26,10 +29,52 @@ export function ProjectsPage() {
   const [editProjectName, setEditProjectName] = useState('');
   const [editProjectDescription, setEditProjectDescription] = useState('');
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
+  const [projectSort, setProjectSort] = useState<ProjectSortOption>('newest');
 
   const describedCount = useMemo(() => {
     return projects.filter((project) => project.description.trim().length > 0).length;
   }, [projects]);
+
+  const sortedProjects = useMemo(() => {
+    const next = [...projects];
+    const compareByName = (left: ProjectDto, right: ProjectDto) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+    const getCreatedAt = (project: ProjectDto) => {
+      const value = Date.parse(project.createdAtUtc);
+      return Number.isNaN(value) ? 0 : value;
+    };
+
+    switch (projectSort) {
+      case 'name-asc':
+        next.sort(compareByName);
+        break;
+      case 'name-desc':
+        next.sort((left, right) => compareByName(right, left));
+        break;
+      case 'oldest':
+        next.sort((left, right) => getCreatedAt(left) - getCreatedAt(right));
+        break;
+      case 'newest':
+      default:
+        next.sort((left, right) => getCreatedAt(right) - getCreatedAt(left));
+        break;
+    }
+
+    return next;
+  }, [projectSort, projects]);
+
+  const projectSortLabel = useMemo(() => {
+    switch (projectSort) {
+      case 'name-asc':
+        return 'Name A-Z';
+      case 'name-desc':
+        return 'Name Z-A';
+      case 'oldest':
+        return 'Oldest';
+      case 'newest':
+      default:
+        return 'Newest';
+    }
+  }, [projectSort]);
 
   const activeEditProject = useMemo(() => {
     if (!editProjectId) {
@@ -119,9 +164,25 @@ export function ProjectsPage() {
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                 This is the entry layer before dashboard and board views. Pick a project to open its dedicated workspace context.
               </p>
-              <Button className="mt-2 border-0 bg-sky-500 text-white shadow-sm hover:bg-sky-600" onClick={() => setIsCreateProjectOpen(true)}>
-                Create project
-              </Button>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="border-border/70 bg-background/80 shadow-sm">
+                      <Filter className="mr-2 h-4 w-4" />
+                      {projectSortLabel}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => setProjectSort('newest')}>Newest</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setProjectSort('oldest')}>Oldest</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setProjectSort('name-asc')}>Name A-Z</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setProjectSort('name-desc')}>Name Z-A</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button className="border-0 bg-sky-500 text-white shadow-sm hover:bg-sky-600" onClick={() => setIsCreateProjectOpen(true)}>
+                  Create project
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -160,7 +221,7 @@ export function ProjectsPage() {
             </CardHeader>
           </Card>
         ) : (
-          projects.map((project) => (
+          sortedProjects.map((project) => (
             <Card key={project.id} className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
               <CardHeader className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
