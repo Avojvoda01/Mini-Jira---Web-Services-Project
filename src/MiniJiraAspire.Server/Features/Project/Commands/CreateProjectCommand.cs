@@ -16,6 +16,6 @@ public class CreateProjectHandler(IProjectRepository repository) : IRequestHandl
             Description = request.Description
         };
         var created = await repository.CreateAsync(project, ct);
-        return new ProjectDto(created.Id, created.Name, created.Description);
+        return new ProjectDto(created.Id, created.Name, created.Description, created.CreatedAtUtc, created.UpdatedAtUtc);
     }
 }

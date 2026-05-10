@@ -1,8 +1,41 @@
 @Server_HostAddress = http://localhost:5413
 
-### Get all epics
-GET {{Server_HostAddress}}/api/epics
+### Get all projects
+GET {{Server_HostAddress}}/api/projects
 Accept: application/json
+
+###
+
+### Get project by id
+GET {{Server_HostAddress}}/api/projects/00000000-0000-0000-0000-000000000000
+Accept: application/json
+
+###
+
+### Create project
+POST {{Server_HostAddress}}/api/projects
+Content-Type: application/json
+
+{
+  "name": "My Project",
+  "description": "A sample project description"
+}
+
+###
+
+### Update project
+PUT {{Server_HostAddress}}/api/projects/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "name": "Updated Project Name",
+  "description": "Updated description"
+}
+
+###
+
+### Delete project
+DELETE {{Server_HostAddress}}/api/projects/00000000-0000-0000-0000-000000000000
 
 ###
 

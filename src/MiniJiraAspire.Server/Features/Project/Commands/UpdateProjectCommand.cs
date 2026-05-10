@@ -11,6 +11,6 @@ public class UpdateProjectHandler(IProjectRepository repository) : IRequestHandl
     public async Task<ProjectDto> Handle(UpdateProjectCommand request, CancellationToken ct)
     {
         var updated = await repository.UpdateAsync(request.Id, request.Name, request.Description, ct);
-        return new ProjectDto(updated.Id, updated.Name, updated.Description);
+        return new ProjectDto(updated.Id, updated.Name, updated.Description, updated.CreatedAtUtc, updated.UpdatedAtUtc);
     }
 }

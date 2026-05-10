@@ -12,6 +12,6 @@ public class GetTaskHandler(ITaskRepository repository) : IRequestHandler<GetTas
     {
         var task = await repository.GetByIdAsync(Guid.Parse(request.TaskId), ct);
         if (task is null) return null;
-        return new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId);
+        return new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedAtUtc, task.UpdatedAtUtc);
     }
 }

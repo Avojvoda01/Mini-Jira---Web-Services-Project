@@ -17,6 +17,6 @@ public class CreateTaskHandler(ITaskRepository repository) : IRequestHandler<Cre
             ProjectId = Guid.Parse(request.ProjectId)
         }, ct);
 
-        return new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId);
+        return new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedAtUtc, task.UpdatedAtUtc);
     }
 }
