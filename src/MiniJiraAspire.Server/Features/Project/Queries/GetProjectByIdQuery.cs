@@ -11,6 +11,6 @@ public class GetProjectByIdHandler(IProjectRepository repository) : IRequestHand
     public async Task<ProjectDto?> Handle(GetProjectByIdQuery request, CancellationToken ct)
     {
         var project = await repository.GetByIdAsync(request.Id, ct);
-        return project is null ? null : new ProjectDto(project.Id, project.Name, project.Description);
+        return project is null ? null : new ProjectDto(project.Id, project.Name, project.Description, project.CreatedAtUtc, project.UpdatedAtUtc);
     }
 }
