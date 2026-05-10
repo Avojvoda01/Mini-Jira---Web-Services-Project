@@ -14,8 +14,8 @@ type CreateProjectState = {
   description: string;
 };
 
-const MAX_PROJECT_NAME_LENGTH = 20;
-const MAX_DESCRIPTION_LENGTH = 1000;
+const MAX_PROJECT_NAME_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 2000;
 
 export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
   const createProjectMutation = useCreateProjectMutation();
