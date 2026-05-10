@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Epic> Epics => Set<Epic>();
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<TaskItem> TaskItems => Set<TaskItem>();
     //public DbSet<User> Users => Set<User>();
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
