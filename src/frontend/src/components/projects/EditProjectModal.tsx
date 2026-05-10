@@ -3,8 +3,8 @@ import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
-const MAX_PROJECT_NAME_LENGTH = 20;
-const MAX_DESCRIPTION_LENGTH = 1000;
+const MAX_PROJECT_NAME_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 2000;
 
 type EditProjectModalProps = {
   isOpen: boolean;

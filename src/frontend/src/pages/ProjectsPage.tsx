@@ -167,7 +167,7 @@ export function ProjectsPage() {
               <div className="mt-2 flex flex-wrap gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="border-border/70 bg-background/80 shadow-sm">
+                    <Button variant="outline" className="border-foreground/40 bg-background/95 text-foreground shadow-sm hover:bg-background">
                       <Filter className="mr-2 h-4 w-4" />
                       {projectSortLabel}
                     </Button>
