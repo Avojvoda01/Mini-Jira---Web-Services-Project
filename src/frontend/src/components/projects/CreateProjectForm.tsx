@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { useAtomValue } from 'jotai';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
-import { authSessionAtom } from '@/store/authAtoms';
+import { useCreateProjectMutation } from '@/features/projects';
 
 type CreateProjectProps = {
   open: boolean;
@@ -12,41 +11,35 @@ type CreateProjectProps = {
 
 type CreateProjectState = {
   name: string;
-  owner: string;
   description: string;
 };
 
-const MAX_PROJECT_NAME_LENGTH = 20;
-const MAX_DESCRIPTION_LENGTH = 1000;
+const MAX_PROJECT_NAME_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 2000;
 
 export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
-  const session = useAtomValue(authSessionAtom);
+  const createProjectMutation = useCreateProjectMutation();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const [form, setForm] = useState<CreateProjectState>({
     name: '',
-    owner: '',
     description: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateProjectState, string>>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
       setForm({
         name: '',
-        owner: '',
         description: '',
       });
       setErrors({});
+      setSubmitError(null);
       return;
     }
-
-    setForm((current) => ({
-      ...current,
-      owner: session?.displayName ?? '',
-    }));
-  }, [open, session?.displayName]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) {
@@ -78,9 +71,13 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
   const validate = () => {
     const nextErrors: Partial<Record<keyof CreateProjectState, string>> = {};
 
-    if (!form.name.trim()) {
+    const trimmedName = form.name.trim();
+
+    if (!trimmedName) {
       nextErrors.name = 'Project name is required.';
-    } else if (form.name.trim().length > MAX_PROJECT_NAME_LENGTH) {
+    } else if (trimmedName.length < 3) {
+      nextErrors.name = 'Project name must be at least 3 characters.';
+    } else if (trimmedName.length > MAX_PROJECT_NAME_LENGTH) {
       nextErrors.name = `Project name must be ${MAX_PROJECT_NAME_LENGTH} characters or less.`;
     }
 
@@ -100,8 +97,19 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
     if (!validate()) {
       return;
     }
+    setSubmitError(null);
 
-    onClose();
+    createProjectMutation
+      .mutateAsync({
+        name: form.name.trim(),
+        description: form.description.trim(),
+      })
+      .then(() => {
+        onClose();
+      })
+      .catch((error) => {
+        setSubmitError(error instanceof Error ? error.message : 'Failed to create project.');
+      });
   };
 
   const handleDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -160,7 +168,7 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
           <CardTitle id="create-project-title" className="text-2xl tracking-tight">
             Create project
           </CardTitle>
-          <CardDescription>Fill out the project details below. This form is ready for backend wiring later.</CardDescription>
+          <CardDescription>Fill out the project details below to add a new workspace.</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -183,20 +191,6 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground" htmlFor="owner">
-                Owner
-              </label>
-              <Input
-                id="owner"
-                value={form.owner}
-                readOnly
-                placeholder="Logged-in user"
-                aria-readonly="true"
-              />
-              <p className="text-xs text-muted-foreground">Automatically set to your account name.</p>
-            </div>
-
-            <div className="space-y-2">
               <label className="text-sm font-medium text-foreground" htmlFor="description">
                 Description
               </label>
@@ -213,7 +207,14 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
               {errors.description ? <p className="text-xs text-rose-700">{errors.description}</p> : null}
             </div>
 
-            <FormActionButtons onCancel={onClose} confirmLabel="Create" confirmType="submit" />
+            {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
+
+            <FormActionButtons
+              onCancel={onClose}
+              confirmLabel={createProjectMutation.isPending ? 'Creating...' : 'Create'}
+              confirmType="submit"
+              confirmDisabled={createProjectMutation.isPending}
+            />
           </form>
         </CardContent>
       </Card>

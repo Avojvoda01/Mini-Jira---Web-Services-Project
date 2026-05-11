@@ -29,7 +29,9 @@ type Epic = EpicDto & {
   ticketIds: string[];
 };
 
-type EpicSortOption = 'newest' | 'oldest' | 'tickets-desc' | 'tickets-asc' | 'name-asc' | 'name-desc';
+type EpicSummary = Pick<Epic, 'id' | 'name' | 'description' | 'ticketIds'>;
+
+type EpicSortOption = 'newest' | 'oldest' | 'recently-updated' | 'tickets-desc' | 'tickets-asc' | 'name-asc' | 'name-desc';
 
 const backlogItems: BacklogTicket[] = [
   {
@@ -68,23 +70,23 @@ const backlogItems: BacklogTicket[] = [
 
 export function BacklogPage() {
   const { setContent } = usePageHeader();
-  const { data: epicDtos = [], isLoading: isLoadingEpics } = useEpicsQuery();
+  const { data: epicDtos = [], isLoading: isLoadingEpics, isError: isEpicsError, error: epicsError, refetch: refetchEpics } = useEpicsQuery();
   const createEpicMutation = useCreateEpicMutation();
   const updateEpicMutation = useUpdateEpicMutation();
   const deleteEpicMutation = useDeleteEpicMutation();
   const [isCreateEpicOpen, setIsCreateEpicOpen] = useState(false);
-  const [ticketAssignmentsByEpic, setTicketAssignmentsByEpic] = useState<Record<number, string[]>>({});
+  const [ticketAssignmentsByEpic, setTicketAssignmentsByEpic] = useState<Record<string, string[]>>({});
   const [newEpicName, setNewEpicName] = useState('');
   const [newEpicDescription, setNewEpicDescription] = useState('');
   const [newEpicTicketIds, setNewEpicTicketIds] = useState<string[]>([]);
   const [createEpicSearch, setCreateEpicSearch] = useState('');
-  const [assignEpicId, setAssignEpicId] = useState<number | null>(null);
+  const [assignEpicId, setAssignEpicId] = useState<string | null>(null);
   const [assignSearch, setAssignSearch] = useState('');
   const [assignTicketDraft, setAssignTicketDraft] = useState<string[]>([]);
-  const [editEpicId, setEditEpicId] = useState<number | null>(null);
+  const [editEpicId, setEditEpicId] = useState<string | null>(null);
   const [editEpicName, setEditEpicName] = useState('');
   const [editEpicDescription, setEditEpicDescription] = useState('');
-  const [deleteConfirmEpicId, setDeleteConfirmEpicId] = useState<number | null>(null);
+  const [deleteConfirmEpicId, setDeleteConfirmEpicId] = useState<string | null>(null);
   const [epicSort, setEpicSort] = useState<EpicSortOption>('newest');
 
   const epics = useMemo<Epic[]>(() => {
@@ -98,6 +100,14 @@ export function BacklogPage() {
     const next = [...epics];
 
     const compareByName = (left: Epic, right: Epic) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+    const getCreatedAt = (epic: Epic) => {
+      const value = Date.parse(epic.createdAtUtc);
+      return Number.isNaN(value) ? 0 : value;
+    };
+    const getUpdatedAt = (epic: Epic) => {
+      const value = Date.parse(epic.updatedAtUtc ?? epic.createdAtUtc);
+      return Number.isNaN(value) ? 0 : value;
+    };
 
     switch (epicSort) {
       case 'tickets-desc':
@@ -112,12 +122,15 @@ export function BacklogPage() {
       case 'name-desc':
         next.sort((left, right) => compareByName(right, left));
         break;
+      case 'recently-updated':
+        next.sort((left, right) => getUpdatedAt(right) - getUpdatedAt(left));
+        break;
       case 'oldest':
-        next.sort((left, right) => left.id - right.id);
+        next.sort((left, right) => getCreatedAt(left) - getCreatedAt(right));
         break;
       case 'newest':
       default:
-        next.sort((left, right) => right.id - left.id);
+        next.sort((left, right) => getCreatedAt(right) - getCreatedAt(left));
         break;
     }
 
@@ -129,7 +142,7 @@ export function BacklogPage() {
   }, []);
 
   const ticketToEpicMap = useMemo(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, string>();
     epics.forEach((epic) => {
       epic.ticketIds.forEach((ticketId) => {
         map.set(ticketId, epic.id);
@@ -242,13 +255,13 @@ export function BacklogPage() {
     setCreateEpicSearch('');
   };
 
-  const openAssignTicketsModal = (epic: Epic) => {
+  const openAssignTicketsModal = (epic: EpicSummary) => {
     setAssignEpicId(epic.id);
     setAssignSearch('');
     setAssignTicketDraft([]);
   };
 
-  const openEditEpicModal = (epic: Epic) => {
+  const openEditEpicModal = (epic: EpicSummary) => {
     setEditEpicId(epic.id);
     setEditEpicName(epic.name);
     setEditEpicDescription(epic.description);
@@ -280,7 +293,7 @@ export function BacklogPage() {
     }
   };
 
-  const openDeleteConfirmModal = (epicId: number) => {
+  const openDeleteConfirmModal = (epicId: string) => {
     setDeleteConfirmEpicId(epicId);
   };
 
@@ -334,7 +347,7 @@ export function BacklogPage() {
     closeAssignTicketsModal();
   };
 
-  const removeTicketFromEpic = (epicId: number, ticketId: string) => {
+  const removeTicketFromEpic = (epicId: string, ticketId: string) => {
     setTicketAssignmentsByEpic((current) => ({
       ...current,
       [epicId]: (current[epicId] ?? []).filter((id) => id !== ticketId),
@@ -343,6 +356,8 @@ export function BacklogPage() {
 
   const epicSortLabel = useMemo(() => {
     switch (epicSort) {
+      case 'recently-updated':
+        return 'Recently updated';
       case 'tickets-desc':
         return 'Most tickets';
       case 'tickets-asc':
@@ -375,6 +390,7 @@ export function BacklogPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setEpicSort('newest')}>Newest</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEpicSort('oldest')}>Oldest</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('recently-updated')}>Recently updated</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEpicSort('tickets-desc')}>Most tickets</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEpicSort('tickets-asc')}>Fewest tickets</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEpicSort('name-asc')}>Name A-Z</DropdownMenuItem>
@@ -396,6 +412,9 @@ export function BacklogPage() {
     <section className="space-y-6">
       <EpicBacklogSection
         isLoading={isLoadingEpics}
+        isError={isEpicsError}
+        error={epicsError}
+        onRetry={refetchEpics}
         epics={sortedEpics}
         ticketById={ticketById}
         onAssignTickets={openAssignTicketsModal}

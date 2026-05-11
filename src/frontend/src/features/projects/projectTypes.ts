@@ -1,4 +1,4 @@
-export type EpicDto = {
+export type ProjectDto = {
   id: string;
   name: string;
   description: string;
@@ -6,13 +6,13 @@ export type EpicDto = {
   updatedAtUtc: string | null;
 };
 
-export type CreateEpicInput = {
+export type CreateProjectInput = {
   name: string;
-  description: string | null;
+  description: string;
 };
 
-export type UpdateEpicInput = {
+export type UpdateProjectInput = {
   id: string;
   name: string;
-  description: string | null;
+  description: string;
 };
