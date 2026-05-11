@@ -70,7 +70,7 @@ const backlogItems: BacklogTicket[] = [
 
 export function BacklogPage() {
   const { setContent } = usePageHeader();
-  const { data: epicDtos = [], isLoading: isLoadingEpics } = useEpicsQuery();
+  const { data: epicDtos = [], isLoading: isLoadingEpics, isError: isEpicsError, error: epicsError, refetch: refetchEpics } = useEpicsQuery();
   const createEpicMutation = useCreateEpicMutation();
   const updateEpicMutation = useUpdateEpicMutation();
   const deleteEpicMutation = useDeleteEpicMutation();
@@ -412,6 +412,9 @@ export function BacklogPage() {
     <section className="space-y-6">
       <EpicBacklogSection
         isLoading={isLoadingEpics}
+        isError={isEpicsError}
+        error={epicsError}
+        onRetry={refetchEpics}
         epics={sortedEpics}
         ticketById={ticketById}
         onAssignTickets={openAssignTicketsModal}
