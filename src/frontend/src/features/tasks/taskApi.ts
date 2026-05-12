@@ -3,6 +3,7 @@ import type {
   ChangeTaskPriorityInput,
   ChangeTaskStatusInput,
   CreateTaskInput,
+  DeleteTaskInput,
   TaskFilters,
   TaskItem,
   TaskPriority,
@@ -109,4 +110,9 @@ export async function changeTaskStatus(input: ChangeTaskStatusInput): Promise<vo
 export async function changeTaskPriority(input: ChangeTaskPriorityInput): Promise<void> {
   const { taskId, priority } = input;
   await apiClient.patch<void>(`/tasks/${taskId}/priority`, { priority });
+}
+
+export async function deleteTask(input: DeleteTaskInput): Promise<void> {
+  const { taskId } = input;
+  await apiClient.delete<void>(`/tasks/${taskId}`);
 }

@@ -27,6 +27,10 @@ export type UpdateTaskInput = {
   description: string | null;
 };
 
+export type DeleteTaskInput = {
+  taskId: string;
+};
+
 export type ChangeTaskStatusInput = {
   taskId: string;
   status: string;

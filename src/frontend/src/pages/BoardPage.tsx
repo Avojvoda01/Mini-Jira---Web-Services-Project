@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Bot, Plus, SendHorizontal } from 'lucide-react';
+import { Bot, Plus, SendHorizontal, X } from 'lucide-react';
 import { CreateTaskModal } from '@/components/board/CreateTaskModal';
+import { DeleteTaskModal } from '@/components/board/DeleteTaskModal';
 import { EditTaskModal } from '@/components/board/EditTaskModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { usePageHeader } from '@/components/layout/PageHeaderContext';
-import { useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
+import { useDeleteTaskMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
 import { cn } from '@/lib/utils';
 
 type ChatMessage = {
@@ -41,6 +42,27 @@ const priorityLabelMap: Record<TaskPriority, TaskCard['priority']> = {
   medium: 'Medium',
   low: 'Low',
   unknown: 'Unknown',
+};
+
+const statusLabelMap: Record<TaskItem['status'], string> = {
+  todo: 'Open',
+  'in-progress': 'In Progress',
+  done: 'Done',
+  unknown: 'Open',
+};
+
+const priorityBadgeClass = (priority: TaskCard['priority']) => {
+  if (priority === 'High') {
+    return 'bg-rose-500/10 text-rose-700 hover:bg-rose-500/10';
+  }
+  if (priority === 'Medium') {
+    return 'bg-amber-500/10 text-amber-700 hover:bg-amber-500/10';
+  }
+  if (priority === 'Low') {
+    return 'bg-slate-500/10 text-slate-700 hover:bg-slate-500/10';
+  }
+
+  return 'bg-muted text-muted-foreground hover:bg-muted';
 };
 
 const columnConfig: Array<Omit<BoardColumn, 'tasks'>> = [
@@ -88,8 +110,11 @@ export function BoardPage() {
   const { data: tasks = [], isLoading, isError, error, refetch } = useTasksQuery({
     projectId: projectId ?? null,
   });
+  const deleteTaskMutation = useDeleteTaskMutation();
   const [createColumnId, setCreateColumnId] = useState<BoardColumn['id'] | null>(null);
   const [editTaskId, setEditTaskId] = useState<string | null>(null);
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
+  const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [input, setInput] = useState('');
   const nextMessageIdRef = useRef(2);
@@ -157,6 +182,8 @@ export function BoardPage() {
   }, [projectId, tasks]);
 
   const activeEditTask = editTaskId ? taskById.get(editTaskId) ?? null : null;
+  const activeDetailTask = detailTaskId ? taskById.get(detailTaskId) ?? null : null;
+  const activeDeleteTask = deleteTaskId ? taskById.get(deleteTaskId) ?? null : null;
 
   const totalTasks = boardColumns.reduce((total, column) => total + column.tasks.length, 0);
   const inProgressCount = boardColumns.find((column) => column.id === 'in-progress')?.tasks.length ?? 0;
@@ -206,6 +233,97 @@ export function BoardPage() {
       />
 
       <EditTaskModal isOpen={editTaskId !== null} onClose={() => setEditTaskId(null)} task={activeEditTask} />
+
+      <DeleteTaskModal
+        isOpen={deleteTaskId !== null}
+        taskTitle={activeDeleteTask?.title ?? 'this ticket'}
+        onClose={() => setDeleteTaskId(null)}
+        onConfirm={async () => {
+          if (!activeDeleteTask) {
+            return;
+          }
+
+          await deleteTaskMutation.mutateAsync({ taskId: activeDeleteTask.id });
+          setDeleteTaskId(null);
+          setDetailTaskId(null);
+        }}
+        isPending={deleteTaskMutation.isPending}
+      />
+
+      {activeDetailTask ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-30 bg-black/30"
+            aria-label="Close task details"
+            onClick={() => setDetailTaskId(null)}
+          />
+          <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-[34rem] flex-col border-l border-border/70 bg-background/95 shadow-2xl backdrop-blur-sm">
+            <div className="flex items-start justify-between gap-4 border-b border-border/70 p-5">
+              <div className="space-y-2">
+                <Badge variant="outline" className="border-border/70 bg-background/70 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
+                  TASK-{activeDetailTask.id.slice(0, 6).toUpperCase()}
+                </Badge>
+                <h2 className="text-lg font-semibold leading-7 text-foreground">{activeDetailTask.title}</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDetailTaskId(null);
+                    setEditTaskId(activeDetailTask.id);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setDetailTaskId(null)} aria-label="Close task details">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-6 overflow-y-auto p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="border-border/70 bg-background/70 text-muted-foreground">
+                  {statusLabelMap[activeDetailTask.status]}
+                </Badge>
+                <Badge className={priorityBadgeClass(priorityLabelMap[activeDetailTask.priority])}>
+                  {priorityLabelMap[activeDetailTask.priority]}
+                </Badge>
+              </div>
+
+              <div className="grid gap-3 text-sm text-muted-foreground">
+                <div className="flex items-center justify-between gap-2">
+                  <span>Owner</span>
+                  <span className="text-foreground">
+                    {activeDetailTask.assigneeId ? `User ${activeDetailTask.assigneeId.slice(0, 6)}` : 'Unassigned'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span>Estimate</span>
+                  <span className="text-foreground">n/a</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Description</p>
+                <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground break-words">
+                  {activeDetailTask.description?.trim() ? activeDetailTask.description : 'No description yet.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end border-t border-border/70 p-4">
+              <Button
+                variant="destructive"
+                onClick={() => setDeleteTaskId(activeDetailTask.id)}
+              >
+                Delete
+              </Button>
+            </div>
+          </aside>
+        </>
+      ) : null}
 
       {isError ? (
         <ErrorState
@@ -257,7 +375,11 @@ export function BoardPage() {
                 column.tasks.map((task, index) => (
                   <div key={task.ticket}>
                     {index > 0 ? <Separator className="mb-3" /> : null}
-                    <article className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm transition-shadow hover:shadow-md">
+                    <button
+                      type="button"
+                      className="w-full cursor-pointer rounded-2xl border border-border/70 bg-background/80 p-4 text-left shadow-sm transition-shadow hover:shadow-md"
+                      onClick={() => setDetailTaskId(task.taskId)}
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1 space-y-2">
                           <Badge variant="outline" className="border-border/70 bg-background/70 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
@@ -270,17 +392,7 @@ export function BoardPage() {
                             </p>
                           ) : null}
                         </div>
-                        <Badge
-                          className={
-                            task.priority === 'High'
-                              ? 'bg-rose-500/10 text-rose-700 hover:bg-rose-500/10'
-                              : task.priority === 'Medium'
-                                ? 'bg-amber-500/10 text-amber-700 hover:bg-amber-500/10'
-                                : task.priority === 'Low'
-                                  ? 'bg-slate-500/10 text-slate-700 hover:bg-slate-500/10'
-                                  : 'bg-muted text-muted-foreground hover:bg-muted'
-                          }
-                        >
+                        <Badge className={priorityBadgeClass(task.priority)}>
                           {task.priority}
                         </Badge>
                       </div>
@@ -290,12 +402,7 @@ export function BoardPage() {
                         <span>{task.estimate}</span>
                       </div>
 
-                      <div className="mt-3 flex justify-end">
-                        <Button variant="outline" size="sm" onClick={() => setEditTaskId(task.taskId)}>
-                          Edit
-                        </Button>
-                      </div>
-                    </article>
+                    </button>
                   </div>
                 ))
               )}

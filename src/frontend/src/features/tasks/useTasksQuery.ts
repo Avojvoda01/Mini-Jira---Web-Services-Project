@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { changeTaskPriority, changeTaskStatus, createTask, fetchTasks, updateTask } from './taskApi';
-import type { ChangeTaskPriorityInput, ChangeTaskStatusInput, CreateTaskInput, TaskFilters, UpdateTaskInput } from './taskTypes';
+import { changeTaskPriority, changeTaskStatus, createTask, deleteTask, fetchTasks, updateTask } from './taskApi';
+import type {
+  ChangeTaskPriorityInput,
+  ChangeTaskStatusInput,
+  CreateTaskInput,
+  DeleteTaskInput,
+  TaskFilters,
+  UpdateTaskInput,
+} from './taskTypes';
 
 export const taskQueryKeys = {
   all: ['tasks'] as const,
@@ -63,6 +70,17 @@ export function useUpdateTaskMutation() {
 
   return useMutation({
     mutationFn: (input: UpdateTaskInput) => updateTask(input),
+    onSuccess: () => {
+      return queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
+    },
+  });
+}
+
+export function useDeleteTaskMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: DeleteTaskInput) => deleteTask(input),
     onSuccess: () => {
       return queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
     },
