@@ -17,6 +17,10 @@ public class EpicConfiguraiton : IEntityTypeConfiguration<Epic>
         builder.Property(e => e.Description)
             .HasMaxLength(2000);
 
+        builder.HasOne(e => e.Project)
+            .WithMany()
+            .HasForeignKey(e => e.ProjectId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
 }

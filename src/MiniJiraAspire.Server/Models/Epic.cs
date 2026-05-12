@@ -4,6 +4,6 @@ public class Epic : BaseEntity
 {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    // TODO: Add references for Tasks
-
+    public Guid ProjectId { get; set; }
+    public Project Project { get; set; } = null!;
 }

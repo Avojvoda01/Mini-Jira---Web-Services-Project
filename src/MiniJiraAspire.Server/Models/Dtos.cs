@@ -2,12 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MiniJiraAspire.Server.Models;
 
-public record EpicDto(Guid Id, string Name, string Description, DateTime CreatedAtUtc, DateTime? UpdatedAtUtc);
+public record EpicDto(Guid Id, string Name, string Description, Guid ProjectId, DateTime CreatedAtUtc, DateTime? UpdatedAtUtc);
 
 public record CreateEpicRequest(
     [property: Required, StringLength(100, MinimumLength = 3)] string Name,
-    [property: StringLength(2000)] string? Description);
-
+    [property: StringLength(2000)] string? Description,
+    [property: Required] Guid ProjectId);
 
 public record UpdateEpicRequest(
     [property: StringLength(100, MinimumLength = 3)] string Name,
