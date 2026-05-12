@@ -40,7 +40,7 @@ DELETE {{Server_HostAddress}}/api/projects/00000000-0000-0000-0000-000000000000
 ###
 
 ### Get epic by id
-GET {{Server_HostAddress}}/api/epics/019dec56-e6f9-7566-a4db-77fba07fcd41
+GET {{Server_HostAddress}}/api/epics
 Accept: application/json
 
 ###

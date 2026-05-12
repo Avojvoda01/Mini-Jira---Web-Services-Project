@@ -57,7 +57,7 @@ public static class EpicEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        var epic = await mediator.Send(new CreateEpicCommand(request.Name, request.Description), ct);
+        var epic = await mediator.Send(new CreateEpicCommand(request.Name, request.Description, request.ProjectId), ct);
         return TypedResults.Created($"/api/epics/{epic.Id}", epic);
     }
 
