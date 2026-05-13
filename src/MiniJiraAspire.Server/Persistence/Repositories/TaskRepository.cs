@@ -6,7 +6,7 @@ namespace MiniJiraAspire.Server.Persistence.Repositories;
 
 public class TaskRepository(AppDbContext db) : ITaskRepository
 {
-    public async Task<List<TaskItem>> GetAllAsync(string? search, string? status, string? priority, string? assigneeId, string? epicId, CancellationToken cancellationToken = default)
+    public async Task<List<TaskItem>> GetAllAsync(string? search, string? status, string? priority, string? assigneeId, string? epicId, string? projectId, CancellationToken cancellationToken = default)
     {
         var query = db.TaskItems.AsNoTracking().AsQueryable();
 
@@ -24,6 +24,9 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
 
         if (!string.IsNullOrWhiteSpace(epicId) && Guid.TryParse(epicId, out var epicGuid))
             query = query.Where(t => t.EpicId == epicGuid);
+
+        if (!string.IsNullOrWhiteSpace(projectId) && Guid.TryParse(projectId, out var projectGuid))
+            query = query.Where(t => t.ProjectId == projectGuid);
 
         return await query.OrderByDescending(t => t.CreatedAtUtc).ToListAsync(cancellationToken);
     }
