@@ -1,10 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createEpic, deleteEpic, epicQueryKeys, fetchEpics, updateEpic } from './epicApi';
+import type { EpicFilters } from './epicTypes';
 
-export function useEpicsQuery() {
+const normalizeFilters = (filters?: Partial<EpicFilters>): EpicFilters => ({
+  projectId: filters?.projectId ?? null,
+});
+
+export function useEpicsQuery(filters?: Partial<EpicFilters>) {
+  const normalizedFilters = normalizeFilters(filters);
+
   return useQuery({
-    queryKey: epicQueryKeys.list(),
-    queryFn: fetchEpics,
+    queryKey: epicQueryKeys.list(normalizedFilters),
+    queryFn: () => fetchEpics(normalizedFilters),
   });
 }
 

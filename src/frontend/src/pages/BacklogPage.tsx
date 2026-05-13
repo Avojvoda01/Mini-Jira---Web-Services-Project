@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Filter, Plus } from 'lucide-react';
 import { EpicBacklogSection } from '@/components/backlog/EpicBacklogSection';
 import { CreateEpicModal } from '@/components/backlog/CreateEpicModal';
@@ -70,7 +71,10 @@ const backlogItems: BacklogTicket[] = [
 
 export function BacklogPage() {
   const { setContent } = usePageHeader();
-  const { data: epicDtos = [], isLoading: isLoadingEpics, isError: isEpicsError, error: epicsError, refetch: refetchEpics } = useEpicsQuery();
+  const { projectId } = useParams();
+  const { data: epicDtos = [], isLoading: isLoadingEpics, isError: isEpicsError, error: epicsError, refetch: refetchEpics } = useEpicsQuery({
+    projectId: projectId ?? null,
+  });
   const createEpicMutation = useCreateEpicMutation();
   const updateEpicMutation = useUpdateEpicMutation();
   const deleteEpicMutation = useDeleteEpicMutation();
@@ -89,12 +93,20 @@ export function BacklogPage() {
   const [deleteConfirmEpicId, setDeleteConfirmEpicId] = useState<string | null>(null);
   const [epicSort, setEpicSort] = useState<EpicSortOption>('newest');
 
+  const scopedEpicDtos = useMemo(() => {
+    if (!projectId) {
+      return epicDtos;
+    }
+
+    return epicDtos.filter((epic) => epic.projectId === projectId);
+  }, [epicDtos, projectId]);
+
   const epics = useMemo<Epic[]>(() => {
-    return epicDtos.map((epic) => ({
+    return scopedEpicDtos.map((epic) => ({
       ...epic,
       ticketIds: ticketAssignmentsByEpic[epic.id] ?? [],
     }));
-  }, [epicDtos, ticketAssignmentsByEpic]);
+  }, [scopedEpicDtos, ticketAssignmentsByEpic]);
 
   const sortedEpics = useMemo(() => {
     const next = [...epics];
@@ -220,7 +232,7 @@ export function BacklogPage() {
   const createEpic = async () => {
     const name = newEpicName.trim();
     const description = newEpicDescription.trim();
-    if (name.length < 3) {
+    if (!projectId || name.length < 3) {
       return;
     }
 
@@ -228,6 +240,7 @@ export function BacklogPage() {
       const newEpic = await createEpicMutation.mutateAsync({
         name,
         description: description || null,
+        projectId,
       });
 
       if (newEpicTicketIds.length > 0) {
