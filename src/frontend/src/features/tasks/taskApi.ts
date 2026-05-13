@@ -86,6 +86,9 @@ export async function fetchTasks(filters: TaskFilters): Promise<TaskItem[]> {
   if (filters.epicId) {
     params.set('epicId', filters.epicId);
   }
+  if (filters.projectId) {
+    params.set('projectId', filters.projectId);
+  }
 
   const query = params.toString();
   const result = await apiClient.get<TaskItemResponse[]>(`/tasks${query ? `?${query}` : ''}`);

@@ -46,11 +46,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   const text = await response.text();
-  if (!text) {
+  const trimmedText = text.trim();
+  if (!trimmedText) {
     return undefined as T;
   }
 
-  return JSON.parse(text) as T;
+  return JSON.parse(trimmedText) as T;
 }
 
 export const apiClient = {

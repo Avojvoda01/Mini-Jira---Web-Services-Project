@@ -15,6 +15,7 @@ const MAX_DESCRIPTION_LENGTH = 2000;
 type EditTaskModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onSave?: () => void;
   task: TaskItem | null;
 };
 
@@ -45,7 +46,7 @@ const priorityToneClass: Record<EditTaskState['priority'], string> = {
   Low: 'bg-slate-500/10 text-slate-700',
 };
 
-export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
+export function EditTaskModal({ isOpen, onClose, onSave, task }: EditTaskModalProps) {
   const updateTaskMutation = useUpdateTaskMutation();
   const changeStatusMutation = useChangeTaskStatusMutation();
   const changePriorityMutation = useChangeTaskPriorityMutation();
@@ -128,7 +129,11 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
         await changePriorityMutation.mutateAsync({ taskId: task.id, priority: desiredPriority });
       }
 
-      onClose();
+      if (onSave) {
+        onSave();
+      } else {
+        onClose();
+      }
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Failed to update task.');
     }

@@ -239,6 +239,16 @@ export function BoardPage() {
     return () => setContent({});
   }, [boardColumns.length, inProgressCount, setContent, totalTasks]);
 
+  useEffect(() => {
+    setEditingCommentId(null);
+    setDeleteCommentId(null);
+
+    if (!detailTaskId) {
+      setCommentDraftByTask({});
+      setCommentEditDrafts({});
+    }
+  }, [detailTaskId]);
+
   return (
     <section className="relative space-y-6">
       <CreateTaskModal
@@ -249,7 +259,15 @@ export function BoardPage() {
         columnLabel={createColumnId ? columnConfig.find((column) => column.id === createColumnId)?.title ?? 'Backlog' : 'Backlog'}
       />
 
-      <EditTaskModal isOpen={editTaskId !== null} onClose={() => setEditTaskId(null)} task={activeEditTask} />
+      <EditTaskModal
+        isOpen={editTaskId !== null}
+        onClose={() => setEditTaskId(null)}
+        onSave={() => {
+          setEditTaskId(null);
+          setDetailTaskId(null);
+        }}
+        task={activeEditTask}
+      />
 
       <DeleteTaskModal
         isOpen={deleteTaskId !== null}
@@ -290,7 +308,13 @@ export function BoardPage() {
             type="button"
             className="fixed inset-0 z-30 bg-black/30"
             aria-label="Close task details"
-            onClick={() => setDetailTaskId(null)}
+            onClick={() => {
+              if (editTaskId) {
+                return;
+              }
+
+              setDetailTaskId(null);
+            }}
           />
           <aside className="fixed right-0 top-0 z-40 flex h-full w-full max-w-[34rem] flex-col border-l border-border/70 bg-background/95 shadow-2xl backdrop-blur-sm">
             <div className="flex items-start justify-between gap-4 border-b border-border/70 p-5">
@@ -303,14 +327,22 @@ export function BoardPage() {
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setDetailTaskId(null);
-                    setEditTaskId(activeDetailTask.id);
-                  }}
+                  onClick={() => setEditTaskId(activeDetailTask.id)}
                 >
                   Edit
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setDetailTaskId(null)} aria-label="Close task details">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (editTaskId) {
+                      return;
+                    }
+
+                    setDetailTaskId(null);
+                  }}
+                  aria-label="Close task details"
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -563,7 +595,7 @@ export function BoardPage() {
                 </div>
               ) : (
                 column.tasks.map((task, index) => (
-                  <div key={task.ticket}>
+                  <div key={task.taskId}>
                     {index > 0 ? <Separator className="mb-3" /> : null}
                     <button
                       type="button"

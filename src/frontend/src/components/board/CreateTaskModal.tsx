@@ -74,12 +74,11 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
       nextErrors.description = `Description must be ${MAX_DESCRIPTION_LENGTH} characters or less.`;
     }
 
-    if (!projectId) {
-      nextErrors.title = 'Select a project before creating tasks.';
-    }
+    const projectError = !projectId ? 'Select a project before creating tasks.' : null;
 
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    setSubmitError(projectError);
+    return Object.keys(nextErrors).length === 0 && !projectError;
   };
 
   const handleCreate = async () => {
