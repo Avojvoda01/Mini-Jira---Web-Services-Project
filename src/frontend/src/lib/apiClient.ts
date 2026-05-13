@@ -18,10 +18,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${env.apiBaseUrl}${path}`, {
-    ...init,
-    headers,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${env.apiBaseUrl}${path}`, {
+      ...init,
+      headers,
+    });
+  } catch {
+    throw new ApiError('Unable to reach the server. Please check your connection and try again.', 0);
+  }
 
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;

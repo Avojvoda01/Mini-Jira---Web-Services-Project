@@ -555,12 +555,6 @@ export function BoardPage() {
         />
       ) : null}
 
-      {isLoading ? (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 p-6 text-sm text-muted-foreground">
-          Loading tasks...
-        </div>
-      ) : null}
-
       <div className="grid gap-4 lg:grid-cols-3">
         {boardColumns.map((column) => (
           <Card key={column.title} className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
@@ -589,7 +583,20 @@ export function BoardPage() {
             </CardHeader>
 
             <CardContent className="space-y-3">
-              {column.tasks.length === 0 ? (
+              {isLoading ? (
+                <div
+                  className="flex items-center justify-center rounded-2xl border border-dashed border-border/70 bg-background/60 p-6"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <div className="h-9 w-9 animate-spin rounded-full border-2 border-border/60 border-t-foreground/70" aria-hidden="true" />
+                  <span className="sr-only">Loading tasks</span>
+                </div>
+              ) : isError ? (
+                <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 p-4 text-sm text-muted-foreground">
+                  Unable to load tasks.
+                </div>
+              ) : column.tasks.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border/70 bg-background/60 p-4 text-sm text-muted-foreground">
                   No tasks here yet.
                 </div>
