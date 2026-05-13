@@ -161,8 +161,6 @@ export function BoardPage() {
   const taskById = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
 
   const boardColumns = useMemo<BoardColumn[]>(() => {
-    const visibleTasks = projectId ? tasks.filter((task) => task.projectId === projectId) : tasks;
-
     const toCard = (task: TaskItem): TaskCard => ({
       taskId: task.id,
       ticket: `TASK-${task.id.slice(0, 6).toUpperCase()}`,
@@ -179,7 +177,7 @@ export function BoardPage() {
       ['done', []],
     ]);
 
-    visibleTasks.forEach((task) => {
+    tasks.forEach((task) => {
       const target = task.status === 'done' ? 'done' : task.status === 'in-progress' ? 'in-progress' : 'backlog';
       byColumn.get(target)?.push(toCard(task));
     });
@@ -188,7 +186,7 @@ export function BoardPage() {
       ...column,
       tasks: byColumn.get(column.id) ?? [],
     }));
-  }, [projectId, tasks]);
+  }, [tasks]);
 
   const activeEditTask = editTaskId ? taskById.get(editTaskId) ?? null : null;
   const activeDetailTask = detailTaskId ? taskById.get(detailTaskId) ?? null : null;
