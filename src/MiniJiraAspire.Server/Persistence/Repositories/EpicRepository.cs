@@ -77,6 +77,15 @@ public class EpicRepository(AppDbContext db) : IEpicRepository
             throw new Exception("Epic delete");
         }
 
+        var assignedTasks = await db.TaskItems
+            .Where(task => task.EpicId == id)
+            .ToListAsync(cancellationToken);
+
+        foreach (var task in assignedTasks)
+        {
+            task.EpicId = null;
+        }
+
         db.Epics.Remove(evt);
         await db.SaveChangesAsync(cancellationToken);
     }
