@@ -18,10 +18,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${env.apiBaseUrl}${path}`, {
-    ...init,
-    headers,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${env.apiBaseUrl}${path}`, {
+      ...init,
+      headers,
+    });
+  } catch {
+    throw new ApiError('Unable to reach the server. Please check your connection and try again.', 0);
+  }
 
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
@@ -40,7 +46,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  const contentLength = response.headers.get('content-length');
+  if (contentLength === '0') {
+    return undefined as T;
+  }
+
+  const text = await response.text();
+  const trimmedText = text.trim();
+  if (!trimmedText) {
+    return undefined as T;
+  }
+
+  return JSON.parse(trimmedText) as T;
 }
 
 export const apiClient = {

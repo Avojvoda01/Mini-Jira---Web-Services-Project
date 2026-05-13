@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using MiniJiraAspire.Server.Features.Comment;
+using MiniJiraAspire.Server.Features.Comment.Queries;
 using MiniJiraAspire.Server.Models.CommentDTO.Request;
 
 namespace Microsoft.Extensions.Hosting.Comments;
@@ -16,6 +17,11 @@ public static class CommentEndpoints
             .Produces<CommentDTO>(StatusCodes.Status201Created)
             .WithName("CreateComment")
             .WithSummary("Create a comment on a task");
+
+        group.MapGet("/", GetComments)
+            .Produces<CommentDTO[]>(StatusCodes.Status200OK)
+            .WithName("GetCommentsForTask")
+            .WithSummary("Get all comments for a task");
 
         group.MapPut("/{commentId:guid}", UpdateComment)
             .Produces(StatusCodes.Status204NoContent)
@@ -36,6 +42,15 @@ public static class CommentEndpoints
     {
         var comment = await mediator.Send(new CreateCommentCommand(taskId, request.Content, request.UserId), ct);
         return TypedResults.Created($"/api/tasks/{taskId}/comments/{comment.Id}", comment);
+    }
+
+    private static async Task<Ok<CommentDTO[]>> GetComments(
+        string taskId,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var comments = await mediator.Send(new GetCommentsForTaskQuery(taskId), ct);
+        return TypedResults.Ok(comments);
     }
 
     private static async Task<NoContent> UpdateComment(

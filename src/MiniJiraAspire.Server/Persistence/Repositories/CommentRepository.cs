@@ -8,6 +8,17 @@ namespace MiniJiraAspire.Server.Persistence.Repositories
 {
     public class CommentRepository(AppDbContext db) : ICommentRepository
     {
+        public async Task<CommentDTO[]> GetAllAsync(string taskId, CancellationToken cancellationToken = default)
+        {
+            var comments = await db.Comments
+                .AsNoTracking()
+                .Where(x => x.TaskId == taskId)
+                .OrderBy(x => x.CreatedAtUtc)
+                .ToListAsync(cancellationToken);
+
+            return comments.Select(MapToDto).ToArray();
+        }
+
         public async Task<CommentDTO> CreateAsync(string taskId, CreateCommentRequest request, CancellationToken cancellationToken = default)
         {
             var comment = new Comment
