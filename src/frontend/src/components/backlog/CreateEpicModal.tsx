@@ -2,6 +2,7 @@ import { Search } from 'lucide-react';
 import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Input } from '@/components/ui/input';
 import { SelectableTicketRow } from '@/components/backlog/SelectableTicketRow';
 
@@ -26,6 +27,12 @@ type CreateEpicModalProps = {
   unassignedTickets: BacklogTicket[];
   onCreate: () => void;
   isPending: boolean;
+  isTicketsLoading?: boolean;
+  isTicketsError?: boolean;
+  ticketsError?: Error | null;
+  onRetryTickets?: () => void;
+  submitError?: string | null;
+  isAssigning?: boolean;
 };
 
 export function CreateEpicModal({
@@ -43,6 +50,12 @@ export function CreateEpicModal({
   unassignedTickets,
   onCreate,
   isPending,
+  isTicketsLoading = false,
+  isTicketsError = false,
+  ticketsError,
+  onRetryTickets,
+  submitError,
+  isAssigning = false,
 }: CreateEpicModalProps) {
   if (!isOpen) {
     return null;
@@ -96,7 +109,15 @@ export function CreateEpicModal({
             />
           </div>
           <div className="h-80 space-y-2 overflow-y-auto rounded-2xl border border-border/70 bg-background/70 p-4">
-            {unassignedTickets.length === 0 ? (
+            {isTicketsError ? (
+              <ErrorState
+                title="Unable to load tickets"
+                description={ticketsError?.message ?? 'Check your connection and try again.'}
+                onRetry={onRetryTickets}
+              />
+            ) : isTicketsLoading ? (
+              <p className="text-sm text-muted-foreground">Loading tickets...</p>
+            ) : unassignedTickets.length === 0 ? (
               <p className="text-sm text-muted-foreground">No unassigned tickets available right now.</p>
             ) : createEpicFilteredTickets.length === 0 ? (
               <p className="text-sm text-muted-foreground">No tickets found for this search.</p>
@@ -115,11 +136,13 @@ export function CreateEpicModal({
           </div>
         </div>
 
+        {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
+
         <FormActionButtons
           onCancel={onClose}
-          confirmLabel="Create epic"
+          confirmLabel={isPending || isAssigning ? 'Creating...' : 'Create epic'}
           onConfirm={onCreate}
-          confirmDisabled={newEpicName.trim().length < 3 || isPending}
+          confirmDisabled={newEpicName.trim().length < 3 || isPending || isAssigning || isTicketsLoading || isTicketsError}
         />
       </CardContent>
     </BacklogModal>
