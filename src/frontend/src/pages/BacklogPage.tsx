@@ -21,6 +21,7 @@ import { useAssignEpicMutation, useTasksQuery, type TaskItem, type TaskPriority,
 
 type BacklogTicket = {
   id: string;
+  displayId: string;
   title: string;
   description: string;
   priority: 'High' | 'Medium' | 'Low';
@@ -50,8 +51,9 @@ const statusLabelMap: Record<TaskStatus, string> = {
   unknown: 'Open',
 };
 
-const mapTaskToTicket = (task: TaskItem): BacklogTicket => ({
+const mapTaskToTicket = (task: TaskItem, displayId: string): BacklogTicket => ({
   id: task.id,
+  displayId,
   title: task.title,
   description: task.description ?? '',
   priority: priorityLabelMap[task.priority],
@@ -112,6 +114,21 @@ export function BacklogPage() {
 
     return tasks.filter((task) => task.projectId === projectId);
   }, [projectId, tasks]);
+
+  const taskDisplayIds = useMemo(() => {
+    const sorted = [...scopedTasks].sort((left, right) => {
+      const leftDate = Date.parse(left.createdAtUtc);
+      const rightDate = Date.parse(right.createdAtUtc);
+      return leftDate - rightDate;
+    });
+
+    const map = new Map<string, string>();
+    sorted.forEach((task, index) => {
+      map.set(task.id, `TASK-${String(index + 1).padStart(3, '0')}`);
+    });
+
+    return map;
+  }, [scopedTasks]);
 
   const ticketsByEpicId = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -177,7 +194,9 @@ export function BacklogPage() {
     return next;
   }, [epics, epicSort]);
 
-  const backlogTickets = useMemo(() => scopedTasks.map(mapTaskToTicket), [scopedTasks]);
+  const backlogTickets = useMemo(() => {
+    return scopedTasks.map((task) => mapTaskToTicket(task, taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`));
+  }, [scopedTasks, taskDisplayIds]);
 
   const ticketById = useMemo(() => {
     return new Map(backlogTickets.map((ticket) => [ticket.id, ticket]));
@@ -208,8 +227,10 @@ export function BacklogPage() {
   }, [deleteConfirmEpicId, epics]);
 
   const unassignedTickets = useMemo(() => {
-    return scopedTasks.filter((task) => !task.epicId).map(mapTaskToTicket);
-  }, [scopedTasks]);
+    return scopedTasks
+      .filter((task) => !task.epicId)
+      .map((task) => mapTaskToTicket(task, taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`));
+  }, [scopedTasks, taskDisplayIds]);
 
   const createEpicFilteredTickets = useMemo(() => {
     const normalizedSearch = createEpicSearch.trim().toLowerCase();
@@ -219,6 +240,7 @@ export function BacklogPage() {
 
     return unassignedTickets.filter((ticket) => {
       return (
+        ticket.displayId.toLowerCase().includes(normalizedSearch) ||
         ticket.id.toLowerCase().includes(normalizedSearch) ||
         ticket.title.toLowerCase().includes(normalizedSearch) ||
         ticket.description.toLowerCase().includes(normalizedSearch)
@@ -236,6 +258,7 @@ export function BacklogPage() {
 
     return source.filter((ticket) => {
       return (
+        ticket.displayId.toLowerCase().includes(normalizedSearch) ||
         ticket.id.toLowerCase().includes(normalizedSearch) ||
         ticket.title.toLowerCase().includes(normalizedSearch) ||
         ticket.description.toLowerCase().includes(normalizedSearch)

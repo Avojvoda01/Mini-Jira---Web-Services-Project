@@ -8,6 +8,7 @@ import { SelectableTicketRow } from '@/components/backlog/SelectableTicketRow';
 
 type BacklogTicket = {
   id: string;
+  displayId: string;
   title: string;
   description: string;
 };
@@ -125,7 +126,7 @@ export function CreateEpicModal({
               createEpicFilteredTickets.map((ticket) => (
                 <SelectableTicketRow
                   key={ticket.id}
-                  id={ticket.id}
+                  id={ticket.displayId}
                   title={ticket.title}
                   secondaryText={ticket.description}
                   checked={newEpicTicketIds.includes(ticket.id)}

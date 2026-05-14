@@ -10,6 +10,7 @@ import { SelectableTicketRow } from '@/components/backlog/SelectableTicketRow';
 
 type BacklogTicket = {
   id: string;
+  displayId: string;
   title: string;
   description: string;
   priority: 'High' | 'Medium' | 'Low';
@@ -107,7 +108,7 @@ export function AssignTicketsModal({
               return (
                 <SelectableTicketRow
                   key={ticket.id}
-                  id={ticket.id}
+                  id={ticket.displayId}
                   title={ticket.title}
                   secondaryText={`${ticket.status} - ${ticket.priority} - ${ticket.estimate}`}
                   checked={assignTicketDraft.includes(ticket.id)}
