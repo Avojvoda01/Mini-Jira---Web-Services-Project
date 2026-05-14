@@ -158,12 +158,27 @@ export function BoardPage() {
     setInput('');
   };
 
+  const taskDisplayIds = useMemo(() => {
+    const sorted = [...tasks].sort((left, right) => {
+      const leftDate = Date.parse(left.createdAtUtc);
+      const rightDate = Date.parse(right.createdAtUtc);
+      return leftDate - rightDate;
+    });
+
+    const map = new Map<string, string>();
+    sorted.forEach((task, index) => {
+      map.set(task.id, `TASK-${String(index + 1).padStart(3, '0')}`);
+    });
+
+    return map;
+  }, [tasks]);
+
   const taskById = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
 
   const boardColumns = useMemo<BoardColumn[]>(() => {
     const toCard = (task: TaskItem): TaskCard => ({
       taskId: task.id,
-      ticket: `TASK-${task.id.slice(0, 6).toUpperCase()}`,
+      ticket: taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`,
       title: task.title,
       description: truncateText(task.description ?? '', MAX_TASK_DESCRIPTION_LENGTH),
       owner: task.assigneeId ? `User ${task.assigneeId.slice(0, 6)}` : 'Unassigned',
@@ -186,7 +201,7 @@ export function BoardPage() {
       ...column,
       tasks: byColumn.get(column.id) ?? [],
     }));
-  }, [tasks]);
+  }, [taskDisplayIds, tasks]);
 
   const activeEditTask = editTaskId ? taskById.get(editTaskId) ?? null : null;
   const activeDetailTask = detailTaskId ? taskById.get(detailTaskId) ?? null : null;
