@@ -333,7 +333,7 @@ export function BoardPage() {
             <div className="flex items-start justify-between gap-4 border-b border-border/70 p-5">
               <div className="space-y-2">
                 <Badge variant="outline" className="border-border/70 bg-background/70 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
-                  TASK-{activeDetailTask.id.slice(0, 6).toUpperCase()}
+                  {taskDisplayIds.get(activeDetailTask.id) ?? `TASK-${activeDetailTask.id.slice(0, 6).toUpperCase()}`}
                 </Badge>
                 <h2 className="text-lg font-semibold leading-7 text-foreground">{activeDetailTask.title}</h2>
               </div>
