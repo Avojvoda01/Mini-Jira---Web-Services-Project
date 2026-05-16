@@ -4,6 +4,8 @@ namespace MiniJiraAspire.Server.Persistence.Repositories;
 
 public interface IUserRepository
 {
+    Task<List<UserDto>> ListAsync(CancellationToken cancellationToken = default);
+
     Task<UserDto> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(string userId, CancellationToken cancellationToken = default);

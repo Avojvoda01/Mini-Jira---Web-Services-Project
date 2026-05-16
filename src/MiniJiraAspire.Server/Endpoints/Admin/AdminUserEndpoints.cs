@@ -12,6 +12,10 @@ public static class AdminUserEndpoints
         var group = app.MapGroup("/api/admin/users")
             .WithTags("Admin - Users");
 
+        group.MapGet("/", GetUsers)
+            .WithName("AdminGetUsers")
+            .WithSummary("Get all users (admin)");
+
         group.MapPost("/", CreateUser)
             .WithName("AdminCreateUser")
             .WithSummary("Create a new user (admin)");
@@ -19,6 +23,14 @@ public static class AdminUserEndpoints
         group.MapDelete("/{userId}", DeleteUser)
             .WithName("AdminDeleteUser")
             .WithSummary("Delete a user (admin)");
+    }
+
+    private static async Task<Ok<List<UserDto>>> GetUsers(
+        IUserRepository repository,
+        CancellationToken cancellationToken)
+    {
+        var users = await repository.ListAsync(cancellationToken);
+        return TypedResults.Ok(users);
     }
 
     private static async Task<Results<Created<UserDto>, ValidationProblem>> CreateUser(

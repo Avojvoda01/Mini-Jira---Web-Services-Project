@@ -6,6 +6,19 @@ namespace MiniJiraAspire.Server.Persistence.Repositories;
 
 public class UserRepository(AppDbContext db) : IUserRepository
 {
+    public Task<List<UserDto>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        return db.Users
+            .AsNoTracking()
+            .OrderBy(user => user.DisplayName)
+            .Select(user => new UserDto(
+                user.Id.ToString(),
+                user.Email,
+                user.DisplayName,
+                user.Role))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<UserDto> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
     {
         var user = new User
@@ -15,7 +28,7 @@ public class UserRepository(AppDbContext db) : IUserRepository
             PasswordHash = request.Password,
             DisplayName = request.DisplayName,
             // TODO: replace the string role with an enum once the RoleEndpoint is implemented.
-            Role = "Project Member"
+            Role = "User"
         };
 
         db.Users.Add(user);
