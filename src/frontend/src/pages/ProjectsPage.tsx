@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowRight, Filter, FolderKanban, LayoutGrid, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronDown, Filter, FolderKanban, LayoutGrid, Sparkles, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -98,6 +98,10 @@ export function ProjectsPage() {
 
     return projects.find((project) => project.id === deleteProjectId);
   }, [deleteProjectId, projects]);
+
+  const usersById = useMemo(() => {
+    return new Map(users.map((user) => [user.id.toLowerCase(), user]));
+  }, [users]);
 
   const openEditProjectModal = (project: ProjectDto) => {
     setEditProjectId(project.id);
@@ -283,10 +287,42 @@ export function ProjectsPage() {
               </CardHeader>
 
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <div className="space-y-1">
-                  <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Project ID</span>
-                  <p className="break-all text-xs font-medium text-foreground">{project.id}</p>
-                </div>
+                <details className="group rounded-lg border border-border/70 bg-background/50 px-3 py-2">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-foreground">
+                    <span className="inline-flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      Show members
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                        {(project.memberIds ?? []).length}
+                      </span>
+                    </span>
+                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+                  </summary>
+
+                  <div className="mt-3 space-y-2">
+                    {(project.memberIds ?? []).length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No members are assigned to this project yet.</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {(project.memberIds ?? []).map((memberId) => {
+                          const member = usersById.get(memberId.toLowerCase());
+
+                          return (
+                            <li
+                              key={memberId}
+                              className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/70 px-3 py-2"
+                            >
+                              <div>
+                                <p className="font-medium text-foreground">{member?.displayName ?? `User ${memberId.slice(0, 6)}`}</p>
+                                <p className="text-xs text-muted-foreground">{member?.email ?? memberId}</p>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </details>
 
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm" onClick={() => openEditProjectModal(project)}>
