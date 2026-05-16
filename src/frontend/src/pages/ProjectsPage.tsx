@@ -12,22 +12,29 @@ import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
 import { DeleteProjectModal } from '@/components/projects/DeleteProjectModal';
 import { EditProjectModal } from '@/components/projects/EditProjectModal';
 import {
+  useAddProjectMemberMutation,
   useDeleteProjectMutation,
   useProjectsQuery,
+  useRemoveProjectMemberMutation,
   useUpdateProjectMutation,
   type ProjectDto,
 } from '@/features/projects';
+import { useAdminUsersQuery } from '@/features/users';
 
 type ProjectSortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
 
 export function ProjectsPage() {
   const { data: projects = [], isError, isLoading, error, refetch } = useProjectsQuery();
+  const { data: users = [] } = useAdminUsersQuery();
   const updateProjectMutation = useUpdateProjectMutation();
+  const addProjectMemberMutation = useAddProjectMemberMutation();
+  const removeProjectMemberMutation = useRemoveProjectMemberMutation();
   const deleteProjectMutation = useDeleteProjectMutation();
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [editProjectName, setEditProjectName] = useState('');
   const [editProjectDescription, setEditProjectDescription] = useState('');
+  const [editProjectMemberIds, setEditProjectMemberIds] = useState<string[]>([]);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [projectSort, setProjectSort] = useState<ProjectSortOption>('newest');
 
@@ -96,12 +103,14 @@ export function ProjectsPage() {
     setEditProjectId(project.id);
     setEditProjectName(project.name);
     setEditProjectDescription(project.description);
+    setEditProjectMemberIds(project.memberIds ?? []);
   };
 
   const closeEditProjectModal = () => {
     setEditProjectId(null);
     setEditProjectName('');
     setEditProjectDescription('');
+    setEditProjectMemberIds([]);
   };
 
   const saveProjectChanges = async () => {
@@ -117,11 +126,35 @@ export function ProjectsPage() {
     }
 
     try {
+      const project = activeEditProject;
+      const currentMemberIds = project?.memberIds ?? [];
+      const desiredMemberIds = Array.from(new Set(editProjectMemberIds));
+      const currentMemberIdSet = new Set(currentMemberIds);
+      const desiredMemberIdSet = new Set(desiredMemberIds);
+      const membersToAdd = desiredMemberIds.filter((memberId) => !currentMemberIdSet.has(memberId));
+      const membersToRemove = currentMemberIds.filter((memberId) => !desiredMemberIdSet.has(memberId));
+
       await updateProjectMutation.mutateAsync({
         id: editProjectId,
         name,
         description,
       });
+
+      for (const userId of membersToAdd) {
+        await addProjectMemberMutation.mutateAsync({
+          projectId: editProjectId,
+          userId,
+          role: 'Member',
+        });
+      }
+
+      for (const userId of membersToRemove) {
+        await removeProjectMemberMutation.mutateAsync({
+          projectId: editProjectId,
+          userId,
+        });
+      }
+
       closeEditProjectModal();
     } catch (error) {
       console.error('Error updating project:', error);
@@ -276,15 +309,18 @@ export function ProjectsPage() {
         )}
       </div>
 
-      <CreateProjectForm open={isCreateProjectOpen} onClose={() => setIsCreateProjectOpen(false)} />
+      <CreateProjectForm open={isCreateProjectOpen} onClose={() => setIsCreateProjectOpen(false)} members={users} />
 
       <EditProjectModal
         isOpen={Boolean(activeEditProject)}
         projectName={editProjectName}
         projectDescription={editProjectDescription}
+        selectedMemberIds={editProjectMemberIds}
+        members={users}
         onClose={closeEditProjectModal}
         onChangeName={setEditProjectName}
         onChangeDescription={setEditProjectDescription}
+        onChangeSelectedMemberIds={setEditProjectMemberIds}
         onSave={saveProjectChanges}
         isPending={updateProjectMutation.isPending}
       />

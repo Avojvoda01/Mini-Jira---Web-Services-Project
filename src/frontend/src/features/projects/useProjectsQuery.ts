@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createProject, deleteProject, fetchProjectById, fetchProjects, projectQueryKeys, updateProject } from './projectApi';
+import { addProjectMember, removeProjectMember } from './projectMemberApi';
 
 export function useProjectsQuery() {
   return useQuery({
@@ -46,5 +47,23 @@ export function useDeleteProjectMutation() {
     onSuccess: () => {
       return queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
     },
+  });
+}
+
+export function useAddProjectMemberMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: addProjectMember,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: projectQueryKeys.all }),
+  });
+}
+
+export function useRemoveProjectMemberMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: removeProjectMember,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: projectQueryKeys.all }),
   });
 }
