@@ -6,6 +6,37 @@ namespace MiniJiraAspire.Server.Persistence.Repositories;
 
 public class UserRepository(AppDbContext db) : IUserRepository
 {
+    public async Task<List<UserDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await db.Users
+            .AsNoTracking()
+            .OrderBy(user => user.DisplayName)
+            .Select(user => new UserDto(
+                user.Id.ToString(),
+                user.Email,
+                user.DisplayName,
+                user.Role))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<UserDto?> GetByIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(userId, out var id))
+        {
+            return null;
+        }
+
+        return await db.Users
+            .AsNoTracking()
+            .Where(user => user.Id == id)
+            .Select(user => new UserDto(
+                user.Id.ToString(),
+                user.Email,
+                user.DisplayName,
+                user.Role))
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<UserDto> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
     {
         var user = new User
@@ -44,6 +75,30 @@ public class UserRepository(AppDbContext db) : IUserRepository
 
         db.Users.Remove(user);
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<UserDto> ChangeRoleAsync(string userId, string role, CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(userId, out var id))
+        {
+            throw new Exception("Invalid user id");
+        }
+
+        var user = await db.Users.FindAsync([id], cancellationToken);
+
+        if (user is null)
+        {
+            throw new Exception("User role update");
+        }
+
+        user.Role = role;
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new UserDto(
+            user.Id.ToString(),
+            user.Email,
+            user.DisplayName,
+            user.Role);
     }
 
     public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
