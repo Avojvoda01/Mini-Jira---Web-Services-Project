@@ -1,54 +1,46 @@
-import { CircleCheckBig, Clock3, Sparkles } from 'lucide-react';
-import { useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { AlertCircle, CheckCircle2, Clock3, Flame, ListTodo, Sparkles, Users, Zap } from 'lucide-react';
+import { useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
 import { usePageHeader } from '@/components/layout/PageHeaderContext';
-
-const kpis = [
-  { label: 'Open tickets', value: '12', detail: '+2 this week' },
-  { label: 'In progress', value: '6', detail: '3 due today' },
-  { label: 'Released', value: '3', detail: '1 release candidate' },
-];
-
-const activityItems = [
-  {
-    title: 'Sprint planning refined the top backlog items',
-    time: '10 min ago',
-    tone: 'Planning',
-  },
-  {
-    title: 'Payment flow validation moved to staging review',
-    time: '1 hour ago',
-    tone: 'Release',
-  },
-  {
-    title: 'Two blockers were cleared from the board',
-    time: 'Today',
-    tone: 'Execution',
-  },
-];
+import { useTasksQuery } from '@/features/tasks';
+import { useEpicsQuery } from '@/features/epics';
+import { useProjectQuery } from '@/features/projects';
 
 export function DashboardPage() {
   const { setContent } = usePageHeader();
+  const { projectId } = useParams();
+  
+  const { data: tasks = [] } = useTasksQuery({ projectId: projectId ?? null });
+  const { data: epics = [] } = useEpicsQuery({ projectId: projectId ?? null });
+  const { data: project } = useProjectQuery(projectId ?? null);
+
+  const stats = useMemo(() => {
+    const totalTasks = tasks.length;
+    const openTasks = tasks.filter((t) => t.status === 'todo').length;
+    const inProgressTasks = tasks.filter((t) => t.status === 'in-progress').length;
+    const completedTasks = tasks.filter((t) => t.status === 'done').length;
+    const totalEpics = epics.filter((e) => e.projectId === projectId).length;
+    const mediumPriorityTasks = tasks.filter((t) => t.priority === 'medium').length;
+    const highPriorityTasks = tasks.filter((t) => t.priority === 'high').length;
+    const teamMembers = project?.memberIds?.length ?? 0;
+
+    return {
+      totalTasks,
+      openTasks,
+      inProgressTasks,
+      completedTasks,
+      totalEpics,
+      mediumPriorityTasks,
+      highPriorityTasks,
+      teamMembers,
+    };
+  }, [tasks, epics, project, projectId]);
 
   useEffect(() => {
     setContent({
       title: 'Dashboard',
-      description: 'A calm, high-signal view of workload, flow health, and delivery momentum.',
-      meta: (
-        <>
-          <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
-            12 open tickets
-          </Badge>
-          <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
-            6 in progress
-          </Badge>
-          <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
-            3 released
-          </Badge>
-        </>
-      ),
+      description: 'Project overview and key metrics.',
     });
 
     return () => setContent({});
@@ -56,79 +48,108 @@ export function DashboardPage() {
 
   return (
     <section className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-3 lg:max-w-[24rem]">
-        {kpis.map((kpi) => (
-          <Card key={kpi.label} size="sm" className="border-border/70 bg-background/80 shadow-sm">
-            <CardContent className="space-y-2 p-4">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{kpi.label}</p>
-              <p className="text-3xl font-semibold tracking-tight text-foreground">{kpi.value}</p>
-              <p className="text-xs text-muted-foreground">{kpi.detail}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
-        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4">
-            <div>
-              <CardTitle>Delivery pulse</CardTitle>
-              <CardDescription>Recent flow indicators from the active sprint.</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            {[
-              {
-                title: 'Cycle time',
-                value: '3.8d',
-                detail: 'down from 4.6d last sprint',
-                icon: Clock3,
-              },
-              {
-                title: 'Blocked work',
-                value: '2',
-                detail: 'none older than 1 day',
-                icon: CircleCheckBig,
-              },
-              {
-                title: 'Release confidence',
-                value: '94%',
-                detail: 'stable across two builds',
-                icon: Sparkles,
-              },
-            ].map((item) => (
-              <div key={item.title} className="rounded-2xl border border-border/70 bg-background/80 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-muted-foreground">{item.title}</p>
-                  <item.icon className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground">{item.value}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{item.detail}</p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Total Tasks */}
+        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">Total Tasks</p>
+                <p className="text-4xl font-bold tracking-tight text-foreground">{stats.totalTasks}</p>
               </div>
-            ))}
+              <ListTodo className="h-8 w-8 text-muted-foreground" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Recent activity</CardTitle>
-            <CardDescription>Short signals that show where the team is spending time.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {activityItems.map((item, index) => (
-              <div key={item.title}>
-                {index > 0 ? <Separator className="mb-4" /> : null}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <Badge variant="outline" className="border-border/70 bg-background/70 text-muted-foreground">
-                      {item.tone}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">{item.time}</span>
-                  </div>
-                  <p className="text-sm leading-6 text-foreground">{item.title}</p>
-                </div>
+        {/* Open Tasks */}
+        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">Open</p>
+                <p className="text-4xl font-bold tracking-tight text-foreground">{stats.openTasks}</p>
               </div>
-            ))}
+              <Zap className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* In Progress */}
+        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">In Progress</p>
+                <p className="text-4xl font-bold tracking-tight text-foreground">{stats.inProgressTasks}</p>
+              </div>
+              <Clock3 className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Completed */}
+        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">Completed</p>
+                <p className="text-4xl font-bold tracking-tight text-foreground">{stats.completedTasks}</p>
+              </div>
+              <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Epics */}
+        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">Total Epics</p>
+                <p className="text-4xl font-bold tracking-tight text-foreground">{stats.totalEpics}</p>
+              </div>
+              <Sparkles className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Medium Priority Tasks */}
+        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">Medium Priority</p>
+                <p className="text-4xl font-bold tracking-tight text-foreground">{stats.mediumPriorityTasks}</p>
+              </div>
+              <AlertCircle className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* High Priority Tasks */}
+        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">High Priority</p>
+                <p className="text-4xl font-bold tracking-tight text-foreground">{stats.highPriorityTasks}</p>
+              </div>
+              <Flame className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Team Members */}
+        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-3">
+                <p className="text-sm font-medium uppercase tracking-[0.15em] text-muted-foreground">Team Members</p>
+                <p className="text-4xl font-bold tracking-tight text-foreground">{stats.teamMembers}</p>
+              </div>
+              <Users className="h-8 w-8 text-muted-foreground" />
+            </div>
           </CardContent>
         </Card>
       </div>
