@@ -20,7 +20,7 @@ public record UpdateEpicRequest(
     [property: StringLength(100, MinimumLength = 3)] string Name,
     [property: StringLength(2000)] string? Description);
 
-public record ProjectDto(Guid Id, string Name, string Description, DateTime CreatedAtUtc, DateTime? UpdatedAtUtc);
+public record ProjectDto(Guid Id, string Name, string Description, string[] MemberIds, DateTime CreatedAtUtc, DateTime? UpdatedAtUtc);
 
 public record CreateProjectRequest(
     [property: Required, StringLength(100, MinimumLength = 3)] string Name,

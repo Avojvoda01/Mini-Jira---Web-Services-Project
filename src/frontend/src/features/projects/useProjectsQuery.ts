@@ -1,10 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createProject, deleteProject, fetchProjects, projectQueryKeys, updateProject } from './projectApi';
+import { createProject, deleteProject, fetchProjectById, fetchProjects, projectQueryKeys, updateProject } from './projectApi';
+import { addProjectMember, removeProjectMember } from './projectMemberApi';
 
 export function useProjectsQuery() {
   return useQuery({
     queryKey: projectQueryKeys.list(),
     queryFn: fetchProjects,
+  });
+}
+
+export function useProjectQuery(projectId: string | null) {
+  return useQuery({
+    queryKey: projectId ? projectQueryKeys.detail(projectId) : [...projectQueryKeys.all, 'detail', 'none'],
+    queryFn: () => fetchProjectById(projectId as string),
+    enabled: Boolean(projectId),
   });
 }
 
@@ -38,5 +47,23 @@ export function useDeleteProjectMutation() {
     onSuccess: () => {
       return queryClient.invalidateQueries({ queryKey: projectQueryKeys.all });
     },
+  });
+}
+
+export function useAddProjectMemberMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: addProjectMember,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: projectQueryKeys.all }),
+  });
+}
+
+export function useRemoveProjectMemberMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: removeProjectMember,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: projectQueryKeys.all }),
   });
 }

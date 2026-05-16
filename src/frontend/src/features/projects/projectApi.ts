@@ -1,13 +1,29 @@
 import { apiClient } from '@/lib/apiClient';
 import type { CreateProjectInput, ProjectDto, UpdateProjectInput } from './projectTypes';
 
+type ProjectApiResponse = ProjectDto & {
+  membersId?: string[];
+};
+
 export const projectQueryKeys = {
   all: ['projects'] as const,
   list: () => [...projectQueryKeys.all, 'list'] as const,
+  detail: (id: string) => [...projectQueryKeys.all, 'detail', id] as const,
 };
 
+const mapProjectDto = (project: ProjectApiResponse): ProjectDto => ({
+  ...project,
+  memberIds: project.memberIds ?? project.membersId ?? [],
+});
+
 export async function fetchProjects(): Promise<ProjectDto[]> {
-  return apiClient.get<ProjectDto[]>('/projects');
+  const projects = await apiClient.get<ProjectApiResponse[]>('/projects');
+  return projects.map(mapProjectDto);
+}
+
+export async function fetchProjectById(id: string): Promise<ProjectDto> {
+  const project = await apiClient.get<ProjectApiResponse>(`/projects/${id}`);
+  return mapProjectDto(project);
 }
 
 export async function createProject(input: CreateProjectInput): Promise<ProjectDto> {

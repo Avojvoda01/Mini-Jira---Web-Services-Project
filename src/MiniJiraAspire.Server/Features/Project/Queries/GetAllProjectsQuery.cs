@@ -11,6 +11,14 @@ public class GetAllProjectsHandler(IProjectRepository repository) : IRequestHand
     public async Task<List<ProjectDto>> Handle(GetAllProjectsQuery request, CancellationToken ct)
     {
         var projects = await repository.GetAllAsync(ct);
-        return projects.Select(p => new ProjectDto(p.Id, p.Name, p.Description, p.CreatedAtUtc, p.UpdatedAtUtc)).ToList();
+        return projects
+            .Select(project => new ProjectDto(
+                project.Id,
+                project.Name,
+                project.Description,
+                [.. project.Members.Select(member => member.UserId.ToString())],
+                project.CreatedAtUtc,
+                project.UpdatedAtUtc))
+            .ToList();
     }
 }

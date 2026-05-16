@@ -1,7 +1,9 @@
+import { ProjectMemberPicker } from '@/components/projects/ProjectMemberPicker';
 import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import type { UserDto } from '@/features/users';
 
 const MAX_PROJECT_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 2000;
@@ -10,9 +12,12 @@ type EditProjectModalProps = {
   isOpen: boolean;
   projectName: string;
   projectDescription: string;
+  selectedMemberIds: string[];
+  members: UserDto[];
   onClose: () => void;
   onChangeName: (value: string) => void;
   onChangeDescription: (value: string) => void;
+  onChangeSelectedMemberIds: (value: string[]) => void;
   onSave: () => void;
   isPending: boolean;
 };
@@ -21,9 +26,12 @@ export function EditProjectModal({
   isOpen,
   projectName,
   projectDescription,
+  selectedMemberIds,
+  members,
   onClose,
   onChangeName,
   onChangeDescription,
+  onChangeSelectedMemberIds,
   onSave,
   isPending,
 }: EditProjectModalProps) {
@@ -65,6 +73,22 @@ export function EditProjectModal({
             className="min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
           />
           <p className="text-xs text-muted-foreground">Up to {MAX_DESCRIPTION_LENGTH} characters.</p>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground" htmlFor="edit-project-members">
+            Members
+          </label>
+          <ProjectMemberPicker
+            members={members}
+            selectedMemberIds={selectedMemberIds}
+            onAdd={(userId) => onChangeSelectedMemberIds([...selectedMemberIds, userId])}
+            onRemove={(userId) => onChangeSelectedMemberIds(selectedMemberIds.filter((memberId) => memberId !== userId))}
+            searchInputId="edit-project-members"
+          />
+          <p className="text-xs text-muted-foreground">
+            Only members not already assigned to this project are shown in the add list.
+          </p>
         </div>
 
         <FormActionButtons

@@ -2,11 +2,14 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
-import { useCreateProjectMutation } from '@/features/projects';
+import { ProjectMemberPicker } from '@/components/projects/ProjectMemberPicker';
+import { useAddProjectMemberMutation, useCreateProjectMutation } from '@/features/projects';
+import type { UserDto } from '@/features/users';
 
 type CreateProjectProps = {
   open: boolean;
   onClose: () => void;
+  members: UserDto[];
 };
 
 type CreateProjectState = {
@@ -17,8 +20,9 @@ type CreateProjectState = {
 const MAX_PROJECT_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 2000;
 
-export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
+export function CreateProjectForm({ open, onClose, members }: CreateProjectProps) {
   const createProjectMutation = useCreateProjectMutation();
+  const addProjectMemberMutation = useAddProjectMemberMutation();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -26,6 +30,7 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
     name: '',
     description: '',
   });
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [errors, setErrors] = useState<Partial<Record<keyof CreateProjectState, string>>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -35,6 +40,7 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
         name: '',
         description: '',
       });
+      setSelectedMemberIds([]);
       setErrors({});
       setSubmitError(null);
       return;
@@ -104,7 +110,19 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
         name: form.name.trim(),
         description: form.description.trim(),
       })
-      .then(() => {
+      .then(async (project) => {
+        if (selectedMemberIds.length > 0) {
+          await Promise.all(
+            selectedMemberIds.map((userId) =>
+              addProjectMemberMutation.mutateAsync({
+                projectId: project.id,
+                userId,
+                role: 'Member',
+              }),
+            ),
+          );
+        }
+
         onClose();
       })
       .catch((error) => {
@@ -207,13 +225,28 @@ export function CreateProjectForm({ open, onClose }: CreateProjectProps) {
               {errors.description ? <p className="text-xs text-rose-700">{errors.description}</p> : null}
             </div>
 
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground" htmlFor="project-members">
+                Members
+              </label>
+              <ProjectMemberPicker
+                members={members}
+                selectedMemberIds={selectedMemberIds}
+                onAdd={(userId) => setSelectedMemberIds((current) => [...current, userId])}
+                onRemove={(userId) => setSelectedMemberIds((current) => current.filter((memberId) => memberId !== userId))}
+                searchInputId="project-members"
+                isBusy={createProjectMutation.isPending || addProjectMemberMutation.isPending}
+              />
+              <p className="text-xs text-muted-foreground">Choose project members now, or add them later from the project edit form.</p>
+            </div>
+
             {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
 
             <FormActionButtons
               onCancel={onClose}
-              confirmLabel={createProjectMutation.isPending ? 'Creating...' : 'Create'}
+              confirmLabel={createProjectMutation.isPending || addProjectMemberMutation.isPending ? 'Creating...' : 'Create'}
               confirmType="submit"
-              confirmDisabled={createProjectMutation.isPending}
+              confirmDisabled={createProjectMutation.isPending || addProjectMemberMutation.isPending}
             />
           </form>
         </CardContent>
