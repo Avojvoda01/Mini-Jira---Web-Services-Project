@@ -19,7 +19,6 @@ public static class AdminUserEndpoints
         group.MapGet("/{userId}", GetUserById)
             .WithName("AdminGetUserById")
             .WithSummary("Get a user by id (admin)");
-
         group.MapPost("/", CreateUser)
             .WithName("AdminCreateUser")
             .WithSummary("Create a new user (admin)");

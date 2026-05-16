@@ -46,7 +46,7 @@ public class UserRepository(AppDbContext db) : IUserRepository
             PasswordHash = request.Password,
             DisplayName = request.DisplayName,
             // TODO: replace the string role with an enum once the RoleEndpoint is implemented.
-            Role = "Project Member"
+            Role = "User"
         };
 
         db.Users.Add(user);
