@@ -46,6 +46,30 @@ public class UserRepository(AppDbContext db) : IUserRepository
         await db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<UserDto> ChangeRoleAsync(string userId, string role, CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(userId, out var id))
+        {
+            throw new Exception("Invalid user id");
+        }
+
+        var user = await db.Users.FindAsync([id], cancellationToken);
+
+        if (user is null)
+        {
+            throw new Exception("User role update");
+        }
+
+        user.Role = role;
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new UserDto(
+            user.Id.ToString(),
+            user.Email,
+            user.DisplayName,
+            user.Role);
+    }
+
     public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLower();

@@ -8,6 +8,8 @@ public interface IUserRepository
 
     Task DeleteAsync(string userId, CancellationToken cancellationToken = default);
 
+    Task<UserDto> ChangeRoleAsync(string userId, string role, CancellationToken cancellationToken = default);
+
     Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
 
     Task<bool> DisplayNameExistsAsync(string displayName, CancellationToken cancellationToken = default);
