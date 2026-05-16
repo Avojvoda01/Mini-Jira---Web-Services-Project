@@ -13,4 +13,8 @@ public interface IProjectRepository
     Task<Project> UpdateAsync(Guid id, string name, string description, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task AddMemberAsync(Guid projectId, Guid userId, string role, CancellationToken cancellationToken = default);
+
+    Task RemoveMemberAsync(Guid projectId, Guid userId, CancellationToken cancellationToken = default);
 }

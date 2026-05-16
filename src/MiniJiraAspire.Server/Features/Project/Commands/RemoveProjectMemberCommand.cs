@@ -1,11 +1,17 @@
 using MediatR;
+using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Project.Commands;
 
 public record RemoveProjectMemberCommand(string ProjectId, string UserId) : IRequest;
 
-public class RemoveProjectMemberHandler : IRequestHandler<RemoveProjectMemberCommand>
+public class RemoveProjectMemberHandler(IProjectRepository repository) : IRequestHandler<RemoveProjectMemberCommand>
 {
-    public Task Handle(RemoveProjectMemberCommand request, CancellationToken ct)
-        => Task.CompletedTask;
+    public async Task Handle(RemoveProjectMemberCommand request, CancellationToken ct)
+    {
+        await repository.RemoveMemberAsync(
+            Guid.Parse(request.ProjectId),
+            Guid.Parse(request.UserId),
+            ct);
+    }
 }
