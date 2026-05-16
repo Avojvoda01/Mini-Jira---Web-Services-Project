@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { Filter, Plus } from 'lucide-react';
 import { EpicBacklogSection } from '@/components/backlog/EpicBacklogSection';
 import { CreateEpicModal } from '@/components/backlog/CreateEpicModal';
@@ -7,6 +8,7 @@ import { EditEpicModal } from '@/components/backlog/EditEpicModal';
 import { DeleteEpicModal } from '@/components/backlog/DeleteEpicModal';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import {
   useCreateEpicMutation,
@@ -15,9 +17,11 @@ import {
   useUpdateEpicMutation,
   type EpicDto,
 } from '@/features/epics';
+import { useAssignEpicMutation, useTasksQuery, type TaskItem, type TaskPriority, type TaskStatus } from '@/features/tasks';
 
 type BacklogTicket = {
   id: string;
+  displayId: string;
   title: string;
   description: string;
   priority: 'High' | 'Medium' | 'Low';
@@ -33,49 +37,50 @@ type EpicSummary = Pick<Epic, 'id' | 'name' | 'description' | 'ticketIds'>;
 
 type EpicSortOption = 'newest' | 'oldest' | 'recently-updated' | 'tickets-desc' | 'tickets-asc' | 'name-asc' | 'name-desc';
 
-const backlogItems: BacklogTicket[] = [
-  {
-    id: 'MJR-141',
-    title: 'Add project-level quick filters',
-    description: 'Make backlog triage faster for product and engineering leads.',
-    priority: 'High',
-    status: 'Ready for refinement',
-    estimate: '5 pts',
-  },
-  {
-    id: 'MJR-138',
-    title: 'Improve issue description formatting',
-    description: 'Support cleaner acceptance criteria and richer task context.',
-    priority: 'Medium',
-    status: 'Needs design input',
-    estimate: '3 pts',
-  },
-  {
-    id: 'MJR-135',
-    title: 'Add notification preference controls',
-    description: 'Allow workspace users to tune updates without leaving the app.',
-    priority: 'Low',
-    status: 'Queued',
-    estimate: '2 pts',
-  },
-  {
-    id: 'MJR-147',
-    title: 'Add audit trail to ticket transitions',
-    description: 'Capture status history for compliance and timeline review.',
-    priority: 'High',
-    status: 'Ready for refinement',
-    estimate: '8 pts',
-  },
-];
+const priorityLabelMap: Record<TaskPriority, BacklogTicket['priority']> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+  unknown: 'Low',
+};
+
+const statusLabelMap: Record<TaskStatus, string> = {
+  todo: 'Open',
+  'in-progress': 'In progress',
+  done: 'Done',
+  unknown: 'Open',
+};
+
+const mapTaskToTicket = (task: TaskItem, displayId: string): BacklogTicket => ({
+  id: task.id,
+  displayId,
+  title: task.title,
+  description: task.description ?? '',
+  priority: priorityLabelMap[task.priority],
+  status: statusLabelMap[task.status],
+  estimate: 'n/a',
+});
 
 export function BacklogPage() {
   const { setContent } = usePageHeader();
-  const { data: epicDtos = [], isLoading: isLoadingEpics, isError: isEpicsError, error: epicsError, refetch: refetchEpics } = useEpicsQuery();
+  const { projectId } = useParams();
+  const { data: epicDtos = [], isLoading: isLoadingEpics, isError: isEpicsError, error: epicsError, refetch: refetchEpics } = useEpicsQuery({
+    projectId: projectId ?? null,
+  });
+  const {
+    data: tasks = [],
+    isLoading: isLoadingTickets,
+    isError: isTicketsError,
+    error: ticketsError,
+    refetch: refetchTickets,
+  } = useTasksQuery({
+    projectId: projectId ?? null,
+  });
   const createEpicMutation = useCreateEpicMutation();
   const updateEpicMutation = useUpdateEpicMutation();
   const deleteEpicMutation = useDeleteEpicMutation();
+  const assignEpicMutation = useAssignEpicMutation();
   const [isCreateEpicOpen, setIsCreateEpicOpen] = useState(false);
-  const [ticketAssignmentsByEpic, setTicketAssignmentsByEpic] = useState<Record<string, string[]>>({});
   const [newEpicName, setNewEpicName] = useState('');
   const [newEpicDescription, setNewEpicDescription] = useState('');
   const [newEpicTicketIds, setNewEpicTicketIds] = useState<string[]>([]);
@@ -88,13 +93,65 @@ export function BacklogPage() {
   const [editEpicDescription, setEditEpicDescription] = useState('');
   const [deleteConfirmEpicId, setDeleteConfirmEpicId] = useState<string | null>(null);
   const [epicSort, setEpicSort] = useState<EpicSortOption>('newest');
+  const [createEpicError, setCreateEpicError] = useState<string | null>(null);
+  const [assignTicketsError, setAssignTicketsError] = useState<string | null>(null);
+  const [ticketActionError, setTicketActionError] = useState<string | null>(null);
+  const [isAssigningTickets, setIsAssigningTickets] = useState(false);
+  const [isCreatingEpicTickets, setIsCreatingEpicTickets] = useState(false);
+
+  const scopedEpicDtos = useMemo(() => {
+    if (!projectId) {
+      return epicDtos;
+    }
+
+    return epicDtos.filter((epic) => epic.projectId === projectId);
+  }, [epicDtos, projectId]);
+
+  const scopedTasks = useMemo(() => {
+    if (!projectId) {
+      return tasks;
+    }
+
+    return tasks.filter((task) => task.projectId === projectId);
+  }, [projectId, tasks]);
+
+  const taskDisplayIds = useMemo(() => {
+    const sorted = [...scopedTasks].sort((left, right) => {
+      const leftDate = Date.parse(left.createdAtUtc);
+      const rightDate = Date.parse(right.createdAtUtc);
+      return leftDate - rightDate;
+    });
+
+    const map = new Map<string, string>();
+    sorted.forEach((task, index) => {
+      map.set(task.id, `TASK-${String(index + 1).padStart(3, '0')}`);
+    });
+
+    return map;
+  }, [scopedTasks]);
+
+  const ticketsByEpicId = useMemo(() => {
+    const map = new Map<string, string[]>();
+
+    scopedTasks.forEach((task) => {
+      if (!task.epicId) {
+        return;
+      }
+
+      const current = map.get(task.epicId) ?? [];
+      current.push(task.id);
+      map.set(task.epicId, current);
+    });
+
+    return map;
+  }, [scopedTasks]);
 
   const epics = useMemo<Epic[]>(() => {
-    return epicDtos.map((epic) => ({
+    return scopedEpicDtos.map((epic) => ({
       ...epic,
-      ticketIds: ticketAssignmentsByEpic[epic.id] ?? [],
+      ticketIds: ticketsByEpicId.get(epic.id) ?? [],
     }));
-  }, [epicDtos, ticketAssignmentsByEpic]);
+  }, [scopedEpicDtos, ticketsByEpicId]);
 
   const sortedEpics = useMemo(() => {
     const next = [...epics];
@@ -137,19 +194,13 @@ export function BacklogPage() {
     return next;
   }, [epics, epicSort]);
 
-  const ticketById = useMemo(() => {
-    return new Map(backlogItems.map((ticket) => [ticket.id, ticket]));
-  }, []);
+  const backlogTickets = useMemo(() => {
+    return scopedTasks.map((task) => mapTaskToTicket(task, taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`));
+  }, [scopedTasks, taskDisplayIds]);
 
-  const ticketToEpicMap = useMemo(() => {
-    const map = new Map<string, string>();
-    epics.forEach((epic) => {
-      epic.ticketIds.forEach((ticketId) => {
-        map.set(ticketId, epic.id);
-      });
-    });
-    return map;
-  }, [epics]);
+  const ticketById = useMemo(() => {
+    return new Map(backlogTickets.map((ticket) => [ticket.id, ticket]));
+  }, [backlogTickets]);
 
   const activeAssignEpic = useMemo(() => {
     if (assignEpicId === null) {
@@ -176,8 +227,10 @@ export function BacklogPage() {
   }, [deleteConfirmEpicId, epics]);
 
   const unassignedTickets = useMemo(() => {
-    return backlogItems.filter((ticket) => !ticketToEpicMap.has(ticket.id));
-  }, [ticketToEpicMap]);
+    return scopedTasks
+      .filter((task) => !task.epicId)
+      .map((task) => mapTaskToTicket(task, taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`));
+  }, [scopedTasks, taskDisplayIds]);
 
   const createEpicFilteredTickets = useMemo(() => {
     const normalizedSearch = createEpicSearch.trim().toLowerCase();
@@ -187,6 +240,7 @@ export function BacklogPage() {
 
     return unassignedTickets.filter((ticket) => {
       return (
+        ticket.displayId.toLowerCase().includes(normalizedSearch) ||
         ticket.id.toLowerCase().includes(normalizedSearch) ||
         ticket.title.toLowerCase().includes(normalizedSearch) ||
         ticket.description.toLowerCase().includes(normalizedSearch)
@@ -204,6 +258,7 @@ export function BacklogPage() {
 
     return source.filter((ticket) => {
       return (
+        ticket.displayId.toLowerCase().includes(normalizedSearch) ||
         ticket.id.toLowerCase().includes(normalizedSearch) ||
         ticket.title.toLowerCase().includes(normalizedSearch) ||
         ticket.description.toLowerCase().includes(normalizedSearch)
@@ -220,21 +275,32 @@ export function BacklogPage() {
   const createEpic = async () => {
     const name = newEpicName.trim();
     const description = newEpicDescription.trim();
+    if (!projectId) {
+      setCreateEpicError('Select a project before creating an epic.');
+      return;
+    }
     if (name.length < 3) {
       return;
     }
 
     try {
+      setCreateEpicError(null);
+      setIsCreatingEpicTickets(true);
       const newEpic = await createEpicMutation.mutateAsync({
         name,
         description: description || null,
+        projectId,
       });
 
       if (newEpicTicketIds.length > 0) {
-        setTicketAssignmentsByEpic((current) => ({
-          ...current,
-          [newEpic.id]: newEpicTicketIds,
-        }));
+        await Promise.all(
+          newEpicTicketIds.map((ticketId) =>
+            assignEpicMutation.mutateAsync({
+              taskId: ticketId,
+              epicId: newEpic.id,
+            }),
+          ),
+        );
       }
 
       setNewEpicName('');
@@ -243,7 +309,9 @@ export function BacklogPage() {
       setCreateEpicSearch('');
       setIsCreateEpicOpen(false);
     } catch (error) {
-      console.error('Error creating epic:', error);
+      setCreateEpicError(error instanceof Error ? error.message : 'Unable to create epic.');
+    } finally {
+      setIsCreatingEpicTickets(false);
     }
   };
 
@@ -253,12 +321,14 @@ export function BacklogPage() {
     setNewEpicDescription('');
     setNewEpicTicketIds([]);
     setCreateEpicSearch('');
+    setCreateEpicError(null);
   };
 
   const openAssignTicketsModal = (epic: EpicSummary) => {
     setAssignEpicId(epic.id);
     setAssignSearch('');
     setAssignTicketDraft([]);
+    setAssignTicketsError(null);
   };
 
   const openEditEpicModal = (epic: EpicSummary) => {
@@ -308,11 +378,7 @@ export function BacklogPage() {
 
     try {
       await deleteEpicMutation.mutateAsync(deleteConfirmEpicId);
-      setTicketAssignmentsByEpic((current) => {
-        const next = { ...current };
-        delete next[deleteConfirmEpicId];
-        return next;
-      });
+      await refetchTickets();
       closeDeleteConfirmModal();
     } catch (error) {
       console.error('Error deleting epic:', error);
@@ -323,6 +389,7 @@ export function BacklogPage() {
     setAssignEpicId(null);
     setAssignSearch('');
     setAssignTicketDraft([]);
+    setAssignTicketsError(null);
   };
 
   const toggleAssignDraftTicket = (ticketId: string) => {
@@ -331,27 +398,40 @@ export function BacklogPage() {
     );
   };
 
-  const saveAssignedTickets = () => {
+  const saveAssignedTickets = async () => {
     if (assignEpicId === null) {
       return;
     }
 
-    setTicketAssignmentsByEpic((current) => {
-      const previous = current[assignEpicId] ?? [];
-      return {
-        ...current,
-        [assignEpicId]: Array.from(new Set([...previous, ...assignTicketDraft])),
-      };
-    });
-
-    closeAssignTicketsModal();
+    try {
+      setAssignTicketsError(null);
+      setIsAssigningTickets(true);
+      await Promise.all(
+        assignTicketDraft.map((ticketId) =>
+          assignEpicMutation.mutateAsync({
+            taskId: ticketId,
+            epicId: assignEpicId,
+          }),
+        ),
+      );
+      closeAssignTicketsModal();
+    } catch (error) {
+      setAssignTicketsError(error instanceof Error ? error.message : 'Unable to assign tickets.');
+    } finally {
+      setIsAssigningTickets(false);
+    }
   };
 
-  const removeTicketFromEpic = (epicId: string, ticketId: string) => {
-    setTicketAssignmentsByEpic((current) => ({
-      ...current,
-      [epicId]: (current[epicId] ?? []).filter((id) => id !== ticketId),
-    }));
+  const removeTicketFromEpic = async (_epicId: string, ticketId: string) => {
+    try {
+      setTicketActionError(null);
+      await assignEpicMutation.mutateAsync({
+        taskId: ticketId,
+        epicId: null,
+      });
+    } catch (error) {
+      setTicketActionError(error instanceof Error ? error.message : 'Unable to remove ticket from epic.');
+    }
   };
 
   const epicSortLabel = useMemo(() => {
@@ -397,7 +477,10 @@ export function BacklogPage() {
               <DropdownMenuItem onClick={() => setEpicSort('name-desc')}>Name Z-A</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button className="shadow-sm" onClick={() => setIsCreateEpicOpen(true)}>
+          <Button className="shadow-sm" onClick={() => {
+            setCreateEpicError(null);
+            setIsCreateEpicOpen(true);
+          }}>
             <Plus className="mr-2 h-4 w-4" />
             Create epic
           </Button>
@@ -410,6 +493,18 @@ export function BacklogPage() {
 
   return (
     <section className="space-y-6">
+      {ticketActionError ? (
+        <ErrorState title="Unable to update tickets" description={ticketActionError} />
+      ) : null}
+
+      {isTicketsError ? (
+        <ErrorState
+          title="Unable to load tickets"
+          description={ticketsError instanceof Error ? ticketsError.message : 'Check your connection and try again.'}
+          onRetry={refetchTickets}
+        />
+      ) : null}
+
       <EpicBacklogSection
         isLoading={isLoadingEpics}
         isError={isEpicsError}
@@ -434,6 +529,12 @@ export function BacklogPage() {
         assignFilteredTickets={assignFilteredTickets}
         unassignedTickets={unassignedTickets}
         onSave={saveAssignedTickets}
+        isLoading={isLoadingTickets}
+        isError={isTicketsError}
+        error={ticketsError instanceof Error ? ticketsError : null}
+        onRetry={refetchTickets}
+        isPending={isAssigningTickets}
+        submitError={assignTicketsError}
       />
 
       <EditEpicModal
@@ -470,6 +571,12 @@ export function BacklogPage() {
         unassignedTickets={unassignedTickets}
         onCreate={createEpic}
         isPending={createEpicMutation.isPending}
+        isTicketsLoading={isLoadingTickets}
+        isTicketsError={isTicketsError}
+        ticketsError={ticketsError instanceof Error ? ticketsError : null}
+        onRetryTickets={refetchTickets}
+        submitError={createEpicError}
+        isAssigning={isCreatingEpicTickets}
       />
     </section>
   );

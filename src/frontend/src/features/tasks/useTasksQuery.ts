@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { changeTaskPriority, changeTaskStatus, createTask, deleteTask, fetchTasks, updateTask } from './taskApi';
+import { assignEpic, changeTaskPriority, changeTaskStatus, createTask, deleteTask, fetchTasks, updateTask } from './taskApi';
 import type {
+  AssignEpicInput,
   ChangeTaskPriorityInput,
   ChangeTaskStatusInput,
   CreateTaskInput,
@@ -81,6 +82,17 @@ export function useDeleteTaskMutation() {
 
   return useMutation({
     mutationFn: (input: DeleteTaskInput) => deleteTask(input),
+    onSuccess: () => {
+      return queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
+    },
+  });
+}
+
+export function useAssignEpicMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: AssignEpicInput) => assignEpic(input),
     onSuccess: () => {
       return queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
     },

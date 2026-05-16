@@ -158,14 +158,27 @@ export function BoardPage() {
     setInput('');
   };
 
+  const taskDisplayIds = useMemo(() => {
+    const sorted = [...tasks].sort((left, right) => {
+      const leftDate = Date.parse(left.createdAtUtc);
+      const rightDate = Date.parse(right.createdAtUtc);
+      return leftDate - rightDate;
+    });
+
+    const map = new Map<string, string>();
+    sorted.forEach((task, index) => {
+      map.set(task.id, `TASK-${String(index + 1).padStart(3, '0')}`);
+    });
+
+    return map;
+  }, [tasks]);
+
   const taskById = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
 
   const boardColumns = useMemo<BoardColumn[]>(() => {
-    const visibleTasks = projectId ? tasks.filter((task) => task.projectId === projectId) : tasks;
-
     const toCard = (task: TaskItem): TaskCard => ({
       taskId: task.id,
-      ticket: `TASK-${task.id.slice(0, 6).toUpperCase()}`,
+      ticket: taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`,
       title: task.title,
       description: truncateText(task.description ?? '', MAX_TASK_DESCRIPTION_LENGTH),
       owner: task.assigneeId ? `User ${task.assigneeId.slice(0, 6)}` : 'Unassigned',
@@ -179,7 +192,7 @@ export function BoardPage() {
       ['done', []],
     ]);
 
-    visibleTasks.forEach((task) => {
+    tasks.forEach((task) => {
       const target = task.status === 'done' ? 'done' : task.status === 'in-progress' ? 'in-progress' : 'backlog';
       byColumn.get(target)?.push(toCard(task));
     });
@@ -188,7 +201,7 @@ export function BoardPage() {
       ...column,
       tasks: byColumn.get(column.id) ?? [],
     }));
-  }, [projectId, tasks]);
+  }, [taskDisplayIds, tasks]);
 
   const activeEditTask = editTaskId ? taskById.get(editTaskId) ?? null : null;
   const activeDetailTask = detailTaskId ? taskById.get(detailTaskId) ?? null : null;
@@ -320,7 +333,7 @@ export function BoardPage() {
             <div className="flex items-start justify-between gap-4 border-b border-border/70 p-5">
               <div className="space-y-2">
                 <Badge variant="outline" className="border-border/70 bg-background/70 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
-                  TASK-{activeDetailTask.id.slice(0, 6).toUpperCase()}
+                  {taskDisplayIds.get(activeDetailTask.id) ?? `TASK-${activeDetailTask.id.slice(0, 6).toUpperCase()}`}
                 </Badge>
                 <h2 className="text-lg font-semibold leading-7 text-foreground">{activeDetailTask.title}</h2>
               </div>

@@ -1,13 +1,16 @@
 import { Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { Badge } from '@/components/ui/badge';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Input } from '@/components/ui/input';
 import { SelectableTicketRow } from '@/components/backlog/SelectableTicketRow';
 
 type BacklogTicket = {
   id: string;
+  displayId: string;
   title: string;
   description: string;
   priority: 'High' | 'Medium' | 'Low';
@@ -26,6 +29,12 @@ type AssignTicketsModalProps = {
   assignFilteredTickets: BacklogTicket[];
   unassignedTickets: BacklogTicket[];
   onSave: () => void;
+  isLoading?: boolean;
+  isError?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
+  isPending?: boolean;
+  submitError?: string | null;
 };
 
 export function AssignTicketsModal({
@@ -39,6 +48,12 @@ export function AssignTicketsModal({
   assignFilteredTickets,
   unassignedTickets,
   onSave,
+  isLoading = false,
+  isError = false,
+  error,
+  onRetry,
+  isPending = false,
+  submitError,
 }: AssignTicketsModalProps) {
   if (!isOpen) {
     return null;
@@ -68,9 +83,24 @@ export function AssignTicketsModal({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {isError ? (
+          <ErrorState
+            title="Unable to load tickets"
+            description={error?.message ?? 'Check your connection and try again.'}
+            onRetry={onRetry}
+          />
+        ) : null}
+
         <div className="h-80 space-y-2 overflow-y-auto rounded-2xl border border-border/70 bg-background/70 p-4">
-          {unassignedTickets.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No assignable tickets available right now.</p>
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading tickets...</p>
+          ) : unassignedTickets.length === 0 ? (
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>No assignable tickets available right now.</p>
+              <Link to="../board" className="text-sm font-medium text-sky-600 hover:text-sky-700">
+                Create a ticket on the board.
+              </Link>
+            </div>
           ) : assignFilteredTickets.length === 0 ? (
             <p className="text-sm text-muted-foreground">No tickets found for this search.</p>
           ) : (
@@ -78,7 +108,7 @@ export function AssignTicketsModal({
               return (
                 <SelectableTicketRow
                   key={ticket.id}
-                  id={ticket.id}
+                  id={ticket.displayId}
                   title={ticket.title}
                   secondaryText={`${ticket.status} - ${ticket.priority} - ${ticket.estimate}`}
                   checked={assignTicketDraft.includes(ticket.id)}
@@ -89,7 +119,14 @@ export function AssignTicketsModal({
           )}
         </div>
 
-        <FormActionButtons onCancel={onClose} confirmLabel="Save assignment" onConfirm={onSave} />
+        {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
+
+        <FormActionButtons
+          onCancel={onClose}
+          confirmLabel={isPending ? 'Saving...' : 'Save assignment'}
+          onConfirm={onSave}
+          confirmDisabled={isPending || isLoading || isError}
+        />
       </CardContent>
     </BacklogModal>
   );

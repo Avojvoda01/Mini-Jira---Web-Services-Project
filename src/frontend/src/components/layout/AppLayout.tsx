@@ -99,39 +99,6 @@ export function AppLayout() {
           </nav>
         </div>
 
-        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Workspace state</CardTitle>
-            <CardDescription>Current sprint and delivery health.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-foreground">Sprint 14</p>
-                <p className="text-xs text-muted-foreground">Delivery on track</p>
-              </div>
-              <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10">Stable</Badge>
-            </div>
-
-            <Separator />
-
-            <div className="grid gap-2 text-sm">
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Open tickets</span>
-                <span className="font-medium text-foreground">12</span>
-              </div>
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>In progress</span>
-                <span className="font-medium text-foreground">6</span>
-              </div>
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Released</span>
-                <span className="font-medium text-foreground">3</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <div className="space-y-3">
           <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Signed in as</p>

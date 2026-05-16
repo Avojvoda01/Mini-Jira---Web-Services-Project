@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 
 type BacklogTicket = {
   id: string;
+  displayId: string;
   title: string;
   estimate: string;
 };
@@ -83,7 +84,7 @@ export function EpicBacklogCard({
                 <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-sm">
                   <div>
                     <p className="font-medium text-foreground">
-                      {ticket.id} - {ticket.title}
+                      {ticket.displayId} - {ticket.title}
                     </p>
                     <p className="text-xs text-muted-foreground">{ticket.estimate}</p>
                   </div>

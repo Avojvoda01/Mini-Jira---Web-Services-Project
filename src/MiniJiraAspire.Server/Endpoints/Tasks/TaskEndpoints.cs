@@ -68,10 +68,11 @@ public static class TaskEndpoints
                 string? priority,
                 string? assigneeId,
                 string? epicId,
+                string? projectId,
                 IMediator mediator,
                 CancellationToken ct) =>
             {
-                var result = await mediator.Send(new GetTasksQuery(search, status, priority, assigneeId, epicId), ct);
+                var result = await mediator.Send(new GetTasksQuery(search, status, priority, assigneeId, epicId, projectId), ct);
                 return Results.Ok(result);
             })
             .Produces<TaskItemDto[]>(StatusCodes.Status200OK)

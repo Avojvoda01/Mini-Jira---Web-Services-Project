@@ -41,6 +41,11 @@ export type ChangeTaskPriorityInput = {
   priority: string;
 };
 
+export type AssignEpicInput = {
+  taskId: string;
+  epicId: string | null;
+};
+
 export type TaskFilters = {
   search: string;
   status: string | null;

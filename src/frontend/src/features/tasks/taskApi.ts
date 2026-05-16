@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/apiClient';
 import type {
+  AssignEpicInput,
   ChangeTaskPriorityInput,
   ChangeTaskStatusInput,
   CreateTaskInput,
@@ -118,4 +119,9 @@ export async function changeTaskPriority(input: ChangeTaskPriorityInput): Promis
 export async function deleteTask(input: DeleteTaskInput): Promise<void> {
   const { taskId } = input;
   await apiClient.delete<void>(`/tasks/${taskId}`);
+}
+
+export async function assignEpic(input: AssignEpicInput): Promise<void> {
+  const { taskId, epicId } = input;
+  await apiClient.patch<void>(`/tasks/${taskId}/assign-epic`, { epicId });
 }
