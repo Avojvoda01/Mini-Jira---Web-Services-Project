@@ -6,6 +6,37 @@ namespace MiniJiraAspire.Server.Persistence.Repositories;
 
 public class UserRepository(AppDbContext db) : IUserRepository
 {
+    public async Task<List<UserDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await db.Users
+            .AsNoTracking()
+            .OrderBy(user => user.DisplayName)
+            .Select(user => new UserDto(
+                user.Id.ToString(),
+                user.Email,
+                user.DisplayName,
+                user.Role))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<UserDto?> GetByIdAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(userId, out var id))
+        {
+            return null;
+        }
+
+        return await db.Users
+            .AsNoTracking()
+            .Where(user => user.Id == id)
+            .Select(user => new UserDto(
+                user.Id.ToString(),
+                user.Email,
+                user.DisplayName,
+                user.Role))
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<UserDto> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
     {
         var user = new User
