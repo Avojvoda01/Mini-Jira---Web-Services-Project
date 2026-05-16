@@ -1,10 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createProject, deleteProject, fetchProjects, projectQueryKeys, updateProject } from './projectApi';
+import { createProject, deleteProject, fetchProjectById, fetchProjects, projectQueryKeys, updateProject } from './projectApi';
 
 export function useProjectsQuery() {
   return useQuery({
     queryKey: projectQueryKeys.list(),
     queryFn: fetchProjects,
+  });
+}
+
+export function useProjectQuery(projectId: string | null) {
+  return useQuery({
+    queryKey: projectId ? projectQueryKeys.detail(projectId) : [...projectQueryKeys.all, 'detail', 'none'],
+    queryFn: () => fetchProjectById(projectId as string),
+    enabled: Boolean(projectId),
   });
 }
 

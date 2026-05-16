@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { BacklogModal } from '@/components/backlog/BacklogModal';
+import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
+import { useAssignUserMutation, useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
+import type { UserDto } from '@/features/users';
 import { cn } from '@/lib/utils';
 
 const MAX_TITLE_LENGTH = 200;
@@ -17,6 +19,7 @@ type EditTaskModalProps = {
   onClose: () => void;
   onSave?: () => void;
   task: TaskItem | null;
+  assignableUsers: UserDto[];
 };
 
 type EditTaskState = {
@@ -24,6 +27,7 @@ type EditTaskState = {
   description: string;
   status: 'Open' | 'In Progress' | 'Done';
   priority: 'Low' | 'Medium' | 'High';
+  assigneeId: string;
 };
 
 const statusLabelMap: Record<TaskItem['status'], EditTaskState['status']> = {
@@ -46,15 +50,17 @@ const priorityToneClass: Record<EditTaskState['priority'], string> = {
   Low: 'bg-slate-500/10 text-slate-700',
 };
 
-export function EditTaskModal({ isOpen, onClose, onSave, task }: EditTaskModalProps) {
+export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers }: EditTaskModalProps) {
   const updateTaskMutation = useUpdateTaskMutation();
   const changeStatusMutation = useChangeTaskStatusMutation();
   const changePriorityMutation = useChangeTaskPriorityMutation();
+  const assignUserMutation = useAssignUserMutation();
   const [form, setForm] = useState<EditTaskState>({
     title: '',
     description: '',
     status: 'Open',
     priority: 'Medium',
+    assigneeId: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof EditTaskState, string>>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -69,6 +75,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task }: EditTaskModalPr
       description: task.description ?? '',
       status: statusLabelMap[task.status],
       priority: priorityLabelMap[task.priority],
+      assigneeId: task.assigneeId ?? '',
     });
     setErrors({});
     setSubmitError(null);
@@ -127,6 +134,13 @@ export function EditTaskModal({ isOpen, onClose, onSave, task }: EditTaskModalPr
 
       if (priorityLabelMap[task.priority] !== desiredPriority) {
         await changePriorityMutation.mutateAsync({ taskId: task.id, priority: desiredPriority });
+      }
+
+      if ((task.assigneeId ?? '') !== form.assigneeId) {
+        await assignUserMutation.mutateAsync({
+          taskId: task.id,
+          userId: form.assigneeId,
+        });
       }
 
       if (onSave) {
@@ -226,17 +240,33 @@ export function EditTaskModal({ isOpen, onClose, onSave, task }: EditTaskModalPr
           </div>
         </div>
 
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground" htmlFor="edit-task-assignee">
+            Assignee
+          </label>
+          <MemberAssigneePicker
+            members={assignableUsers}
+            selectedAssigneeId={form.assigneeId}
+            onAssign={(userId) => updateField('assigneeId', userId)}
+            onRemove={() => updateField('assigneeId', '')}
+            searchInputId="edit-task-assignee"
+          />
+          <p className="text-xs text-muted-foreground">
+            Only project members can be assigned.
+          </p>
+        </div>
+
         {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
 
         <FormActionButtons
           onCancel={onClose}
           confirmLabel={
-            updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending
+            updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending
               ? 'Saving...'
               : 'Save changes'
           }
           onConfirm={handleSave}
-          confirmDisabled={updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending}
+          confirmDisabled={updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending}
         />
       </CardContent>
     </BacklogModal>

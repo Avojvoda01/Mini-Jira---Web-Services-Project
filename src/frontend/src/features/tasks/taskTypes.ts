@@ -46,6 +46,11 @@ export type AssignEpicInput = {
   epicId: string | null;
 };
 
+export type AssignUserInput = {
+  taskId: string;
+  userId: string;
+};
+
 export type TaskFilters = {
   search: string;
   status: string | null;

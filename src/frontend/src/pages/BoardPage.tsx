@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Bot, Pencil, Plus, SendHorizontal, X } from 'lucide-react';
+import { Bot, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
 import { CreateTaskModal } from '@/components/board/CreateTaskModal';
 import { DeleteCommentModal } from '@/components/board/DeleteCommentModal';
 import { DeleteTaskModal } from '@/components/board/DeleteTaskModal';
@@ -13,7 +13,10 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import { useCommentsQuery, useCreateCommentMutation, useDeleteCommentMutation, useUpdateCommentMutation } from '@/features/comments';
-import { useDeleteTaskMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
+import { useProjectQuery } from '@/features/projects';
+import { useAssignUserMutation, useDeleteTaskMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
+import { useAdminUsersQuery } from '@/features/users';
+import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { cn } from '@/lib/utils';
 
 type ChatMessage = {
@@ -109,6 +112,8 @@ const truncateText = (value: string, maxLength: number) => {
 export function BoardPage() {
   const { setContent } = usePageHeader();
   const { projectId } = useParams();
+  const { data: project } = useProjectQuery(projectId ?? null);
+  const { data: users = [] } = useAdminUsersQuery();
   const { data: tasks = [], isLoading, isError, error, refetch } = useTasksQuery({
     projectId: projectId ?? null,
   });
@@ -116,6 +121,7 @@ export function BoardPage() {
   const updateCommentMutation = useUpdateCommentMutation();
   const deleteCommentMutation = useDeleteCommentMutation();
   const deleteTaskMutation = useDeleteTaskMutation();
+  const assignUserMutation = useAssignUserMutation();
   const [createColumnId, setCreateColumnId] = useState<BoardColumn['id'] | null>(null);
   const [editTaskId, setEditTaskId] = useState<string | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
@@ -125,6 +131,8 @@ export function BoardPage() {
   const [commentEditDrafts, setCommentEditDrafts] = useState<Record<string, string>>({});
   const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [isAssigneePickerOpen, setIsAssigneePickerOpen] = useState(false);
+  const [assigneeError, setAssigneeError] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const nextMessageIdRef = useRef(2);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -175,13 +183,40 @@ export function BoardPage() {
 
   const taskById = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
 
+  const usersById = useMemo(
+    () => new Map(users.map((user) => [user.id.toLowerCase(), user.displayName])),
+    [users],
+  );
+
+  const assignableUsers = useMemo(() => {
+    if (!projectId) {
+      return [];
+    }
+
+    const memberIds = project?.memberIds ?? [];
+    if (memberIds.length === 0) {
+      return [];
+    }
+
+    const memberIdSet = new Set(memberIds.map((memberId) => memberId.toLowerCase()));
+    return users.filter((user) => memberIdSet.has(user.id.toLowerCase()));
+  }, [project?.memberIds, projectId, users]);
+
+  const resolveUserDisplayName = (userId: string | null) => {
+    if (!userId) {
+      return 'Unassigned';
+    }
+
+    return usersById.get(userId.toLowerCase()) ?? `User ${userId.slice(0, 6)}`;
+  };
+
   const boardColumns = useMemo<BoardColumn[]>(() => {
     const toCard = (task: TaskItem): TaskCard => ({
       taskId: task.id,
       ticket: taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`,
       title: task.title,
       description: truncateText(task.description ?? '', MAX_TASK_DESCRIPTION_LENGTH),
-      owner: task.assigneeId ? `User ${task.assigneeId.slice(0, 6)}` : 'Unassigned',
+      owner: resolveUserDisplayName(task.assigneeId),
       priority: priorityLabelMap[task.priority],
       estimate: 'n/a',
     });
@@ -201,7 +236,7 @@ export function BoardPage() {
       ...column,
       tasks: byColumn.get(column.id) ?? [],
     }));
-  }, [taskDisplayIds, tasks]);
+  }, [taskDisplayIds, tasks, usersById]);
 
   const activeEditTask = editTaskId ? taskById.get(editTaskId) ?? null : null;
   const activeDetailTask = detailTaskId ? taskById.get(detailTaskId) ?? null : null;
@@ -214,6 +249,42 @@ export function BoardPage() {
   } = useCommentsQuery(activeDetailTask?.id ?? null);
   const activeCommentDraft = activeDetailTask ? commentDraftByTask[activeDetailTask.id] ?? '' : '';
   const activeDeleteComment = deleteCommentId ? activeComments.find((comment) => comment.id === deleteCommentId) ?? null : null;
+
+  const handleAssignUser = async (userId: string) => {
+    if (!activeDetailTask) {
+      return;
+    }
+
+    setAssigneeError(null);
+
+    try {
+      await assignUserMutation.mutateAsync({
+        taskId: activeDetailTask.id,
+        userId,
+      });
+      setIsAssigneePickerOpen(false);
+    } catch (error) {
+      setAssigneeError(error instanceof Error ? error.message : 'Unable to update assignee.');
+    }
+  };
+
+  const handleRemoveUser = async () => {
+    if (!activeDetailTask) {
+      return;
+    }
+
+    setAssigneeError(null);
+
+    try {
+      await assignUserMutation.mutateAsync({
+        taskId: activeDetailTask.id,
+        userId: '',
+      });
+      setIsAssigneePickerOpen(false);
+    } catch (error) {
+      setAssigneeError(error instanceof Error ? error.message : 'Unable to update assignee.');
+    }
+  };
 
   const totalTasks = boardColumns.reduce((total, column) => total + column.tasks.length, 0);
   const inProgressCount = boardColumns.find((column) => column.id === 'in-progress')?.tasks.length ?? 0;
@@ -255,6 +326,8 @@ export function BoardPage() {
   useEffect(() => {
     setEditingCommentId(null);
     setDeleteCommentId(null);
+    setIsAssigneePickerOpen(false);
+    setAssigneeError(null);
 
     if (!detailTaskId) {
       setCommentDraftByTask({});
@@ -270,6 +343,7 @@ export function BoardPage() {
         projectId={projectId ?? null}
         defaultStatus={createColumnId ? columnStatusMap[createColumnId] : 'Open'}
         columnLabel={createColumnId ? columnConfig.find((column) => column.id === createColumnId)?.title ?? 'Backlog' : 'Backlog'}
+        assignableUsers={assignableUsers}
       />
 
       <EditTaskModal
@@ -280,6 +354,7 @@ export function BoardPage() {
           setDetailTaskId(null);
         }}
         task={activeEditTask}
+        assignableUsers={assignableUsers}
       />
 
       <DeleteTaskModal
@@ -374,10 +449,41 @@ export function BoardPage() {
               <div className="grid gap-3 text-sm text-muted-foreground">
                 <div className="flex items-center justify-between gap-2">
                   <span>Owner</span>
-                  <span className="text-foreground">
-                    {activeDetailTask.assigneeId ? `User ${activeDetailTask.assigneeId.slice(0, 6)}` : 'Unassigned'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-foreground">
+                      {resolveUserDisplayName(activeDetailTask.assigneeId)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className={cn(
+                        'h-8 w-8',
+                        isAssigneePickerOpen ? 'border-border/70 text-foreground hover:bg-background/80' : '',
+                      )}
+                      onClick={() => setIsAssigneePickerOpen((current) => !current)}
+                      aria-label={isAssigneePickerOpen ? 'Close assignee picker' : 'Change assignee'}
+                    >
+                      {isAssigneePickerOpen ? <Minus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
+                {isAssigneePickerOpen ? (
+                  <div className="rounded-2xl border border-border/70 bg-background/80 p-3">
+                    <MemberAssigneePicker
+                      members={assignableUsers}
+                      selectedAssigneeId={activeDetailTask.assigneeId ?? ''}
+                      onAssign={handleAssignUser}
+                      onRemove={handleRemoveUser}
+                      searchInputId="detail-task-assignee"
+                      isBusy={assignUserMutation.isPending}
+                    />
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Only project members can be assigned.
+                    </p>
+                    {assigneeError ? <p className="mt-2 text-xs text-rose-700">{assigneeError}</p> : null}
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between gap-2">
                   <span>Estimate</span>
                   <span className="text-foreground">n/a</span>
@@ -413,7 +519,7 @@ export function BoardPage() {
                     activeComments.map((comment) => (
                       <div key={comment.id} className="rounded-2xl border border-border/70 bg-background/80 p-3">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-xs text-muted-foreground">{comment.userId ? `User ${comment.userId.slice(0, 6)}` : 'Unassigned'}</p>
+                          <p className="text-xs text-muted-foreground">{resolveUserDisplayName(comment.userId)}</p>
                           <div className="flex items-center gap-2">
                             <Button
                               variant="ghost"

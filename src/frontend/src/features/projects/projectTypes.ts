@@ -2,6 +2,7 @@ export type ProjectDto = {
   id: string;
   name: string;
   description: string;
+  memberIds?: string[];
   createdAtUtc: string;
   updatedAtUtc: string | null;
 };

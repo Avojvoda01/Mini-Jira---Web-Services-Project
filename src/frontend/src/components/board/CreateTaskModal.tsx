@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { BacklogModal } from '@/components/backlog/BacklogModal';
+import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useCreateTaskMutation } from '@/features/tasks';
+import { useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useCreateTaskMutation, useAssignUserMutation } from '@/features/tasks';
+import type { UserDto } from '@/features/users';
 import { cn } from '@/lib/utils';
 
 const MAX_TITLE_LENGTH = 200;
@@ -18,12 +20,14 @@ type CreateTaskModalProps = {
   projectId: string | null;
   defaultStatus: string;
   columnLabel: string;
+  assignableUsers: UserDto[];
 };
 
 type CreateTaskState = {
   title: string;
   description: string;
   priority: 'Low' | 'Medium' | 'High';
+  assigneeId: string;
 };
 
 const priorityToneClass: Record<CreateTaskState['priority'], string> = {
@@ -32,17 +36,18 @@ const priorityToneClass: Record<CreateTaskState['priority'], string> = {
   Low: 'bg-slate-500/10 text-slate-700',
 };
 
-export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, columnLabel }: CreateTaskModalProps) {
+export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, columnLabel, assignableUsers }: CreateTaskModalProps) {
   const createTaskMutation = useCreateTaskMutation();
   const changeStatusMutation = useChangeTaskStatusMutation();
   const changePriorityMutation = useChangeTaskPriorityMutation();
-  const [form, setForm] = useState<CreateTaskState>({ title: '', description: '', priority: 'Medium' });
+  const assignUserMutation = useAssignUserMutation();
+  const [form, setForm] = useState<CreateTaskState>({ title: '', description: '', priority: 'Medium', assigneeId: '' });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateTaskState, string>>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
-      setForm({ title: '', description: '', priority: 'Medium' });
+      setForm({ title: '', description: '', priority: 'Medium', assigneeId: '' });
       setErrors({});
       setSubmitError(null);
     }
@@ -101,6 +106,10 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
 
       if (form.priority !== 'Medium') {
         await changePriorityMutation.mutateAsync({ taskId: created.id, priority: form.priority });
+      }
+
+      if (form.assigneeId) {
+        await assignUserMutation.mutateAsync({ taskId: created.id, userId: form.assigneeId });
       }
 
       onClose();
@@ -178,17 +187,33 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
           </DropdownMenu>
         </div>
 
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground" htmlFor="task-assignee">
+            Assignee
+          </label>
+          <MemberAssigneePicker
+            members={assignableUsers}
+            selectedAssigneeId={form.assigneeId}
+            onAssign={(userId) => updateField('assigneeId', userId)}
+            onRemove={() => updateField('assigneeId', '')}
+            searchInputId="task-assignee"
+          />
+          <p className="text-xs text-muted-foreground">
+            Only project members can be assigned.
+          </p>
+        </div>
+
         {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
 
         <FormActionButtons
           onCancel={onClose}
           confirmLabel={
-            createTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending
+            createTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending
               ? 'Creating...'
               : 'Create ticket'
           }
           onConfirm={handleCreate}
-          confirmDisabled={createTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending}
+          confirmDisabled={createTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending}
         />
       </CardContent>
     </BacklogModal>
