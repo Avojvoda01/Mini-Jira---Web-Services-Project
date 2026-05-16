@@ -1,31 +1,85 @@
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http.HttpResults;
+using MiniJiraAspire.Server.Models;
+using MiniJiraAspire.Server.Persistence.Repositories;
+
 namespace Microsoft.Extensions.Hosting.Admin.Users;
 
 public static class AdminUserEndpoints
 {
     public static void MapAdminUserEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/admin/users", async (
-                CreateUserCommand command,
-                CancellationToken ct) =>
-            {
-                // TODO: implement logic
-                return Results.Created("/api/admin/users/new-id", new { Id = "new-id" });
-            })
+        var group = app.MapGroup("/api/admin/users")
+            .WithTags("Admin - Users");
+
+        group.MapPost("/", CreateUser)
             .WithName("AdminCreateUser")
-            .WithTags("Admin - Users")
             .WithSummary("Create a new user (admin)");
 
-        app.MapDelete("/api/admin/users/{userId}", async (
-                string userId,
-                CancellationToken ct) =>
-            {
-                // TODO: implement logic
-                return Results.NoContent();
-            })
+        group.MapDelete("/{userId}", DeleteUser)
             .WithName("AdminDeleteUser")
-            .WithTags("Admin - Users")
             .WithSummary("Delete a user (admin)");
     }
-}
 
-public record CreateUserCommand(string Email, string Password, string DisplayName);
+    private static async Task<Results<Created<UserDto>, ValidationProblem>> CreateUser(
+        CreateUserRequest request,
+        IUserRepository repository,
+        CancellationToken cancellationToken)
+    {
+        var errors = Validate(request);
+
+        if (await repository.EmailExistsAsync(request.Email, cancellationToken))
+        {
+            AddError(errors, nameof(request.Email), "Email is already taken.");
+        }
+
+        if (await repository.DisplayNameExistsAsync(request.DisplayName, cancellationToken))
+        {
+            AddError(errors, nameof(request.DisplayName), "Display name is already taken.");
+        }
+
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        var user = await repository.CreateAsync(request, cancellationToken);
+        return TypedResults.Created($"/api/admin/users/{user.Id}", user);
+    }
+
+    private static async Task<NoContent> DeleteUser(
+        string userId,
+        IUserRepository repository,
+        CancellationToken cancellationToken)
+    {
+        await repository.DeleteAsync(userId, cancellationToken);
+        return TypedResults.NoContent();
+    }
+
+    private static Dictionary<string, string[]> Validate(CreateUserRequest request)
+    {
+        var validationResults = new List<ValidationResult>();
+        var validationContext = new ValidationContext(request);
+
+        Validator.TryValidateObject(request, validationContext, validationResults, validateAllProperties: true);
+
+        var errors = new Dictionary<string, string[]>();
+
+        foreach (var validationResult in validationResults)
+        {
+            foreach (var memberName in validationResult.MemberNames)
+            {
+                AddError(errors, memberName, validationResult.ErrorMessage ?? "Invalid value.");
+            }
+        }
+
+        return errors;
+    }
+
+    private static void AddError(Dictionary<string, string[]> errors, string key, string error)
+    {
+        errors[key] = errors.TryGetValue(key, out var existingErrors)
+            ? [.. existingErrors, error]
+            : [error];
+    }
+}

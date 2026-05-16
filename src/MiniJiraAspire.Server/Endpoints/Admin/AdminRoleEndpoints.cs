@@ -18,4 +18,5 @@ public static class AdminRoleEndpoints
     }
 }
 
+// TODO: replace Role with an enum once the RoleEndpoint is implemented.
 public record ChangeUserRoleCommand(string Role);
