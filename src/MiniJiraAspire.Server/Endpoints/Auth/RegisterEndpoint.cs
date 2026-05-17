@@ -1,7 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
+using MiniJiraAspire.Server.Features.Auth.Commands;
 using MiniJiraAspire.Server.Models;
-using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace Microsoft.Extensions.Hosting.Auth.Register;
 
@@ -17,42 +18,36 @@ public static class RegisterEndpoint
 
     private static async Task<Results<Created<UserDto>, ValidationProblem>> RegisterUser(
         RegisterCommand command,
-        IUserRepository repository,
+        IMediator mediator,
         CancellationToken cancellationToken)
     {
         var errors = Validate(command);
-
-        if (await repository.EmailExistsAsync(command.Email, cancellationToken))
-        {
-            AddError(errors, nameof(command.Email), "Email is already taken.");
-        }
-
-        if (await repository.DisplayNameExistsAsync(command.DisplayName, cancellationToken))
-        {
-            AddError(errors, nameof(command.DisplayName), "Display name is already taken.");
-        }
 
         if (errors.Count > 0)
         {
             return TypedResults.ValidationProblem(errors);
         }
 
+        var result = await mediator.Send(
+            new RegisterUserCommand(command.Email, command.Password, command.DisplayName),
+            cancellationToken);
+
+        return result.Succeeded && result.User is not null
+            ? TypedResults.Created($"/api/users/{result.User.Id}", result.User)
+            : TypedResults.ValidationProblem(result.Errors);
+    }
+
+    private static Dictionary<string, string[]> Validate(RegisterCommand command)
+    {
         var request = new CreateUserRequest(
             command.Email,
             command.Password,
             command.DisplayName);
 
-        var user = await repository.CreateAsync(request, cancellationToken);
-
-        return TypedResults.Created($"/api/users/{user.Id}", user);
-    }
-
-    private static Dictionary<string, string[]> Validate(RegisterCommand command)
-    {
         var validationResults = new List<ValidationResult>();
-        var validationContext = new ValidationContext(command);
+        var validationContext = new ValidationContext(request);
 
-        Validator.TryValidateObject(command, validationContext, validationResults, validateAllProperties: true);
+        Validator.TryValidateObject(request, validationContext, validationResults, validateAllProperties: true);
 
         var errors = new Dictionary<string, string[]>();
 

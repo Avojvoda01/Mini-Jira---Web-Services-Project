@@ -8,7 +8,9 @@ public interface IUserRepository
 
     Task<UserDto?> GetByIdAsync(string userId, CancellationToken cancellationToken = default);
 
-    Task<UserDto> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken = default);
+    Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+
+    Task<UserDto> CreateAsync(CreateUserData request, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(string userId, CancellationToken cancellationToken = default);
 

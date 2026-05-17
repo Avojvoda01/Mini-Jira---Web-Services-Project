@@ -13,7 +13,8 @@ public static class AdminRoleEndpoints
         app.MapPatch("/api/admin/roles/{userId}", ChangeUserRole)
             .WithName("ChangeUserRole")
             .WithTags("Admin - Roles")
-            .WithSummary("Change the role of a user (admin)");
+            .WithSummary("Change the role of a user (admin)")
+            .RequireAuthorization(policy => policy.RequireRole("Admin"));
     }
 
     private static async Task<Results<Ok<UserDto>, ValidationProblem, ProblemHttpResult>> ChangeUserRole(

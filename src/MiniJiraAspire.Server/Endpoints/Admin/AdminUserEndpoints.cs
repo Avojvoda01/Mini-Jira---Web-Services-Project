@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http.HttpResults;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
@@ -10,7 +11,8 @@ public static class AdminUserEndpoints
     public static void MapAdminUserEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/admin/users")
-            .WithTags("Admin - Users");
+            .WithTags("Admin - Users")
+            .RequireAuthorization(policy => policy.RequireRole("Admin"));
 
         group.MapGet("/", GetUsers)
             .WithName("AdminGetUsers")
@@ -54,6 +56,7 @@ public static class AdminUserEndpoints
     private static async Task<Results<Created<UserDto>, ValidationProblem>> CreateUser(
         CreateUserRequest request,
         IUserRepository repository,
+        IPasswordHasher<User> passwordHasher,
         CancellationToken cancellationToken)
     {
         var errors = Validate(request);
@@ -73,7 +76,18 @@ public static class AdminUserEndpoints
             return TypedResults.ValidationProblem(errors);
         }
 
-        var user = await repository.CreateAsync(request, cancellationToken);
+        var userModel = new User
+        {
+            Email = request.Email,
+            DisplayName = request.DisplayName,
+            PasswordHash = string.Empty
+        };
+        var passwordHash = passwordHasher.HashPassword(userModel, request.Password);
+
+        var user = await repository.CreateAsync(
+            new CreateUserData(request.Email, passwordHash, request.DisplayName),
+            cancellationToken);
+
         return TypedResults.Created($"/api/admin/users/{user.Id}", user);
     }
 
