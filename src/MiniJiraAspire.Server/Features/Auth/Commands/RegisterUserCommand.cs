@@ -1,0 +1,64 @@
+using MediatR;
+using Microsoft.AspNetCore.Identity;
+using MiniJiraAspire.Server.Models;
+using MiniJiraAspire.Server.Persistence.Repositories;
+
+namespace MiniJiraAspire.Server.Features.Auth.Commands;
+
+public record RegisterUserCommand(string Email, string Password, string DisplayName) : IRequest<RegisterUserResult>;
+
+public record RegisterUserResult(UserDto? User, Dictionary<string, string[]> Errors)
+{
+    public bool Succeeded => User is not null;
+
+    public static RegisterUserResult Success(UserDto user) => new(user, []);
+
+    public static RegisterUserResult ValidationFailed(Dictionary<string, string[]> errors) => new(null, errors);
+}
+
+public class RegisterUserHandler(
+    IUserRepository repository,
+    IPasswordHasher<User> passwordHasher) : IRequestHandler<RegisterUserCommand, RegisterUserResult>
+{
+    public async Task<RegisterUserResult> Handle(RegisterUserCommand request, CancellationToken ct)
+    {
+        var errors = new Dictionary<string, string[]>();
+
+        if (await repository.EmailExistsAsync(request.Email, ct))
+        {
+            AddError(errors, nameof(request.Email), "Email is already taken.");
+        }
+
+        if (await repository.DisplayNameExistsAsync(request.DisplayName, ct))
+        {
+            AddError(errors, nameof(request.DisplayName), "Display name is already taken.");
+        }
+
+        if (errors.Count > 0)
+        {
+            return RegisterUserResult.ValidationFailed(errors);
+        }
+
+        var user = new User
+        {
+            Email = request.Email,
+            DisplayName = request.DisplayName,
+            PasswordHash = string.Empty
+        };
+
+        var passwordHash = passwordHasher.HashPassword(user, request.Password);
+
+        var createdUser = await repository.CreateAsync(
+            new CreateUserData(request.Email, passwordHash, request.DisplayName),
+            ct);
+
+        return RegisterUserResult.Success(createdUser);
+    }
+
+    private static void AddError(Dictionary<string, string[]> errors, string key, string error)
+    {
+        errors[key] = errors.TryGetValue(key, out var existingErrors)
+            ? [.. existingErrors, error]
+            : [error];
+    }
+}

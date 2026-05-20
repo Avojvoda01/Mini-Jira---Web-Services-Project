@@ -37,13 +37,21 @@ public class UserRepository(AppDbContext db) : IUserRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<UserDto> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
+    public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.Trim().ToLower();
+
+        return db.Users.FirstOrDefaultAsync(
+            user => user.Email.ToLower() == normalizedEmail,
+            cancellationToken);
+    }
+
+    public async Task<UserDto> CreateAsync(CreateUserData request, CancellationToken cancellationToken = default)
     {
         var user = new User
         {
             Email = request.Email,
-            // only temporary, should be hashed in production
-            PasswordHash = request.Password,
+            PasswordHash = request.PasswordHash,
             DisplayName = request.DisplayName,
             // TODO: replace the string role with an enum once the RoleEndpoint is implemented.
             Role = "User"

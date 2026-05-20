@@ -1,3 +1,7 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Hosting.Admin.Roles;
 using Microsoft.Extensions.Hosting.Admin.Users;
 using Microsoft.Extensions.Hosting.Auth.Login;
@@ -7,11 +11,14 @@ using Microsoft.Extensions.Hosting.Epics;
 using Microsoft.Extensions.Hosting.Tasks;
 using Microsoft.Extensions.Hosting.Tasks.Actions;
 using MiniJiraAspire.Server.Migrations;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
+using MiniJiraAspire.Server.Services.Auth;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using MiniJiraAspire.Server.Endpoints.Projects;
+using MiniJiraAspire.Server.Endpoints.Users;
 
 DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
@@ -45,6 +52,29 @@ builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is not configured.");
+var jwtAudience = jwtSection["Audience"] ?? throw new InvalidOperationException("Jwt:Audience is not configured.");
+var jwtSecret = jwtSection["Secret"] ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+        };
+    });
+builder.Services.AddAuthorization();
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
@@ -59,6 +89,9 @@ if (app.Environment.IsDevelopment())
 {
     app.UseCors("FrontendDev");
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
@@ -89,6 +122,9 @@ app.MapEpicEndpoints();
 
 // Projects
 app.MapProjectEndpoints();
+
+// Users
+app.MapUserEndpoints();
 
 // Admin
 app.MapAdminUserEndpoints();
