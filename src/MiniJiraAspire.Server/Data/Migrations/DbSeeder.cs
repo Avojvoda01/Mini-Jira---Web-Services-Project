@@ -11,7 +11,10 @@ public class DbSeeder
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Using migrations keeps the day 2 sample aligned with the EF Core workflow we teach.
-        await db.Database.MigrateAsync();
+        if (db.Database.IsRelational())
+            await db.Database.MigrateAsync();
+        else
+            await db.Database.EnsureCreatedAsync();
 
         var projectAlpha = await db.Projects.FirstOrDefaultAsync(project => project.Name == "Project Alpha");
         if (projectAlpha is null)
