@@ -57,6 +57,29 @@ and JWT token generation – communicate with the domain via clearly defined
 * Adapters (e.g., the EF Core repositories) can be replaced without changing the handlers
 * Highly testable – ports can be easily mocked
 
+### A note on the domain model: it is intentionally anemic
+
+Our entities (`TaskItem`, `Epic`, `Project`, `Comment`, `User`) are **plain data
+holders** – properties only, no behavior. They do **not** enforce their own
+invariants (there is, for example, no `TaskItem.ChangeStatus()` that would reject
+an illegal status transition). This is a deliberate trade-off, not an oversight.
+
+Where the logic actually lives:
+
+* **Business rules / orchestration** → in the MediatR handlers (`Features/**`),
+  e.g. uniqueness checks and password hashing in `CreateUserHandler`, or the role
+  whitelist in `ChangeUserRoleHandler`.
+* **State changes & data access** → in the repositories (`Persistence/**`),
+  e.g. `TaskRepository.ChangeStatusAsync` simply sets the new status.
+
+So "Domain at the center" here means *the entities are the stable core that
+everything else depends on*, **not** that they are a rich, behavior-bearing domain
+model in the DDD sense. For an application of this size that is a reasonable
+choice: it keeps the entities simple and the logic easy to find in one handler per
+use case. If the business rules grow more complex (multi-step validations, state
+machines), the natural next step would be to pull that behavior into the entities
+themselves.
+
 ### Repository Pattern
 
 The Repository Pattern is the **adapter between the domain and the database**. The
