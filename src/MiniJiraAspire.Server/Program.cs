@@ -103,8 +103,7 @@ if (app.Environment.IsDevelopment())
 await DbSeeder.MigrateAndSeedAsync(app.Services);
 
 // Auth
-app.MapLogin();
-app.MapRegister();
+app.MapAuthEndpoints();
 
 // Tasks
 app.MapTaskEndpoints();
