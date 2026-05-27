@@ -58,7 +58,7 @@ public static class AdminUserEndpoints
     {
         var result = await mediator.Send(new CreateUserCommand(request.Email, request.Password, request.DisplayName), ct);
 
-        return result.Succeeded && result.User is not null
+        return result is { Succeeded: true, User: not null }
             ? TypedResults.Created($"/api/admin/users/{result.User.Id}", result.User)
             : TypedResults.ValidationProblem(result.Errors);
     }

@@ -9,11 +9,13 @@ public static class AdminRoleEndpoints
 {
     public static void MapAdminRoleEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPatch("/api/admin/roles/{userId}", ChangeUserRole)
-            .WithName("ChangeUserRole")
+        var group = app.MapGroup("/api/admin/roles")
             .WithTags("Admin - Roles")
-            .WithSummary("Change the role of a user (admin)")
             .RequireAuthorization(policy => policy.RequireRole("Admin"));
+
+        group.MapPatch("/{userId}", ChangeUserRole)
+            .WithName("ChangeUserRole")
+            .WithSummary("Change the role of a user (admin)");
     }
 
     private static async Task<Results<Ok<UserDto>, ValidationProblem, ProblemHttpResult>> ChangeUserRole(
