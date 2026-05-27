@@ -107,7 +107,6 @@ app.MapAuthEndpoints();
 
 // Tasks
 app.MapTaskEndpoints();
-app.MapTaskActionEndpoints();
 
 // Comments
 app.MapCommentEndpoints();
