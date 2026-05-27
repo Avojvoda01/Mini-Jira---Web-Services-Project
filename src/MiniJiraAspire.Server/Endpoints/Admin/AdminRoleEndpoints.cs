@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using MiniJiraAspire.Server.Features.User.Commands;
 using MiniJiraAspire.Server.Models;
 
-namespace Microsoft.Extensions.Hosting.Admin.Roles;
+namespace MiniJiraAspire.Server.Endpoints.Admin;
 
 public static class AdminRoleEndpoints
 {

@@ -3,7 +3,7 @@ using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 using EpicEntity = MiniJiraAspire.Server.Models.Epic;
 
-namespace MiniJiraAspire.Server.Features.Epic;
+namespace MiniJiraAspire.Server.Features.Epic.Commands;
 
 public record CreateEpicCommand(string Name, string? Description, Guid ProjectId) : IRequest<EpicDto>;
 

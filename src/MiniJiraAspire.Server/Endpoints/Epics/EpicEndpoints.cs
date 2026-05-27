@@ -1,9 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
-using MiniJiraAspire.Server.Features.Epic;
+using MiniJiraAspire.Server.Features.Epic.Commands;
+using MiniJiraAspire.Server.Features.Epic.Queries;
 using MiniJiraAspire.Server.Models;
 
-namespace Microsoft.Extensions.Hosting.Epics;
+namespace MiniJiraAspire.Server.Endpoints.Epics;
 
 public static class EpicEndpoints
 {

@@ -4,7 +4,7 @@ using MiniJiraAspire.Server.Features.User.Commands;
 using MiniJiraAspire.Server.Features.User.Queries;
 using MiniJiraAspire.Server.Models;
 
-namespace Microsoft.Extensions.Hosting.Admin.Users;
+namespace MiniJiraAspire.Server.Endpoints.Admin;
 
 public static class AdminUserEndpoints
 {

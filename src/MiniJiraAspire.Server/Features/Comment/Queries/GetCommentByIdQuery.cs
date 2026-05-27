@@ -2,7 +2,7 @@ using MediatR;
 using MiniJiraAspire.Server.Models.CommentDTO.Request;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
-namespace MiniJiraAspire.Server.Features.Comment;
+namespace MiniJiraAspire.Server.Features.Comment.Queries;
 
 public record GetCommentByIdQuery(string TaskId, Guid CommentId) : IRequest<CommentDTO?>;
 

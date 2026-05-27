@@ -1,10 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
-using MiniJiraAspire.Server.Features.Comment;
+using MiniJiraAspire.Server.Features.Comment.Commands;
 using MiniJiraAspire.Server.Features.Comment.Queries;
 using MiniJiraAspire.Server.Models.CommentDTO.Request;
 
-namespace Microsoft.Extensions.Hosting.Comments;
+namespace MiniJiraAspire.Server.Endpoints.Comments;
 
 public static class CommentEndpoints
 {

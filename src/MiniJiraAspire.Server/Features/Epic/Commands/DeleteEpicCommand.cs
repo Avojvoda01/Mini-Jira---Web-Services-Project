@@ -1,7 +1,7 @@
 using MediatR;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
-namespace MiniJiraAspire.Server.Features.Epic;
+namespace MiniJiraAspire.Server.Features.Epic.Commands;
 
 public record DeleteEpicCommand(Guid Id) : IRequest;
 

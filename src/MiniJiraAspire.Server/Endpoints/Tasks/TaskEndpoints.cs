@@ -3,7 +3,7 @@ using MiniJiraAspire.Server.Features.Tasks.Commands;
 using MiniJiraAspire.Server.Features.Tasks.Queries;
 using MiniJiraAspire.Server.Models;
 
-namespace Microsoft.Extensions.Hosting.Tasks;
+namespace MiniJiraAspire.Server.Endpoints.Tasks;
 
 public static class TaskEndpoints
 {

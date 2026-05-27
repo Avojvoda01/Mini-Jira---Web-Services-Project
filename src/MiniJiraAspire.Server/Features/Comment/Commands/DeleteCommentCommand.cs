@@ -1,7 +1,7 @@
 using MediatR;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
-namespace MiniJiraAspire.Server.Features.Comment;
+namespace MiniJiraAspire.Server.Features.Comment.Commands;
 
 public record DeleteCommentCommand(string TaskId, Guid CommentId) : IRequest;
 

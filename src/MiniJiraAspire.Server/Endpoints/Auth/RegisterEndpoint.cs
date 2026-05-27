@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using MiniJiraAspire.Server.Features.Auth.Commands;
 using MiniJiraAspire.Server.Models;
 
-namespace Microsoft.Extensions.Hosting.Auth.Register;
+namespace MiniJiraAspire.Server.Endpoints.Auth;
 
 public static class RegisterEndpoint
 {

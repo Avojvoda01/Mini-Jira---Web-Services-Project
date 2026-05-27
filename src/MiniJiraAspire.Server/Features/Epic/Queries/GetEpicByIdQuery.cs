@@ -2,7 +2,7 @@ using MediatR;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
-namespace MiniJiraAspire.Server.Features.Epic;
+namespace MiniJiraAspire.Server.Features.Epic.Queries;
 
 public record GetEpicByIdQuery(Guid Id) : IRequest<EpicDto?>;
 

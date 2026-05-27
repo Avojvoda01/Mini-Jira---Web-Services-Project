@@ -3,7 +3,7 @@ using MiniJiraAspire.Server.Models.CommentDTO.Request;
 using MiniJiraAspire.Server.Persistence.Repositories;
 using CommentEntity = MiniJiraAspire.Server.Models.Comment;
 
-namespace MiniJiraAspire.Server.Features.Comment;
+namespace MiniJiraAspire.Server.Features.Comment.Commands;
 
 public record CreateCommentCommand(string TaskId, string Content, Guid? UserId) : IRequest<CommentDTO>;
 
