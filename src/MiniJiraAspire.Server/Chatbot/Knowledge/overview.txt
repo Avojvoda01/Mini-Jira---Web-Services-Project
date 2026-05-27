@@ -1,0 +1,12 @@
+Mini Jira is a small Jira-style web application for project management.
+
+The main concepts are projects, epics, tasks, comments, users, and admin actions.
+
+A project groups related work.
+An epic is a larger feature or category inside a project.
+A task is an individual work item.
+A comment belongs to a task and stores discussion or notes.
+A user can be assigned work or managed by an admin.
+
+The chatbot should explain how Mini Jira works in simple language.
+The chatbot should not invent real project data, user data, task ids, or database records.

@@ -1,0 +1,20 @@
+Comments are notes or discussion messages attached to tasks.
+
+A comment has:
+- Id
+- TaskId
+- UserId
+- Content
+- CreatedAtUtc
+- UpdatedAtUtc
+
+Comments belong to tasks through TaskId.
+A comment can optionally have a UserId to show who wrote it.
+
+Important comment routes:
+- GET /api/tasks/{taskId}/comments gets comments for a task.
+- POST /api/tasks/{taskId}/comments creates a comment on a task.
+- PUT /api/tasks/{taskId}/comments/{commentId} updates a comment.
+- DELETE /api/tasks/{taskId}/comments/{commentId} deletes a comment.
+
+Comments are useful for discussing details, progress, or questions about a task.

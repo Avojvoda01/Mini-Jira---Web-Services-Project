@@ -1,0 +1,37 @@
+Tasks are individual work items in Mini Jira.
+
+A task has:
+- Id
+- Title
+- Description
+- Status
+- Priority
+- ProjectId
+- AssigneeId
+- EpicId
+- CreatedAtUtc
+- UpdatedAtUtc
+
+A task belongs to a project through ProjectId.
+A task can optionally be assigned to a user through AssigneeId.
+A task can optionally be assigned to an epic through EpicId.
+
+Important task routes:
+- GET /api/tasks gets tasks and can filter them.
+- GET /api/tasks/{taskId} gets one task by id.
+- POST /api/tasks creates a task.
+- PUT /api/tasks/{taskId} updates a task.
+- DELETE /api/tasks/{taskId} deletes a task.
+
+Task filters:
+- search
+- status
+- priority
+- assigneeId
+- epicId
+
+Task action routes:
+- PATCH /api/tasks/{taskId}/status changes the task status.
+- PATCH /api/tasks/{taskId}/priority changes the task priority.
+- PATCH /api/tasks/{taskId}/assign-user assigns a user to the task.
+- PATCH /api/tasks/{taskId}/assign-epic assigns an epic to the task.

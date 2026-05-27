@@ -15,6 +15,7 @@ using MiniJiraAspire.Server.Migrations;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 using MiniJiraAspire.Server.Services.Auth;
+using MiniJiraAspire.Server.Chatbot;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -78,6 +79,9 @@ builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.Configure<ChatbotOptions>(builder.Configuration.GetSection(ChatbotOptions.SectionName));
+builder.Services.AddSingleton<IMiniJiraKnowledgeProvider, MiniJiraKnowledgeProvider>();
+builder.Services.AddHttpClient<ILmStudioChatClient, LmStudioChatClient>();
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is not configured.");
@@ -161,6 +165,9 @@ v1.MapEpicEndpoints();
 v1.MapProjectEndpoints();
 v1.MapUserEndpoints();
 
+
+// Chatbot
+app.MapChatbotEndpoints();
 
 app.MapDefaultEndpoints();
 
