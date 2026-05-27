@@ -1,0 +1,47 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace MiniJiraAspire.Server.Models;
+
+// Auth & Users
+public record LoginRequest(
+    [property: Required, EmailAddress] string Email,
+    [property: Required] string Password);
+
+public record CreateUserRequest(
+    [property: Required, EmailAddress] string Email,
+    [property: Required, MinLength(6)] string Password,
+    [property: Required, StringLength(100, MinimumLength = 2)] string DisplayName);
+
+// Epics
+public record CreateEpicRequest(
+    [property: Required, StringLength(100, MinimumLength = 3)] string Name,
+    [property: StringLength(2000)] string? Description,
+    [property: Required] Guid ProjectId);
+
+public record UpdateEpicRequest(
+    [property: StringLength(100, MinimumLength = 3)] string Name,
+    [property: StringLength(2000)] string? Description);
+
+// Projects
+public record CreateProjectRequest(
+    [property: Required, StringLength(100, MinimumLength = 3)] string Name,
+    [property: StringLength(2000)] string Description);
+
+public record UpdateProjectRequest(
+    [property: StringLength(100, MinimumLength = 3)] string Name,
+    [property: StringLength(2000)] string Description);
+
+// Tasks
+public record CreateTaskRequest(
+    [property: Required, StringLength(200, MinimumLength = 3)] string Title,
+    [property: StringLength(2000)] string? Description,
+    [property: Required] Guid ProjectId);
+
+public record UpdateTaskRequest(
+    [property: StringLength(200, MinimumLength = 3)] string Title,
+    [property: StringLength(2000)] string? Description);
+
+// Comments
+public record CreateCommentRequest(string Content, Guid? UserId);
+
+public record UpdateCommentRequest(string Content);

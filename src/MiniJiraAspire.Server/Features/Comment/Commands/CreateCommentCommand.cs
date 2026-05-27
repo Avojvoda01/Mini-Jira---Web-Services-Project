@@ -1,15 +1,15 @@
 using MediatR;
-using MiniJiraAspire.Server.Models.CommentDTO.Request;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 using CommentEntity = MiniJiraAspire.Server.Models.Comment;
 
 namespace MiniJiraAspire.Server.Features.Comment.Commands;
 
-public record CreateCommentCommand(string TaskId, string Content, Guid? UserId) : IRequest<CommentDTO>;
+public record CreateCommentCommand(string TaskId, string Content, Guid? UserId) : IRequest<CommentDto>;
 
-public class CreateCommentHandler(ICommentRepository repository) : IRequestHandler<CreateCommentCommand, CommentDTO>
+public class CreateCommentHandler(ICommentRepository repository) : IRequestHandler<CreateCommentCommand, CommentDto>
 {
-    public async Task<CommentDTO> Handle(CreateCommentCommand request, CancellationToken ct)
+    public async Task<CommentDto> Handle(CreateCommentCommand request, CancellationToken ct)
     {
         var comment = await repository.CreateAsync(new CommentEntity
         {
@@ -18,6 +18,6 @@ public class CreateCommentHandler(ICommentRepository repository) : IRequestHandl
             Content = request.Content
         }, ct);
 
-        return new CommentDTO(comment.Id, comment.TaskId, comment.UserId, comment.Content, comment.CreatedAtUtc, comment.UpdatedAtUtc);
+        return new CommentDto(comment.Id, comment.TaskId, comment.UserId, comment.Content, comment.CreatedAtUtc, comment.UpdatedAtUtc);
     }
 }
