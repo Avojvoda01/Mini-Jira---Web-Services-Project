@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using MiniJiraAspire.Server.Models;
@@ -23,7 +24,7 @@ public class RegisterUserHandler(
 {
     public async Task<RegisterUserResult> Handle(RegisterUserCommand request, CancellationToken ct)
     {
-        var errors = new Dictionary<string, string[]>();
+        var errors = ValidateAnnotations(request);
 
         if (await repository.EmailExistsAsync(request.Email, ct))
         {
@@ -53,6 +54,24 @@ public class RegisterUserHandler(
 
         return RegisterUserResult.Success(
             new UserDto(createdUser.Id.ToString(), createdUser.Email, createdUser.DisplayName, createdUser.Role));
+    }
+
+    private static Dictionary<string, string[]> ValidateAnnotations(RegisterUserCommand request)
+    {
+        var dto = new CreateUserRequest(request.Email, request.Password, request.DisplayName);
+        var validationResults = new List<ValidationResult>();
+        Validator.TryValidateObject(dto, new ValidationContext(dto), validationResults, validateAllProperties: true);
+
+        var errors = new Dictionary<string, string[]>();
+        foreach (var validationResult in validationResults)
+        {
+            foreach (var memberName in validationResult.MemberNames)
+            {
+                AddError(errors, memberName, validationResult.ErrorMessage ?? "Invalid value.");
+            }
+        }
+
+        return errors;
     }
 
     private static void AddError(Dictionary<string, string[]> errors, string key, string error)
