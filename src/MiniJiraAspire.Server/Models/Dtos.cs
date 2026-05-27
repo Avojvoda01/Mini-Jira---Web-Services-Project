@@ -7,8 +7,6 @@ public record CreateUserRequest(
     [property: Required, MinLength(6)] string Password,
     [property: Required, StringLength(100, MinimumLength = 2)] string DisplayName);
 
-public record CreateUserData(string Email, string PasswordHash, string DisplayName);
-
 public record UserDto(string Id, string Email, string DisplayName, string Role);
 
 public record LoginRequest(

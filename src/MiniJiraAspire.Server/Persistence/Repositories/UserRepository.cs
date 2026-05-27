@@ -6,35 +6,22 @@ namespace MiniJiraAspire.Server.Persistence.Repositories;
 
 public class UserRepository(AppDbContext db) : IUserRepository
 {
-    public async Task<List<UserDto>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        return await db.Users
+    public Task<List<User>> GetAllAsync(CancellationToken cancellationToken = default)
+        => db.Users
             .AsNoTracking()
             .OrderBy(user => user.DisplayName)
-            .Select(user => new UserDto(
-                user.Id.ToString(),
-                user.Email,
-                user.DisplayName,
-                user.Role))
             .ToListAsync(cancellationToken);
-    }
 
-    public async Task<UserDto?> GetByIdAsync(string userId, CancellationToken cancellationToken = default)
+    public Task<User?> GetByIdAsync(string userId, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(userId, out var id))
         {
-            return null;
+            return Task.FromResult<User?>(null);
         }
 
-        return await db.Users
+        return db.Users
             .AsNoTracking()
-            .Where(user => user.Id == id)
-            .Select(user => new UserDto(
-                user.Id.ToString(),
-                user.Email,
-                user.DisplayName,
-                user.Role))
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
     }
 
     public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -46,67 +33,49 @@ public class UserRepository(AppDbContext db) : IUserRepository
             cancellationToken);
     }
 
-    public async Task<UserDto> CreateAsync(CreateUserData request, CancellationToken cancellationToken = default)
+    public async Task<User> CreateAsync(User user, CancellationToken cancellationToken = default)
     {
-        var user = new User
-        {
-            Email = request.Email,
-            PasswordHash = request.PasswordHash,
-            DisplayName = request.DisplayName,
-            // TODO: replace the string role with an enum once the RoleEndpoint is implemented.
-            Role = "User"
-        };
-
         db.Users.Add(user);
         await db.SaveChangesAsync(cancellationToken);
-
-        return new UserDto(
-            user.Id.ToString(),
-            user.Email,
-            user.DisplayName,
-            user.Role);
+        return user;
     }
 
-    public async Task DeleteAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(string userId, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(userId, out var id))
         {
-            throw new Exception("Invalid user id");
+            return false;
         }
 
         var user = await db.Users.FindAsync([id], cancellationToken);
 
         if (user is null)
         {
-            throw new Exception("User delete");
+            return false;
         }
 
         db.Users.Remove(user);
         await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
-    public async Task<UserDto> ChangeRoleAsync(string userId, string role, CancellationToken cancellationToken = default)
+    public async Task<User?> ChangeRoleAsync(string userId, string role, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(userId, out var id))
         {
-            throw new Exception("Invalid user id");
+            return null;
         }
 
         var user = await db.Users.FindAsync([id], cancellationToken);
 
         if (user is null)
         {
-            throw new Exception("User role update");
+            return null;
         }
 
         user.Role = role;
         await db.SaveChangesAsync(cancellationToken);
-
-        return new UserDto(
-            user.Id.ToString(),
-            user.Email,
-            user.DisplayName,
-            user.Role);
+        return user;
     }
 
     public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default)

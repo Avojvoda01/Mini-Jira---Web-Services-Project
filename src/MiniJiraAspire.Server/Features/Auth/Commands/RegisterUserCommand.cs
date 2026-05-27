@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
+using UserEntity = MiniJiraAspire.Server.Models.User;
 
 namespace MiniJiraAspire.Server.Features.Auth.Commands;
 
@@ -18,7 +19,7 @@ public record RegisterUserResult(UserDto? User, Dictionary<string, string[]> Err
 
 public class RegisterUserHandler(
     IUserRepository repository,
-    IPasswordHasher<User> passwordHasher) : IRequestHandler<RegisterUserCommand, RegisterUserResult>
+    IPasswordHasher<UserEntity> passwordHasher) : IRequestHandler<RegisterUserCommand, RegisterUserResult>
 {
     public async Task<RegisterUserResult> Handle(RegisterUserCommand request, CancellationToken ct)
     {
@@ -39,20 +40,19 @@ public class RegisterUserHandler(
             return RegisterUserResult.ValidationFailed(errors);
         }
 
-        var user = new User
+        var user = new UserEntity
         {
             Email = request.Email,
             DisplayName = request.DisplayName,
             PasswordHash = string.Empty
         };
 
-        var passwordHash = passwordHasher.HashPassword(user, request.Password);
+        user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
 
-        var createdUser = await repository.CreateAsync(
-            new CreateUserData(request.Email, passwordHash, request.DisplayName),
-            ct);
+        var createdUser = await repository.CreateAsync(user, ct);
 
-        return RegisterUserResult.Success(createdUser);
+        return RegisterUserResult.Success(
+            new UserDto(createdUser.Id.ToString(), createdUser.Email, createdUser.DisplayName, createdUser.Role));
     }
 
     private static void AddError(Dictionary<string, string[]> errors, string key, string error)
