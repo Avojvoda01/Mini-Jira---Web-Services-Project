@@ -1,5 +1,5 @@
 using MediatR;
-using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
+using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Comment;
 

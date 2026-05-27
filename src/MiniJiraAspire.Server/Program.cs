@@ -13,7 +13,6 @@ using Microsoft.Extensions.Hosting.Tasks.Actions;
 using MiniJiraAspire.Server.Migrations;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
-using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
 using MiniJiraAspire.Server.Services.Auth;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;

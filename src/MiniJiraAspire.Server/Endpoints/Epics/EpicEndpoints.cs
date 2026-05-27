@@ -43,13 +43,15 @@ public static class EpicEndpoints
         return TypedResults.Ok(epics);
     }
 
-    private static async Task<Ok<EpicDto>> GetEpicById(
+    private static async Task<Results<Ok<EpicDto>, ProblemHttpResult>> GetEpicById(
         Guid id,
         IMediator mediator,
         CancellationToken ct)
     {
         var epic = await mediator.Send(new GetEpicByIdQuery(id), ct);
-        return TypedResults.Ok(epic);
+        return epic is null
+            ? TypedResults.Problem($"Epic with id {id} not found", statusCode: StatusCodes.Status404NotFound)
+            : TypedResults.Ok(epic);
     }
 
     private static async Task<Created<EpicDto>> CreateEpic(

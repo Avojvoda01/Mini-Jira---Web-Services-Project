@@ -9,5 +9,5 @@ public record UpdateEpicCommand(Guid Id, string Name, string? Description) : IRe
 public class UpdateEpicHandler(IEpicRepository repository) : IRequestHandler<UpdateEpicCommand>
 {
     public Task Handle(UpdateEpicCommand request, CancellationToken ct)
-        => repository.UpdateAsync(request.Id, new UpdateEpicRequest(request.Name, request.Description), ct);
+        => repository.UpdateAsync(request.Id, request.Name, request.Description, ct);
 }
