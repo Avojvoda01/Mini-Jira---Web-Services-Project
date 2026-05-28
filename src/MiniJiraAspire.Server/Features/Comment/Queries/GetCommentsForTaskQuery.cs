@@ -1,13 +1,18 @@
 using MediatR;
-using MiniJiraAspire.Server.Models.CommentDTO.Request;
-using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
+using MiniJiraAspire.Server.Models;
+using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Comment.Queries;
 
-public record GetCommentsForTaskQuery(string TaskId) : IRequest<CommentDTO[]>;
+public record GetCommentsForTaskQuery(string TaskId) : IRequest<CommentDto[]>;
 
-public class GetCommentsForTaskHandler(ICommentRepository repository) : IRequestHandler<GetCommentsForTaskQuery, CommentDTO[]>
+public class GetCommentsForTaskHandler(ICommentRepository repository) : IRequestHandler<GetCommentsForTaskQuery, CommentDto[]>
 {
-    public Task<CommentDTO[]> Handle(GetCommentsForTaskQuery request, CancellationToken ct)
-        => repository.GetAllAsync(request.TaskId, ct);
+    public async Task<CommentDto[]> Handle(GetCommentsForTaskQuery request, CancellationToken ct)
+    {
+        var comments = await repository.GetAllAsync(request.TaskId, ct);
+        return comments
+            .Select(comment => new CommentDto(comment.Id, comment.TaskId, comment.UserId, comment.Content, comment.CreatedAtUtc, comment.UpdatedAtUtc))
+            .ToArray();
+    }
 }

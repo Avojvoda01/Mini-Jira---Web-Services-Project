@@ -1,10 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
-using MiniJiraAspire.Server.Features.Comment;
+using MiniJiraAspire.Server.Features.Comment.Commands;
 using MiniJiraAspire.Server.Features.Comment.Queries;
-using MiniJiraAspire.Server.Models.CommentDTO.Request;
+using MiniJiraAspire.Server.Models;
 
-namespace Microsoft.Extensions.Hosting.Comments;
+namespace MiniJiraAspire.Server.Endpoints.Comments;
 
 public static class CommentEndpoints
 {
@@ -14,12 +14,12 @@ public static class CommentEndpoints
             .WithTags("Comments");
 
         group.MapPost("/", CreateComment)
-            .Produces<CommentDTO>(StatusCodes.Status201Created)
+            .Produces<CommentDto>(StatusCodes.Status201Created)
             .WithName("CreateComment")
             .WithSummary("Create a comment on a task");
 
         group.MapGet("/", GetComments)
-            .Produces<CommentDTO[]>(StatusCodes.Status200OK)
+            .Produces<CommentDto[]>(StatusCodes.Status200OK)
             .WithName("GetCommentsForTask")
             .WithSummary("Get all comments for a task");
 
@@ -34,7 +34,7 @@ public static class CommentEndpoints
             .WithSummary("Delete a comment");
     }
 
-    private static async Task<Created<CommentDTO>> CreateComment(
+    private static async Task<Created<CommentDto>> CreateComment(
         string taskId,
         CreateCommentRequest request,
         IMediator mediator,
@@ -44,7 +44,7 @@ public static class CommentEndpoints
         return TypedResults.Created($"/api/tasks/{taskId}/comments/{comment.Id}", comment);
     }
 
-    private static async Task<Ok<CommentDTO[]>> GetComments(
+    private static async Task<Ok<CommentDto[]>> GetComments(
         string taskId,
         IMediator mediator,
         CancellationToken ct)

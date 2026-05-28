@@ -5,24 +5,24 @@ using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 using UserEntity = MiniJiraAspire.Server.Models.User;
 
-namespace MiniJiraAspire.Server.Features.Auth.Commands;
+namespace MiniJiraAspire.Server.Features.User.Commands;
 
-public record RegisterUserCommand(string Email, string Password, string DisplayName) : IRequest<RegisterUserResult>;
+public record CreateUserCommand(string Email, string Password, string DisplayName) : IRequest<CreateUserResult>;
 
-public record RegisterUserResult(UserDto? User, Dictionary<string, string[]> Errors)
+public record CreateUserResult(UserDto? User, Dictionary<string, string[]> Errors)
 {
     public bool Succeeded => User is not null;
 
-    public static RegisterUserResult Success(UserDto user) => new(user, []);
+    public static CreateUserResult Success(UserDto user) => new(user, []);
 
-    public static RegisterUserResult ValidationFailed(Dictionary<string, string[]> errors) => new(null, errors);
+    public static CreateUserResult ValidationFailed(Dictionary<string, string[]> errors) => new(null, errors);
 }
 
-public class RegisterUserHandler(
+public class CreateUserHandler(
     IUserRepository repository,
-    IPasswordHasher<UserEntity> passwordHasher) : IRequestHandler<RegisterUserCommand, RegisterUserResult>
+    IPasswordHasher<UserEntity> passwordHasher) : IRequestHandler<CreateUserCommand, CreateUserResult>
 {
-    public async Task<RegisterUserResult> Handle(RegisterUserCommand request, CancellationToken ct)
+    public async Task<CreateUserResult> Handle(CreateUserCommand request, CancellationToken ct)
     {
         var errors = ValidateAnnotations(request);
 
@@ -38,7 +38,7 @@ public class RegisterUserHandler(
 
         if (errors.Count > 0)
         {
-            return RegisterUserResult.ValidationFailed(errors);
+            return CreateUserResult.ValidationFailed(errors);
         }
 
         var user = new UserEntity
@@ -47,16 +47,14 @@ public class RegisterUserHandler(
             DisplayName = request.DisplayName,
             PasswordHash = string.Empty
         };
-
         user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
 
-        var createdUser = await repository.CreateAsync(user, ct);
+        var created = await repository.CreateAsync(user, ct);
 
-        return RegisterUserResult.Success(
-            new UserDto(createdUser.Id.ToString(), createdUser.Email, createdUser.DisplayName, createdUser.Role));
+        return CreateUserResult.Success(new UserDto(created.Id.ToString(), created.Email, created.DisplayName, created.Role));
     }
 
-    private static Dictionary<string, string[]> ValidateAnnotations(RegisterUserCommand request)
+    private static Dictionary<string, string[]> ValidateAnnotations(CreateUserCommand request)
     {
         var dto = new CreateUserRequest(request.Email, request.Password, request.DisplayName);
         var validationResults = new List<ValidationResult>();

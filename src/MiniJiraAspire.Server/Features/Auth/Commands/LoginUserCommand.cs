@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 using MiniJiraAspire.Server.Services.Auth;
+using UserEntity = MiniJiraAspire.Server.Models.User;
 
 namespace MiniJiraAspire.Server.Features.Auth.Commands;
 
@@ -10,7 +11,7 @@ public record LoginUserCommand(string Email, string Password) : IRequest<LoginRe
 
 public class LoginUserHandler(
     IUserRepository repository,
-    IPasswordHasher<User> passwordHasher,
+    IPasswordHasher<UserEntity> passwordHasher,
     IJwtTokenService jwtTokenService) : IRequestHandler<LoginUserCommand, LoginResponse?>
 {
     public async Task<LoginResponse?> Handle(LoginUserCommand request, CancellationToken ct)

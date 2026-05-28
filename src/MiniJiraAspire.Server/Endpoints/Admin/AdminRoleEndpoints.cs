@@ -1,50 +1,43 @@
+using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
+using MiniJiraAspire.Server.Features.User.Commands;
 using MiniJiraAspire.Server.Models;
-using MiniJiraAspire.Server.Persistence.Repositories;
 
-namespace Microsoft.Extensions.Hosting.Admin.Roles;
+namespace MiniJiraAspire.Server.Endpoints.Admin;
 
 public static class AdminRoleEndpoints
 {
-    private static readonly string[] AllowedRoles = ["Admin", "Project Manager", "Project Member"];
-
     public static void MapAdminRoleEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPatch("/api/admin/roles/{userId}", ChangeUserRole)
-            .WithName("ChangeUserRole")
+        var group = app.MapGroup("/api/admin/roles")
             .WithTags("Admin - Roles")
-            .WithSummary("Change the role of a user (admin)")
             .RequireAuthorization(policy => policy.RequireRole("Admin"));
+
+        group.MapPatch("/{userId}", ChangeUserRole)
+            .WithName("ChangeUserRole")
+            .WithSummary("Change the role of a user (admin)");
     }
 
     private static async Task<Results<Ok<UserDto>, ValidationProblem, ProblemHttpResult>> ChangeUserRole(
         string userId,
-        ChangeUserRoleCommand command,
-        IUserRepository repository,
-        CancellationToken cancellationToken)
+        ChangeUserRoleRequest request,
+        IMediator mediator,
+        CancellationToken ct)
     {
-        var role = command.Role.Trim();
+        var result = await mediator.Send(new ChangeUserRoleCommand(userId, request.Role), ct);
 
-        if (!AllowedRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
+        if (result.ValidationErrors is not null)
         {
-            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
-            {
-                [nameof(command.Role)] = [$"Role must be one of: {string.Join(", ", AllowedRoles)}."]
-            });
+            return TypedResults.ValidationProblem(result.ValidationErrors);
         }
 
-        var normalizedRole = AllowedRoles.First(allowedRole =>
-            string.Equals(allowedRole, role, StringComparison.OrdinalIgnoreCase));
+        if (result.NotFound)
+        {
+            return TypedResults.Problem($"User with id {userId} not found", statusCode: StatusCodes.Status404NotFound);
+        }
 
-        try
-        {
-            var user = await repository.ChangeRoleAsync(userId, normalizedRole, cancellationToken);
-            return TypedResults.Ok(user);
-        }
-        catch (Exception ex)
-        {
-            return TypedResults.Problem(ex.Message, statusCode: StatusCodes.Status404NotFound);
-        }
+        return TypedResults.Ok(result.User!);
     }
 }
-public record ChangeUserRoleCommand(string Role);
+
+public record ChangeUserRoleRequest(string Role);

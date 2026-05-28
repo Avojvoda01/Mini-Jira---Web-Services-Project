@@ -2,18 +2,14 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Hosting.Admin.Roles;
-using Microsoft.Extensions.Hosting.Admin.Users;
-using Microsoft.Extensions.Hosting.Auth.Login;
-using Microsoft.Extensions.Hosting.Auth.Register;
-using Microsoft.Extensions.Hosting.Comments;
-using Microsoft.Extensions.Hosting.Epics;
-using Microsoft.Extensions.Hosting.Tasks;
-using Microsoft.Extensions.Hosting.Tasks.Actions;
+using MiniJiraAspire.Server.Endpoints.Admin;
+using MiniJiraAspire.Server.Endpoints.Auth;
+using MiniJiraAspire.Server.Endpoints.Comments;
+using MiniJiraAspire.Server.Endpoints.Epics;
+using MiniJiraAspire.Server.Endpoints.Tasks;
 using MiniJiraAspire.Server.Migrations;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
-using MiniJiraAspire.Server.Persistence.Repositories.Interfaces;
 using MiniJiraAspire.Server.Services.Auth;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
@@ -107,12 +103,10 @@ if (app.Environment.IsDevelopment())
 await DbSeeder.MigrateAndSeedAsync(app.Services);
 
 // Auth
-app.MapLogin();
-app.MapRegister();
+app.MapAuthEndpoints();
 
 // Tasks
 app.MapTaskEndpoints();
-app.MapTaskActionEndpoints();
 
 // Comments
 app.MapCommentEndpoints();

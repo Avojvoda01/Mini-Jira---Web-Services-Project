@@ -1,10 +1,10 @@
-using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Identity;
+using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
+using MiniJiraAspire.Server.Features.User.Commands;
+using MiniJiraAspire.Server.Features.User.Queries;
 using MiniJiraAspire.Server.Models;
-using MiniJiraAspire.Server.Persistence.Repositories;
 
-namespace Microsoft.Extensions.Hosting.Admin.Users;
+namespace MiniJiraAspire.Server.Endpoints.Admin;
 
 public static class AdminUserEndpoints
 {
@@ -21,6 +21,7 @@ public static class AdminUserEndpoints
         group.MapGet("/{userId}", GetUserById)
             .WithName("AdminGetUserById")
             .WithSummary("Get a user by id (admin)");
+
         group.MapPost("/", CreateUser)
             .WithName("AdminCreateUser")
             .WithSummary("Create a new user (admin)");
@@ -31,99 +32,46 @@ public static class AdminUserEndpoints
     }
 
     private static async Task<Ok<List<UserDto>>> GetUsers(
-        IUserRepository repository,
-        CancellationToken cancellationToken)
+        IMediator mediator,
+        CancellationToken ct)
     {
-        var users = await repository.GetAllAsync(cancellationToken);
+        var users = await mediator.Send(new GetAllUsersQuery(), ct);
         return TypedResults.Ok(users);
     }
 
     private static async Task<Results<Ok<UserDto>, ProblemHttpResult>> GetUserById(
         string userId,
-        IUserRepository repository,
-        CancellationToken cancellationToken)
+        IMediator mediator,
+        CancellationToken ct)
     {
-        var user = await repository.GetByIdAsync(userId, cancellationToken);
+        var user = await mediator.Send(new GetUserByIdQuery(userId), ct);
 
-        if (user is null)
-        {
-            return TypedResults.Problem($"User with id {userId} not found", statusCode: StatusCodes.Status404NotFound);
-        }
-
-        return TypedResults.Ok(user);
+        return user is null
+            ? TypedResults.Problem($"User with id {userId} not found", statusCode: StatusCodes.Status404NotFound)
+            : TypedResults.Ok(user);
     }
 
     private static async Task<Results<Created<UserDto>, ValidationProblem>> CreateUser(
         CreateUserRequest request,
-        IUserRepository repository,
-        IPasswordHasher<User> passwordHasher,
-        CancellationToken cancellationToken)
+        IMediator mediator,
+        CancellationToken ct)
     {
-        var errors = Validate(request);
+        var result = await mediator.Send(new CreateUserCommand(request.Email, request.Password, request.DisplayName), ct);
 
-        if (await repository.EmailExistsAsync(request.Email, cancellationToken))
-        {
-            AddError(errors, nameof(request.Email), "Email is already taken.");
-        }
-
-        if (await repository.DisplayNameExistsAsync(request.DisplayName, cancellationToken))
-        {
-            AddError(errors, nameof(request.DisplayName), "Display name is already taken.");
-        }
-
-        if (errors.Count > 0)
-        {
-            return TypedResults.ValidationProblem(errors);
-        }
-
-        var userModel = new User
-        {
-            Email = request.Email,
-            DisplayName = request.DisplayName,
-            PasswordHash = string.Empty
-        };
-        var passwordHash = passwordHasher.HashPassword(userModel, request.Password);
-
-        var user = await repository.CreateAsync(
-            new CreateUserData(request.Email, passwordHash, request.DisplayName),
-            cancellationToken);
-
-        return TypedResults.Created($"/api/admin/users/{user.Id}", user);
+        return result is { Succeeded: true, User: not null }
+            ? TypedResults.Created($"/api/admin/users/{result.User.Id}", result.User)
+            : TypedResults.ValidationProblem(result.Errors);
     }
 
-    private static async Task<NoContent> DeleteUser(
+    private static async Task<Results<NoContent, ProblemHttpResult>> DeleteUser(
         string userId,
-        IUserRepository repository,
-        CancellationToken cancellationToken)
+        IMediator mediator,
+        CancellationToken ct)
     {
-        await repository.DeleteAsync(userId, cancellationToken);
-        return TypedResults.NoContent();
-    }
+        var deleted = await mediator.Send(new DeleteUserCommand(userId), ct);
 
-    private static Dictionary<string, string[]> Validate(CreateUserRequest request)
-    {
-        var validationResults = new List<ValidationResult>();
-        var validationContext = new ValidationContext(request);
-
-        Validator.TryValidateObject(request, validationContext, validationResults, validateAllProperties: true);
-
-        var errors = new Dictionary<string, string[]>();
-
-        foreach (var validationResult in validationResults)
-        {
-            foreach (var memberName in validationResult.MemberNames)
-            {
-                AddError(errors, memberName, validationResult.ErrorMessage ?? "Invalid value.");
-            }
-        }
-
-        return errors;
-    }
-
-    private static void AddError(Dictionary<string, string[]> errors, string key, string error)
-    {
-        errors[key] = errors.TryGetValue(key, out var existingErrors)
-            ? [.. existingErrors, error]
-            : [error];
+        return deleted
+            ? TypedResults.NoContent()
+            : TypedResults.Problem($"User with id {userId} not found", statusCode: StatusCodes.Status404NotFound);
     }
 }
