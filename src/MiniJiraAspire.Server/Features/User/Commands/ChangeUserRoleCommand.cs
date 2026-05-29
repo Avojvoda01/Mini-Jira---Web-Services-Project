@@ -17,21 +17,19 @@ public record ChangeUserRoleResult(UserDto? User, Dictionary<string, string[]>? 
 
 public class ChangeUserRoleHandler(IUserRepository repository) : IRequestHandler<ChangeUserRoleCommand, ChangeUserRoleResult>
 {
-    private static readonly string[] AllowedRoles = ["Admin", "Project Manager", "Project Member"];
-
     public async Task<ChangeUserRoleResult> Handle(ChangeUserRoleCommand request, CancellationToken ct)
     {
         var role = request.Role.Trim();
 
-        if (!AllowedRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
+        if (!UserRoles.All.Contains(role, StringComparer.OrdinalIgnoreCase))
         {
             return ChangeUserRoleResult.ValidationFailed(new Dictionary<string, string[]>
             {
-                [nameof(request.Role)] = [$"Role must be one of: {string.Join(", ", AllowedRoles)}."]
+                [nameof(request.Role)] = [$"Role must be one of: {string.Join(", ", UserRoles.All)}."]
             });
         }
 
-        var normalizedRole = AllowedRoles.First(allowedRole =>
+        var normalizedRole = UserRoles.All.First(allowedRole =>
             string.Equals(allowedRole, role, StringComparison.OrdinalIgnoreCase));
 
         var user = await repository.ChangeRoleAsync(request.UserId, normalizedRole, ct);
