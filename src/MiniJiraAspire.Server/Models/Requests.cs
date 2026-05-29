@@ -9,7 +9,12 @@ public record LoginRequest(
 
 public record CreateUserRequest(
     [property: Required, EmailAddress] string Email,
-    [property: Required, MinLength(6)] string Password,
+    [property: Required]
+    [property: MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+    [property: RegularExpression(
+        @"^(?=.*[A-Za-z])(?=.*\d).+$",
+        ErrorMessage = "Password must contain at least one letter and one number.")]
+    string Password,
     [property: Required, StringLength(100, MinimumLength = 2)] string DisplayName);
 
 // Epics
