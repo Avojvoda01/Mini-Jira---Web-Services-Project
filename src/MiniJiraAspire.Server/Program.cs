@@ -2,7 +2,6 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using MiniJiraAspire.Server.Endpoints.Admin;
 using MiniJiraAspire.Server.Endpoints.Auth;
 using MiniJiraAspire.Server.Endpoints.Comments;
 using MiniJiraAspire.Server.Endpoints.Epics;
@@ -120,9 +119,6 @@ app.MapProjectEndpoints();
 // Users
 app.MapUserEndpoints();
 
-// Admin
-app.MapAdminUserEndpoints();
-app.MapAdminRoleEndpoints();
 
 app.MapDefaultEndpoints();
 
