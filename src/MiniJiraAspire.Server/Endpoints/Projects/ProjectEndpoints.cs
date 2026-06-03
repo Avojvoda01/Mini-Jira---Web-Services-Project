@@ -8,7 +8,7 @@ public static class ProjectEndpoints
 {
     public static void MapProjectEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/projects")
+        var group = app.MapGroup("/projects")
             .WithTags("Projects");
 
         group.MapPost("/", CreateProject)
@@ -34,10 +34,14 @@ public static class ProjectEndpoints
             .WithSummary("Get project by id");
 
         group.MapPost("/{projectId:guid}/members", AddProjectMember)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("AddProjectMember")
             .WithSummary("Assign a member to a project");
 
         group.MapDelete("/{projectId:guid}/members/{userId}", RemoveProjectMember)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("RemoveProjectMember")
             .WithSummary("Remove a member from a project");
     }
@@ -48,7 +52,7 @@ public static class ProjectEndpoints
         CancellationToken ct)
     {
         var result = await mediator.Send(new CreateProjectCommand(request.Name, request.Description), ct);
-        return TypedResults.Created($"/api/projects/{result.Id}", result);
+        return TypedResults.Created($"/api/v1/projects/{result.Id}", result);
     }
 
     private static async Task<IResult> UpdateProject(
@@ -93,7 +97,7 @@ public static class ProjectEndpoints
             : Results.Ok(project);
     }
 
-    private static async Task<IResult> AddProjectMember(
+    private static async Task<Results<NoContent, ProblemHttpResult>> AddProjectMember(
         Guid projectId,
         AddProjectMemberCommand command,
         IMediator mediator,
@@ -101,17 +105,19 @@ public static class ProjectEndpoints
     {
         var added = await mediator.Send(command with { ProjectId = projectId.ToString() }, ct);
         return added
-            ? Results.Created($"/api/projects/{projectId}/members", new { })
-            : Results.Problem("Project or user not found", statusCode: StatusCodes.Status404NotFound);
+            ? TypedResults.NoContent()
+            : TypedResults.Problem("Project or user not found", statusCode: StatusCodes.Status404NotFound);
     }
 
-    private static async Task<NoContent> RemoveProjectMember(
+    private static async Task<Results<NoContent, ProblemHttpResult>> RemoveProjectMember(
         Guid projectId,
         string userId,
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(new RemoveProjectMemberCommand(projectId.ToString(), userId), ct);
-        return TypedResults.NoContent();
+        var removed = await mediator.Send(new RemoveProjectMemberCommand(projectId.ToString(), userId), ct);
+        return removed
+            ? TypedResults.NoContent()
+            : TypedResults.Problem("Project membership not found", statusCode: StatusCodes.Status404NotFound);
     }
 }

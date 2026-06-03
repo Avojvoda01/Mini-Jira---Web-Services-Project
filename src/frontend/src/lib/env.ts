@@ -16,5 +16,5 @@ if (!parsedEnv.success) {
 }
 
 export const env = {
-  apiBaseUrl: parsedEnv.data.VITE_API_BASE_URL ?? '/api',
+  apiBaseUrl: parsedEnv.data.VITE_API_BASE_URL ?? '/api/v1',
 } as const;

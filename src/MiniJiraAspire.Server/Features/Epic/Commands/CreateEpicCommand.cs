@@ -5,10 +5,15 @@ using EpicEntity = MiniJiraAspire.Server.Models.Epic;
 
 namespace MiniJiraAspire.Server.Features.Epic.Commands;
 
-public class CreateEpicHandler(IEpicRepository repository) : IRequestHandler<CreateEpicCommand, EpicDto>
+public class CreateEpicHandler(IEpicRepository repository, IProjectRepository projectRepository) : IRequestHandler<CreateEpicCommand, EpicDto?>
 {
-    public async Task<EpicDto> Handle(CreateEpicCommand request, CancellationToken ct)
+    public async Task<EpicDto?> Handle(CreateEpicCommand request, CancellationToken ct)
     {
+        if (await projectRepository.GetByIdAsync(request.ProjectId, ct) is null)
+        {
+            return null;
+        }
+
         var epic = await repository.CreateAsync(new EpicEntity
         {
             Name = request.Name,

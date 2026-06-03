@@ -8,7 +8,7 @@ public static class AuthEndpoints
 {
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/auth")
+        var group = app.MapGroup("/auth")
             .WithTags("Auth");
 
         group.MapPost("/login", Login)
@@ -44,17 +44,14 @@ public static class AuthEndpoints
             new RegisterUserCommand(request.Email, request.Password, request.DisplayName),
             ct);
 
-        return result.Succeeded && result.User is not null
-            ? TypedResults.Created($"/api/users/{result.User.Id}", result.User)
-            : TypedResults.Problem(
-                title: "Unable to register.",
-                detail: GetFirstError(result.Errors),
-                statusCode: StatusCodes.Status400BadRequest);
-    }
+        if (result.EmailConflict)
+            return TypedResults.Problem("Email is already taken.", statusCode: StatusCodes.Status409Conflict);
 
-    private static string GetFirstError(Dictionary<string, string[]> errors)
-    {
-        return errors.Values.SelectMany(fieldErrors => fieldErrors).FirstOrDefault()
-            ?? "Unable to create your account.";
+        return result.Succeeded && result.User is not null
+            ? TypedResults.Created($"/api/v1/users/{result.User.Id}", result.User)
+            : TypedResults.Problem(new HttpValidationProblemDetails(result.Errors)
+            {
+                Status = StatusCodes.Status422UnprocessableEntity
+            });
     }
 }

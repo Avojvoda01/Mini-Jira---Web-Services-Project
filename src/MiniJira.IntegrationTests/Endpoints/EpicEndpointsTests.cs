@@ -14,7 +14,7 @@ public class EpicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     private async Task<Guid> CreateProjectAsync()
     {
-        var response = await _client.PostAsJsonAsync("/api/projects", new { Name = "Epic Test Project", Description = "Desc" });
+        var response = await _client.PostAsJsonAsync("/api/v1/projects", new { Name = "Epic Test Project", Description = "Desc" });
         response.EnsureSuccessStatusCode();
         var project = await response.Content.ReadFromJsonAsync<ProjectDto>();
         return project!.Id;
@@ -23,7 +23,7 @@ public class EpicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     private async Task<EpicDto> CreateEpicAsync(string name = "Test Epic", string? description = "Desc", Guid? projectId = null)
     {
         var pid = projectId ?? await CreateProjectAsync();
-        var response = await _client.PostAsJsonAsync("/api/epics", new { Name = name, Description = description, ProjectId = pid });
+        var response = await _client.PostAsJsonAsync("/api/v1/epics", new { Name = name, Description = description, ProjectId = pid });
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<EpicDto>())!;
     }
@@ -33,7 +33,7 @@ public class EpicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var projectId = await CreateProjectAsync();
 
-        var response = await _client.PostAsJsonAsync("/api/epics", new { Name = "New Epic", Description = "A description", ProjectId = projectId });
+        var response = await _client.PostAsJsonAsync("/api/v1/epics", new { Name = "New Epic", Description = "A description", ProjectId = projectId });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var epic = await response.Content.ReadFromJsonAsync<EpicDto>();
@@ -48,7 +48,7 @@ public class EpicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var created = await CreateEpicAsync();
 
-        var response = await _client.GetAsync($"/api/epics/{created.Id}");
+        var response = await _client.GetAsync($"/api/v1/epics/{created.Id}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var epic = await response.Content.ReadFromJsonAsync<EpicDto>();
@@ -59,7 +59,7 @@ public class EpicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetEpic_NonExisting_Returns404()
     {
-        var response = await _client.GetAsync($"/api/epics/{Guid.NewGuid()}");
+        var response = await _client.GetAsync($"/api/v1/epics/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -71,7 +71,7 @@ public class EpicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         await CreateEpicAsync("Epic A", projectId: projectId);
         await CreateEpicAsync("Epic B", projectId: projectId);
 
-        var response = await _client.GetAsync("/api/epics");
+        var response = await _client.GetAsync("/api/v1/epics");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var epics = await response.Content.ReadFromJsonAsync<EpicDto[]>();
@@ -84,7 +84,7 @@ public class EpicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var created = await CreateEpicAsync();
 
-        var response = await _client.PutAsJsonAsync($"/api/epics/{created.Id}", new { Name = "Updated", Description = "Updated Desc" });
+        var response = await _client.PutAsJsonAsync($"/api/v1/epics/{created.Id}", new { Name = "Updated", Description = "Updated Desc" });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -107,11 +107,11 @@ public class EpicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var created = await CreateEpicAsync();
 
-        var response = await _client.DeleteAsync($"/api/epics/{created.Id}");
+        var response = await _client.DeleteAsync($"/api/v1/epics/{created.Id}");
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-        var getResponse = await _client.GetAsync($"/api/epics/{created.Id}");
+        var getResponse = await _client.GetAsync($"/api/v1/epics/{created.Id}");
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 }

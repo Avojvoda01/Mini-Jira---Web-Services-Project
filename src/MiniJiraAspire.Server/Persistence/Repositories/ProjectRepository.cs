@@ -74,16 +74,17 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
         return true;
     }
 
-    public async Task RemoveMemberAsync(Guid projectId, Guid userId, CancellationToken cancellationToken = default)
+    public async Task<bool> RemoveMemberAsync(Guid projectId, Guid userId, CancellationToken cancellationToken = default)
     {
         var membership = await db.ProjectMembers.FirstOrDefaultAsync(
             member => member.ProjectId == projectId && member.UserId == userId,
             cancellationToken);
 
         if (membership is null)
-            return;
+            return false;
 
         db.ProjectMembers.Remove(membership);
         await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

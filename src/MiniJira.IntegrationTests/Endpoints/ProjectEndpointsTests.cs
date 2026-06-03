@@ -14,7 +14,7 @@ public class ProjectEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
     private async Task<ProjectDto> CreateProjectAsync(string name = "Test Project", string description = "Desc")
     {
-        var response = await _client.PostAsJsonAsync("/api/projects", new { Name = name, Description = description });
+        var response = await _client.PostAsJsonAsync("/api/v1/projects", new { Name = name, Description = description });
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<ProjectDto>())!;
     }
@@ -22,7 +22,7 @@ public class ProjectEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task CreateProject_ReturnsCreatedWithProject()
     {
-        var response = await _client.PostAsJsonAsync("/api/projects", new { Name = "New Project", Description = "A description" });
+        var response = await _client.PostAsJsonAsync("/api/v1/projects", new { Name = "New Project", Description = "A description" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var project = await response.Content.ReadFromJsonAsync<ProjectDto>();
@@ -36,7 +36,7 @@ public class ProjectEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var created = await CreateProjectAsync();
 
-        var response = await _client.GetAsync($"/api/projects/{created.Id}");
+        var response = await _client.GetAsync($"/api/v1/projects/{created.Id}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var project = await response.Content.ReadFromJsonAsync<ProjectDto>();
@@ -47,7 +47,7 @@ public class ProjectEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetProject_NonExisting_Returns404()
     {
-        var response = await _client.GetAsync($"/api/projects/{Guid.NewGuid()}");
+        var response = await _client.GetAsync($"/api/v1/projects/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -58,7 +58,7 @@ public class ProjectEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         await CreateProjectAsync("Project A");
         await CreateProjectAsync("Project B");
 
-        var response = await _client.GetAsync("/api/projects");
+        var response = await _client.GetAsync("/api/v1/projects");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var projects = await response.Content.ReadFromJsonAsync<ProjectDto[]>();
@@ -71,7 +71,7 @@ public class ProjectEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var created = await CreateProjectAsync();
 
-        var response = await _client.PutAsJsonAsync($"/api/projects/{created.Id}", new { Name = "Updated", Description = "Updated Desc" });
+        var response = await _client.PutAsJsonAsync($"/api/v1/projects/{created.Id}", new { Name = "Updated", Description = "Updated Desc" });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -94,11 +94,11 @@ public class ProjectEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     {
         var created = await CreateProjectAsync();
 
-        var response = await _client.DeleteAsync($"/api/projects/{created.Id}");
+        var response = await _client.DeleteAsync($"/api/v1/projects/{created.Id}");
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-        var getResponse = await _client.GetAsync($"/api/projects/{created.Id}");
+        var getResponse = await _client.GetAsync($"/api/v1/projects/{created.Id}");
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 }

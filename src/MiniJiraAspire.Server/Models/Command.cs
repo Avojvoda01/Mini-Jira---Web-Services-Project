@@ -23,14 +23,14 @@ public record AssignUserCommand(string TaskId, string? UserId) : IRequest<TaskIt
 public record AssignEpicCommand(string TaskId, string? EpicId) : IRequest<TaskItemDto?>;
 
 // Comments
-public record CreateCommentCommand(string TaskId, string Content, Guid? UserId) : IRequest<CommentDto>;
+public record CreateCommentCommand(string TaskId, string Content, Guid? UserId) : IRequest<CommentDto?>;
 
 public record UpdateCommentCommand(string TaskId, Guid CommentId, string Content) : IRequest<CommentDto?>;
 
 public record DeleteCommentCommand(string TaskId, Guid CommentId) : IRequest<bool>;
 
 // Epics
-public record CreateEpicCommand(string Name, string? Description, Guid ProjectId) : IRequest<EpicDto>;
+public record CreateEpicCommand(string Name, string? Description, Guid ProjectId) : IRequest<EpicDto?>;
 
 public record UpdateEpicCommand(Guid Id, string Name, string? Description) : IRequest<EpicDto?>;
 
@@ -45,7 +45,7 @@ public record DeleteProjectCommand(Guid ProjectId) : IRequest<bool>;
 
 public record AddProjectMemberCommand(string ProjectId, string UserId, string Role) : IRequest<bool>;
 
-public record RemoveProjectMemberCommand(string ProjectId, string UserId) : IRequest;
+public record RemoveProjectMemberCommand(string ProjectId, string UserId) : IRequest<bool>;
 
 // Users
 public record CreateUserCommand(string Email, string Password, string DisplayName) : IRequest<CreateUserResponse>;
