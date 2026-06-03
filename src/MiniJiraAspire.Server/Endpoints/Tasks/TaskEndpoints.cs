@@ -7,7 +7,7 @@ public static class TaskEndpoints
 {
     public static void MapTaskEndpoints(this IEndpointRouteBuilder app)
     {
-        var tasks = app.MapGroup("/api/tasks")
+        var tasks = app.MapGroup("/tasks")
             .WithTags("Tasks");
 
         tasks.MapPost("/", CreateTask)
@@ -33,7 +33,7 @@ public static class TaskEndpoints
             .WithName("GetTasks")
             .WithSummary("Search and filter tasks");
 
-        var actions = app.MapGroup("/api/tasks")
+        var actions = app.MapGroup("/tasks")
             .WithTags("Task Actions");
 
         actions.MapPatch("/{taskId}/status", ChangeStatus)
@@ -59,7 +59,7 @@ public static class TaskEndpoints
         CancellationToken ct)
     {
         var result = await mediator.Send(command, ct);
-        return Results.Created($"/api/tasks/{result.Id}", result);
+        return Results.Created($"/api/v1/tasks/{result.Id}", result);
     }
 
     private static async Task<IResult> UpdateTask(

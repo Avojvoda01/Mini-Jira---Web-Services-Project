@@ -15,11 +15,6 @@ public class RegisterUserHandler(
     {
         var errors = ValidateAnnotations(request);
 
-        if (await repository.EmailExistsAsync(request.Email, ct))
-        {
-            AddError(errors, nameof(request.Email), "Email is already taken.");
-        }
-
         if (await repository.DisplayNameExistsAsync(request.DisplayName, ct))
         {
             AddError(errors, nameof(request.DisplayName), "Display name is already taken.");
@@ -28,6 +23,11 @@ public class RegisterUserHandler(
         if (errors.Count > 0)
         {
             return RegisterUserResponse.ValidationFailed(errors);
+        }
+
+        if (await repository.EmailExistsAsync(request.Email, ct))
+        {
+            return RegisterUserResponse.EmailAlreadyTaken();
         }
 
         var user = new UserEntity

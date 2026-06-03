@@ -1,4 +1,5 @@
 using System.Text;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -74,6 +75,21 @@ builder.Services.AddAuthorization();
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("X-Api-Version"));
+})
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -101,23 +117,21 @@ if (app.Environment.IsDevelopment())
 
 await DbSeeder.MigrateAndSeedAsync(app.Services);
 
-// Auth
-app.MapAuthEndpoints();
+var versionSet = app.NewApiVersionSet()
+    .HasApiVersion(new ApiVersion(1, 0))
+    .ReportApiVersions()
+    .Build();
 
-// Tasks
-app.MapTaskEndpoints();
+var v1 = app.MapGroup("/api/v{version:apiVersion}")
+    .WithApiVersionSet(versionSet)
+    .MapToApiVersion(new ApiVersion(1, 0));
 
-// Comments
-app.MapCommentEndpoints();
-
-// Epics
-app.MapEpicEndpoints();
-
-// Projects
-app.MapProjectEndpoints();
-
-// Users
-app.MapUserEndpoints();
+v1.MapAuthEndpoints();
+v1.MapTaskEndpoints();
+v1.MapCommentEndpoints();
+v1.MapEpicEndpoints();
+v1.MapProjectEndpoints();
+v1.MapUserEndpoints();
 
 
 app.MapDefaultEndpoints();

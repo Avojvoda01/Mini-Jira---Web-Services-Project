@@ -8,7 +8,7 @@ public static class UserEndpoints
 {
     public static void MapUserEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/users")
+        var group = app.MapGroup("/users")
             .WithTags("Users");
 
         group.MapGet("/", GetUsers)
@@ -16,10 +16,12 @@ public static class UserEndpoints
             .WithSummary("Get users");
 
         group.MapGet("/{userId}", GetUser)
+            .Produces<UserDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("GetUser")
             .WithSummary("Get user by id");
 
-        var adminGroup = app.MapGroup("/api/users")
+        var adminGroup = app.MapGroup("/users")
             .WithTags("Users")
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Admin.ToRoleString()));
 
@@ -44,7 +46,7 @@ public static class UserEndpoints
         return TypedResults.Ok(users);
     }
 
-    private static async Task<Results<Ok<UserDto>, NotFound>> GetUser(
+    private static async Task<Results<Ok<UserDto>, ProblemHttpResult>> GetUser(
         string userId,
         IMediator mediator,
         CancellationToken ct)
@@ -52,20 +54,26 @@ public static class UserEndpoints
         var user = await mediator.Send(new GetUserByIdQuery(userId), ct);
 
         return user is null
-            ? TypedResults.NotFound()
+            ? TypedResults.Problem($"User with id {userId} not found", statusCode: StatusCodes.Status404NotFound)
             : TypedResults.Ok(user);
     }
 
-    private static async Task<Results<Created<UserDto>, ValidationProblem>> CreateUser(
+    private static async Task<Results<Created<UserDto>, ProblemHttpResult>> CreateUser(
         CreateUserRequest request,
         IMediator mediator,
         CancellationToken ct)
     {
         var result = await mediator.Send(new CreateUserCommand(request.Email, request.Password, request.DisplayName), ct);
 
+        if (result.EmailConflict)
+            return TypedResults.Problem("Email is already taken.", statusCode: StatusCodes.Status409Conflict);
+
         return result is { Succeeded: true, User: not null }
-            ? TypedResults.Created($"/api/users/{result.User.Id}", result.User)
-            : TypedResults.ValidationProblem(result.Errors);
+            ? TypedResults.Created($"/api/v1/users/{result.User.Id}", result.User)
+            : TypedResults.Problem(new HttpValidationProblemDetails(result.Errors)
+            {
+                Status = StatusCodes.Status422UnprocessableEntity
+            });
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> DeleteUser(
@@ -80,7 +88,7 @@ public static class UserEndpoints
             : TypedResults.Problem($"User with id {userId} not found", statusCode: StatusCodes.Status404NotFound);
     }
 
-    private static async Task<Results<Ok<UserDto>, ValidationProblem, ProblemHttpResult>> ChangeUserRole(
+    private static async Task<Results<Ok<UserDto>, ProblemHttpResult>> ChangeUserRole(
         string userId,
         ChangeUserRoleRequest request,
         IMediator mediator,
@@ -89,7 +97,10 @@ public static class UserEndpoints
         var result = await mediator.Send(new ChangeUserRoleCommand(userId, request.Role), ct);
 
         if (result.ValidationErrors is not null)
-            return TypedResults.ValidationProblem(result.ValidationErrors);
+            return TypedResults.Problem(new HttpValidationProblemDetails(result.ValidationErrors)
+            {
+                Status = StatusCodes.Status422UnprocessableEntity
+            });
 
         if (result.NotFound)
             return TypedResults.Problem($"User with id {userId} not found", statusCode: StatusCodes.Status404NotFound);

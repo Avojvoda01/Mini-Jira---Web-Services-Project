@@ -8,10 +8,12 @@ public static class EpicEndpoints
 {
     public static void MapEpicEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/epics")
+        var group = app.MapGroup("/epics")
             .WithTags("Epics");
 
         group.MapPost("/", CreateEpic)
+            .Produces<EpicDto>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("CreateEpic")
             .WithSummary("Create a new epic");
 
@@ -57,13 +59,15 @@ public static class EpicEndpoints
             : TypedResults.Ok(epic);
     }
 
-    private static async Task<Created<EpicDto>> CreateEpic(
+    private static async Task<Results<Created<EpicDto>, ProblemHttpResult>> CreateEpic(
         CreateEpicRequest request,
         IMediator mediator,
         CancellationToken ct)
     {
         var epic = await mediator.Send(new CreateEpicCommand(request.Name, request.Description, request.ProjectId), ct);
-        return TypedResults.Created($"/api/epics/{epic.Id}", epic);
+        return epic is null
+            ? TypedResults.Problem($"Project with id {request.ProjectId} not found", statusCode: StatusCodes.Status404NotFound)
+            : TypedResults.Created($"/api/v1/epics/{epic.Id}", epic);
     }
 
     private static async Task<Results<Ok<EpicDto>, ProblemHttpResult>> UpdateEpic(

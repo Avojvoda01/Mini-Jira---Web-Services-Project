@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using MiniJira.IntegrationTests.Infrastructure;
-using MiniJiraAspire.Server.Features.Tasks.Commands;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJira.IntegrationTests.Endpoints;
@@ -18,7 +17,7 @@ public class TaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     private async Task<Guid> SeedProjectAsync()
     {
         // Create a project directly via the API so tasks have a valid ProjectId
-        var response = await _client.PostAsJsonAsync("/api/projects", new { Name = "Test Project", Description = "Desc" });
+        var response = await _client.PostAsJsonAsync("/api/v1/projects", new { Name = "Test Project", Description = "Desc" });
         response.EnsureSuccessStatusCode();
         var project = await response.Content.ReadFromJsonAsync<ProjectDto>();
         return project!.Id;
@@ -27,7 +26,7 @@ public class TaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     private async Task<TaskItemDto> CreateTaskAsync(Guid projectId, string title = "Test Task")
     {
         var command = new CreateTaskCommand(title, "Test Description", projectId.ToString());
-        var response = await _client.PostAsJsonAsync("/api/tasks", command);
+        var response = await _client.PostAsJsonAsync("/api/v1/tasks", command);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<TaskItemDto>())!;
     }
@@ -38,7 +37,7 @@ public class TaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var projectId = await SeedProjectAsync();
         var command = new CreateTaskCommand("Integration Test Task", "Description", projectId.ToString());
 
-        var response = await _client.PostAsJsonAsync("/api/tasks", command);
+        var response = await _client.PostAsJsonAsync("/api/v1/tasks", command);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var task = await response.Content.ReadFromJsonAsync<TaskItemDto>();
@@ -54,7 +53,7 @@ public class TaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var projectId = await SeedProjectAsync();
         var created = await CreateTaskAsync(projectId);
 
-        var response = await _client.GetAsync($"/api/tasks/{created.Id}");
+        var response = await _client.GetAsync($"/api/v1/tasks/{created.Id}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var task = await response.Content.ReadFromJsonAsync<TaskItemDto>();
@@ -65,7 +64,7 @@ public class TaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetTask_NonExisting_Returns404()
     {
-        var response = await _client.GetAsync($"/api/tasks/{Guid.NewGuid()}");
+        var response = await _client.GetAsync($"/api/v1/tasks/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -77,7 +76,7 @@ public class TaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         await CreateTaskAsync(projectId, "Task A");
         await CreateTaskAsync(projectId, "Task B");
 
-        var response = await _client.GetAsync("/api/tasks");
+        var response = await _client.GetAsync("/api/v1/tasks");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var tasks = await response.Content.ReadFromJsonAsync<TaskItemDto[]>();
@@ -91,12 +90,12 @@ public class TaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var projectId = await SeedProjectAsync();
         var created = await CreateTaskAsync(projectId);
 
-        var response = await _client.DeleteAsync($"/api/tasks/{created.Id}");
+        var response = await _client.DeleteAsync($"/api/v1/tasks/{created.Id}");
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         // Verify task is gone
-        var getResponse = await _client.GetAsync($"/api/tasks/{created.Id}");
+        var getResponse = await _client.GetAsync($"/api/v1/tasks/{created.Id}");
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
