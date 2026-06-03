@@ -1,9 +1,8 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Project.Commands;
-
-public record RemoveProjectMemberCommand(string ProjectId, string UserId) : IRequest;
 
 public class RemoveProjectMemberHandler(IProjectRepository repository) : IRequestHandler<RemoveProjectMemberCommand>
 {

@@ -1,7 +1,5 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
-using MiniJiraAspire.Server.Features.Comment.Commands;
-using MiniJiraAspire.Server.Features.Comment.Queries;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Endpoints.Comments;

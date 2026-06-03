@@ -1,9 +1,8 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Tasks.Commands;
-
-public record ChangeStatusCommand(string TaskId, string Status) : IRequest;
 
 public class ChangeStatusHandler(ITaskRepository repository) : IRequestHandler<ChangeStatusCommand>
 {

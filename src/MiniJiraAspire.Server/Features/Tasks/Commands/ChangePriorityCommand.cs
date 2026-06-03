@@ -1,9 +1,8 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Tasks.Commands;
-
-public record ChangePriorityCommand(string TaskId, string Priority) : IRequest;
 
 public class ChangePriorityHandler(ITaskRepository repository) : IRequestHandler<ChangePriorityCommand>
 {

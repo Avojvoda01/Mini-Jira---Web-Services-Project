@@ -5,8 +5,6 @@ using CommentEntity = MiniJiraAspire.Server.Models.Comment;
 
 namespace MiniJiraAspire.Server.Features.Comment.Commands;
 
-public record CreateCommentCommand(string TaskId, string Content, Guid? UserId) : IRequest<CommentDto>;
-
 public class CreateCommentHandler(ICommentRepository repository) : IRequestHandler<CreateCommentCommand, CommentDto>
 {
     public async Task<CommentDto> Handle(CreateCommentCommand request, CancellationToken ct)

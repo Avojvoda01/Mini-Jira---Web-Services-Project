@@ -4,8 +4,6 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Epic.Queries;
 
-public record GetAllEpicsQuery : IRequest<List<EpicDto>>;
-
 public class GetAllEpicsHandler(IEpicRepository repository) : IRequestHandler<GetAllEpicsQuery, List<EpicDto>>
 {
     public async Task<List<EpicDto>> Handle(GetAllEpicsQuery request, CancellationToken ct)

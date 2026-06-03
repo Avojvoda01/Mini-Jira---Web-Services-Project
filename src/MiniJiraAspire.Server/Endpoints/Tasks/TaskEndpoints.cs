@@ -1,6 +1,4 @@
 using MediatR;
-using MiniJiraAspire.Server.Features.Tasks.Commands;
-using MiniJiraAspire.Server.Features.Tasks.Queries;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Endpoints.Tasks;

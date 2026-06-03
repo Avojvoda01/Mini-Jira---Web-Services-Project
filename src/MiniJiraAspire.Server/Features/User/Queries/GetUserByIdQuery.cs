@@ -4,8 +4,6 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.User.Queries;
 
-public record GetUserByIdQuery(string UserId) : IRequest<UserDto?>;
-
 public class GetUserByIdHandler(IUserRepository repository) : IRequestHandler<GetUserByIdQuery, UserDto?>
 {
     public async Task<UserDto?> Handle(GetUserByIdQuery request, CancellationToken ct)

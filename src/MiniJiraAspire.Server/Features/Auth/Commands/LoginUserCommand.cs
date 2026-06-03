@@ -7,8 +7,6 @@ using UserEntity = MiniJiraAspire.Server.Models.User;
 
 namespace MiniJiraAspire.Server.Features.Auth.Commands;
 
-public record LoginUserCommand(string Email, string Password) : IRequest<LoginResponse?>;
-
 public class LoginUserHandler(
     IUserRepository repository,
     IPasswordHasher<UserEntity> passwordHasher,

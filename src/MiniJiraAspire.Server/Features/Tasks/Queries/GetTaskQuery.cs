@@ -4,8 +4,6 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Tasks.Queries;
 
-public record GetTaskQuery(string TaskId) : IRequest<TaskItemDto?>;
-
 public class GetTaskHandler(ITaskRepository repository) : IRequestHandler<GetTaskQuery, TaskItemDto?>
 {
     public async Task<TaskItemDto?> Handle(GetTaskQuery request, CancellationToken ct)

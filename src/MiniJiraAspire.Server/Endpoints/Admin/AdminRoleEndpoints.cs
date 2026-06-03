@@ -1,6 +1,5 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
-using MiniJiraAspire.Server.Features.User.Commands;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Endpoints.Admin;
@@ -39,5 +38,3 @@ public static class AdminRoleEndpoints
         return TypedResults.Ok(result.User!);
     }
 }
-
-public record ChangeUserRoleRequest(string Role);

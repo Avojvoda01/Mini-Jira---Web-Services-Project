@@ -1,9 +1,8 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Comment.Commands;
-
-public record UpdateCommentCommand(string TaskId, Guid CommentId, string Content) : IRequest;
 
 public class UpdateCommentHandler(ICommentRepository repository) : IRequestHandler<UpdateCommentCommand>
 {

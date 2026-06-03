@@ -1,9 +1,8 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Tasks.Commands;
-
-public record DeleteTaskCommand(string TaskId) : IRequest;
 
 public class DeleteTaskHandler(ITaskRepository repository) : IRequestHandler<DeleteTaskCommand>
 {

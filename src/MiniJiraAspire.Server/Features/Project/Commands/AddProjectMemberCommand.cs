@@ -1,9 +1,8 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Project.Commands;
-
-public record AddProjectMemberCommand(string ProjectId, string UserId, string Role) : IRequest;
 
 public class AddProjectMemberHandler(IProjectRepository repository) : IRequestHandler<AddProjectMemberCommand>
 {

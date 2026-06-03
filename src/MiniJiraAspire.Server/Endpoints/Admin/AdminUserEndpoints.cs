@@ -1,7 +1,5 @@
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
-using MiniJiraAspire.Server.Features.User.Commands;
-using MiniJiraAspire.Server.Features.User.Queries;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Endpoints.Admin;

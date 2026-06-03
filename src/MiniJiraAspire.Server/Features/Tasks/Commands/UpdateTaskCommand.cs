@@ -1,9 +1,8 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Tasks.Commands;
-
-public record UpdateTaskCommand(string TaskId, string Title, string? Description) : IRequest;
 
 public class UpdateTaskHandler(ITaskRepository repository) : IRequestHandler<UpdateTaskCommand>
 {

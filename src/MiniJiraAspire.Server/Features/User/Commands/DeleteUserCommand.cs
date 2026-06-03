@@ -1,9 +1,8 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.User.Commands;
-
-public record DeleteUserCommand(string UserId) : IRequest<bool>;
 
 public class DeleteUserHandler(IUserRepository repository) : IRequestHandler<DeleteUserCommand, bool>
 {

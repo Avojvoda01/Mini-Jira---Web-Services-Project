@@ -1,9 +1,8 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Project.Commands;
-
-public record DeleteProjectCommand(Guid ProjectId) : IRequest;
 
 public class DeleteProjectHandler(IProjectRepository repository) : IRequestHandler<DeleteProjectCommand>
 {
