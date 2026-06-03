@@ -4,8 +4,6 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.User.Queries;
 
-public record GetAllUsersQuery : IRequest<List<UserDto>>;
-
 public class GetAllUsersHandler(IUserRepository repository) : IRequestHandler<GetAllUsersQuery, List<UserDto>>
 {
     public async Task<List<UserDto>> Handle(GetAllUsersQuery request, CancellationToken ct)

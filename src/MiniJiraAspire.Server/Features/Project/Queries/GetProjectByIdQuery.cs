@@ -4,8 +4,6 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Project.Queries;
 
-public record GetProjectByIdQuery(Guid Id) : IRequest<ProjectDto?>;
-
 public class GetProjectByIdHandler(IProjectRepository repository) : IRequestHandler<GetProjectByIdQuery, ProjectDto?>
 {
     public async Task<ProjectDto?> Handle(GetProjectByIdQuery request, CancellationToken ct)

@@ -1,12 +1,11 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Epic.Commands;
 
-public record DeleteEpicCommand(Guid Id) : IRequest;
-
-public class DeleteEpicHandler(IEpicRepository repository) : IRequestHandler<DeleteEpicCommand>
+public class DeleteEpicHandler(IEpicRepository repository) : IRequestHandler<DeleteEpicCommand, bool>
 {
-    public Task Handle(DeleteEpicCommand request, CancellationToken ct)
+    public Task<bool> Handle(DeleteEpicCommand request, CancellationToken ct)
         => repository.DeleteAsync(request.Id, ct);
 }

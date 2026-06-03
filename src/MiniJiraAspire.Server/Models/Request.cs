@@ -17,6 +17,8 @@ public record CreateUserRequest(
     string Password,
     [property: Required, StringLength(100, MinimumLength = 2)] string DisplayName);
 
+public record ChangeUserRoleRequest(string Role);
+
 // Epics
 public record CreateEpicRequest(
     [property: Required, StringLength(100, MinimumLength = 3)] string Name,

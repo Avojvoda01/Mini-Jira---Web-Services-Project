@@ -7,22 +7,11 @@ using UserEntity = MiniJiraAspire.Server.Models.User;
 
 namespace MiniJiraAspire.Server.Features.User.Commands;
 
-public record CreateUserCommand(string Email, string Password, string DisplayName) : IRequest<CreateUserResult>;
-
-public record CreateUserResult(UserDto? User, Dictionary<string, string[]> Errors)
-{
-    public bool Succeeded => User is not null;
-
-    public static CreateUserResult Success(UserDto user) => new(user, []);
-
-    public static CreateUserResult ValidationFailed(Dictionary<string, string[]> errors) => new(null, errors);
-}
-
 public class CreateUserHandler(
     IUserRepository repository,
-    IPasswordHasher<UserEntity> passwordHasher) : IRequestHandler<CreateUserCommand, CreateUserResult>
+    IPasswordHasher<UserEntity> passwordHasher) : IRequestHandler<CreateUserCommand, CreateUserResponse>
 {
-    public async Task<CreateUserResult> Handle(CreateUserCommand request, CancellationToken ct)
+    public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken ct)
     {
         var errors = ValidateAnnotations(request);
 
@@ -38,7 +27,7 @@ public class CreateUserHandler(
 
         if (errors.Count > 0)
         {
-            return CreateUserResult.ValidationFailed(errors);
+            return CreateUserResponse.ValidationFailed(errors);
         }
 
         var user = new UserEntity
@@ -51,7 +40,7 @@ public class CreateUserHandler(
 
         var created = await repository.CreateAsync(user, ct);
 
-        return CreateUserResult.Success(new UserDto(created.Id.ToString(), created.Email, created.DisplayName, created.Role));
+        return CreateUserResponse.Success(new UserDto(created.Id.ToString(), created.Email, created.DisplayName, created.Role));
     }
 
     private static Dictionary<string, string[]> ValidateAnnotations(CreateUserCommand request)

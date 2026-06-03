@@ -1,12 +1,11 @@
 using MediatR;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Comment.Commands;
 
-public record DeleteCommentCommand(string TaskId, Guid CommentId) : IRequest;
-
-public class DeleteCommentHandler(ICommentRepository repository) : IRequestHandler<DeleteCommentCommand>
+public class DeleteCommentHandler(ICommentRepository repository) : IRequestHandler<DeleteCommentCommand, bool>
 {
-    public Task Handle(DeleteCommentCommand request, CancellationToken ct)
+    public Task<bool> Handle(DeleteCommentCommand request, CancellationToken ct)
         => repository.DeleteAsync(request.TaskId, request.CommentId, ct);
 }

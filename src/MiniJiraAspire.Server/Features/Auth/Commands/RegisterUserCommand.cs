@@ -7,22 +7,11 @@ using UserEntity = MiniJiraAspire.Server.Models.User;
 
 namespace MiniJiraAspire.Server.Features.Auth.Commands;
 
-public record RegisterUserCommand(string Email, string Password, string DisplayName) : IRequest<RegisterUserResult>;
-
-public record RegisterUserResult(UserDto? User, Dictionary<string, string[]> Errors)
-{
-    public bool Succeeded => User is not null;
-
-    public static RegisterUserResult Success(UserDto user) => new(user, []);
-
-    public static RegisterUserResult ValidationFailed(Dictionary<string, string[]> errors) => new(null, errors);
-}
-
 public class RegisterUserHandler(
     IUserRepository repository,
-    IPasswordHasher<UserEntity> passwordHasher) : IRequestHandler<RegisterUserCommand, RegisterUserResult>
+    IPasswordHasher<UserEntity> passwordHasher) : IRequestHandler<RegisterUserCommand, RegisterUserResponse>
 {
-    public async Task<RegisterUserResult> Handle(RegisterUserCommand request, CancellationToken ct)
+    public async Task<RegisterUserResponse> Handle(RegisterUserCommand request, CancellationToken ct)
     {
         var errors = ValidateAnnotations(request);
 
@@ -38,7 +27,7 @@ public class RegisterUserHandler(
 
         if (errors.Count > 0)
         {
-            return RegisterUserResult.ValidationFailed(errors);
+            return RegisterUserResponse.ValidationFailed(errors);
         }
 
         var user = new UserEntity
@@ -52,7 +41,7 @@ public class RegisterUserHandler(
 
         var createdUser = await repository.CreateAsync(user, ct);
 
-        return RegisterUserResult.Success(
+        return RegisterUserResponse.Success(
             new UserDto(createdUser.Id.ToString(), createdUser.Email, createdUser.DisplayName, createdUser.Role));
     }
 

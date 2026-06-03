@@ -1,5 +1,6 @@
 using Moq;
 using MiniJiraAspire.Server.Features.Epic.Commands;
+using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 using EpicEntity = MiniJiraAspire.Server.Models.Epic;
 namespace MinirJira.Test.Features.Epic;

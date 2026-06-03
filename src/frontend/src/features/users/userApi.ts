@@ -7,13 +7,13 @@ export const userQueryKeys = {
 };
 
 export async function fetchAdminUsers(): Promise<UserDto[]> {
-  return apiClient.get<UserDto[]>('/admin/users');
+  return apiClient.get<UserDto[]>('/users');
 }
 
 export async function createAdminUser(input: CreateAdminUserInput): Promise<UserDto> {
-  return apiClient.post<UserDto>('/admin/users', input);
+  return apiClient.post<UserDto>('/users', input);
 }
 
 export async function deleteAdminUser(userId: string): Promise<void> {
-  return apiClient.delete<void>(`/admin/users/${userId}`);
+  return apiClient.delete<void>(`/users/${userId}`);
 }

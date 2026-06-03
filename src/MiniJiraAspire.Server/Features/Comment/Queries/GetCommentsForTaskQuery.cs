@@ -4,8 +4,6 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Comment.Queries;
 
-public record GetCommentsForTaskQuery(string TaskId) : IRequest<CommentDto[]>;
-
 public class GetCommentsForTaskHandler(ICommentRepository repository) : IRequestHandler<GetCommentsForTaskQuery, CommentDto[]>
 {
     public async Task<CommentDto[]> Handle(GetCommentsForTaskQuery request, CancellationToken ct)

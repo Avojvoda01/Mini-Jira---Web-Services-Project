@@ -4,8 +4,6 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Epic.Queries;
 
-public record GetEpicByIdQuery(Guid Id) : IRequest<EpicDto?>;
-
 public class GetEpicByIdHandler(IEpicRepository repository) : IRequestHandler<GetEpicByIdQuery, EpicDto?>
 {
     public async Task<EpicDto?> Handle(GetEpicByIdQuery request, CancellationToken ct)

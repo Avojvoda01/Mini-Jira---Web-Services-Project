@@ -4,8 +4,6 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Project.Queries;
 
-public record GetAllProjectsQuery : IRequest<List<ProjectDto>>;
-
 public class GetAllProjectsHandler(IProjectRepository repository) : IRequestHandler<GetAllProjectsQuery, List<ProjectDto>>
 {
     public async Task<List<ProjectDto>> Handle(GetAllProjectsQuery request, CancellationToken ct)
