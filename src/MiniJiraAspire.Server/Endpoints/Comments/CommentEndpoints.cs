@@ -13,6 +13,7 @@ public static class CommentEndpoints
 
         group.MapPost("/", CreateComment)
             .Produces<CommentDto>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("CreateComment")
             .WithSummary("Create a comment on a task");
 
@@ -34,14 +35,16 @@ public static class CommentEndpoints
             .WithSummary("Delete a comment");
     }
 
-    private static async Task<Created<CommentDto>> CreateComment(
+    private static async Task<Results<Created<CommentDto>, ProblemHttpResult>> CreateComment(
         string taskId,
         CreateCommentRequest request,
         IMediator mediator,
         CancellationToken ct)
     {
         var comment = await mediator.Send(new CreateCommentCommand(taskId, request.Content, request.UserId), ct);
-        return TypedResults.Created($"/api/v1/tasks/{taskId}/comments/{comment.Id}", comment);
+        return comment is null
+            ? TypedResults.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound)
+            : TypedResults.Created($"/api/v1/tasks/{taskId}/comments/{comment.Id}", comment);
     }
 
     private static async Task<Ok<CommentDto[]>> GetComments(

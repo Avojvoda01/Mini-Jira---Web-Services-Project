@@ -44,17 +44,14 @@ public static class AuthEndpoints
             new RegisterUserCommand(request.Email, request.Password, request.DisplayName),
             ct);
 
+        if (result.EmailConflict)
+            return TypedResults.Problem("Email is already taken.", statusCode: StatusCodes.Status409Conflict);
+
         return result.Succeeded && result.User is not null
             ? TypedResults.Created($"/api/v1/users/{result.User.Id}", result.User)
-            : TypedResults.Problem(
-                title: "Unable to register.",
-                detail: GetFirstError(result.Errors),
-                statusCode: StatusCodes.Status400BadRequest);
-    }
-
-    private static string GetFirstError(Dictionary<string, string[]> errors)
-    {
-        return errors.Values.SelectMany(fieldErrors => fieldErrors).FirstOrDefault()
-            ?? "Unable to create your account.";
+            : TypedResults.Problem(new HttpValidationProblemDetails(result.Errors)
+            {
+                Status = StatusCodes.Status422UnprocessableEntity
+            });
     }
 }
