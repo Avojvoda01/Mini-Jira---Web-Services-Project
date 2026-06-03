@@ -26,11 +26,10 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
         return project;
     }
 
-    public async Task<Project> UpdateAsync(Guid id, string name, string description, CancellationToken cancellationToken = default)
+    public async Task<Project?> UpdateAsync(Guid id, string name, string description, CancellationToken cancellationToken = default)
     {
         var project = await db.Projects.FindAsync([id], cancellationToken);
-        if (project is null)
-            throw new Exception($"Project with id {id} not found");
+        if (project is null) return null;
 
         project.Name = name;
         project.Description = description;
@@ -38,32 +37,32 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
         return project;
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var project = await db.Projects.FindAsync([id], cancellationToken);
-        if (project is null)
-            throw new Exception($"Project with id {id} not found");
+        if (project is null) return false;
 
         db.Projects.Remove(project);
         await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
-    public async Task AddMemberAsync(Guid projectId, Guid userId, string role, CancellationToken cancellationToken = default)
+    public async Task<bool> AddMemberAsync(Guid projectId, Guid userId, string role, CancellationToken cancellationToken = default)
     {
         var projectExists = await db.Projects.AnyAsync(project => project.Id == projectId, cancellationToken);
         if (!projectExists)
-            throw new Exception($"Project with id {projectId} not found");
+            return false;
 
         var userExists = await db.Users.AnyAsync(user => user.Id == userId, cancellationToken);
         if (!userExists)
-            throw new Exception($"User with id {userId} not found");
+            return false;
 
         var alreadyMember = await db.ProjectMembers.AnyAsync(
             member => member.ProjectId == projectId && member.UserId == userId,
             cancellationToken);
 
         if (alreadyMember)
-            return;
+            return true;
 
         db.ProjectMembers.Add(new ProjectMember
         {
@@ -72,6 +71,7 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
         });
 
         await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     public async Task RemoveMemberAsync(Guid projectId, Guid userId, CancellationToken cancellationToken = default)

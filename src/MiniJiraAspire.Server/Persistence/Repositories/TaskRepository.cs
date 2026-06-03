@@ -41,10 +41,10 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
         return task;
     }
 
-    public async Task<TaskItem> UpdateAsync(Guid id, string title, string? description, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> UpdateAsync(Guid id, string title, string? description, CancellationToken cancellationToken = default)
     {
-        var task = await db.TaskItems.FindAsync([id], cancellationToken)
-            ?? throw new Exception($"Task with id {id} not found");
+        var task = await db.TaskItems.FindAsync([id], cancellationToken);
+        if (task is null) return null;
 
         task.Title = title;
         task.Description = description;
@@ -52,48 +52,53 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
         return task;
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var task = await db.TaskItems.FindAsync([id], cancellationToken)
-            ?? throw new Exception($"Task with id {id} not found");
+        var task = await db.TaskItems.FindAsync([id], cancellationToken);
+        if (task is null) return false;
 
         db.TaskItems.Remove(task);
         await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
-    public async Task ChangeStatusAsync(Guid id, string status, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> ChangeStatusAsync(Guid id, string status, CancellationToken cancellationToken = default)
     {
-        var task = await db.TaskItems.FindAsync([id], cancellationToken)
-            ?? throw new Exception($"Task with id {id} not found");
+        var task = await db.TaskItems.FindAsync([id], cancellationToken);
+        if (task is null) return null;
 
         task.Status = status;
         await db.SaveChangesAsync(cancellationToken);
+        return task;
     }
 
-    public async Task ChangePriorityAsync(Guid id, string priority, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> ChangePriorityAsync(Guid id, string priority, CancellationToken cancellationToken = default)
     {
-        var task = await db.TaskItems.FindAsync([id], cancellationToken)
-            ?? throw new Exception($"Task with id {id} not found");
+        var task = await db.TaskItems.FindAsync([id], cancellationToken);
+        if (task is null) return null;
 
         task.Priority = priority;
         await db.SaveChangesAsync(cancellationToken);
+        return task;
     }
 
-    public async Task AssignUserAsync(Guid id, Guid? userId, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> AssignUserAsync(Guid id, Guid? userId, CancellationToken cancellationToken = default)
     {
-        var task = await db.TaskItems.FindAsync([id], cancellationToken)
-            ?? throw new Exception($"Task with id {id} not found");
+        var task = await db.TaskItems.FindAsync([id], cancellationToken);
+        if (task is null) return null;
 
         task.AssigneeId = userId;
         await db.SaveChangesAsync(cancellationToken);
+        return task;
     }
 
-    public async Task AssignEpicAsync(Guid id, Guid? epicId, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> AssignEpicAsync(Guid id, Guid? epicId, CancellationToken cancellationToken = default)
     {
-        var task = await db.TaskItems.FindAsync([id], cancellationToken)
-            ?? throw new Exception($"Task with id {id} not found");
+        var task = await db.TaskItems.FindAsync([id], cancellationToken);
+        if (task is null) return null;
 
         task.EpicId = epicId;
         await db.SaveChangesAsync(cancellationToken);
+        return task;
     }
 }

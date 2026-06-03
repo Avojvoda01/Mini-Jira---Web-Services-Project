@@ -4,8 +4,8 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Tasks.Commands;
 
-public class DeleteTaskHandler(ITaskRepository repository) : IRequestHandler<DeleteTaskCommand>
+public class DeleteTaskHandler(ITaskRepository repository) : IRequestHandler<DeleteTaskCommand, bool>
 {
-    public async Task Handle(DeleteTaskCommand request, CancellationToken ct)
-        => await repository.DeleteAsync(Guid.Parse(request.TaskId), ct);
+    public Task<bool> Handle(DeleteTaskCommand request, CancellationToken ct)
+        => repository.DeleteAsync(Guid.Parse(request.TaskId), ct);
 }

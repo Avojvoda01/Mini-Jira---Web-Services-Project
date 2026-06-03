@@ -68,8 +68,10 @@ public static class TaskEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(command with { TaskId = taskId }, ct);
-        return Results.Ok();
+        var task = await mediator.Send(command with { TaskId = taskId }, ct);
+        return task is null
+            ? Results.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(task);
     }
 
     private static async Task<IResult> DeleteTask(
@@ -77,8 +79,10 @@ public static class TaskEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(new DeleteTaskCommand(taskId), ct);
-        return Results.NoContent();
+        var deleted = await mediator.Send(new DeleteTaskCommand(taskId), ct);
+        return deleted
+            ? Results.NoContent()
+            : Results.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> GetTask(
@@ -112,8 +116,10 @@ public static class TaskEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(command with { TaskId = taskId }, ct);
-        return Results.Ok();
+        var task = await mediator.Send(command with { TaskId = taskId }, ct);
+        return task is null
+            ? Results.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(task);
     }
 
     private static async Task<IResult> ChangePriority(
@@ -122,8 +128,10 @@ public static class TaskEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(command with { TaskId = taskId }, ct);
-        return Results.Ok();
+        var task = await mediator.Send(command with { TaskId = taskId }, ct);
+        return task is null
+            ? Results.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(task);
     }
 
     private static async Task<IResult> AssignUser(
@@ -132,8 +140,10 @@ public static class TaskEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(command with { TaskId = taskId }, ct);
-        return Results.Ok();
+        var task = await mediator.Send(command with { TaskId = taskId }, ct);
+        return task is null
+            ? Results.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(task);
     }
 
     private static async Task<IResult> AssignEpic(
@@ -142,7 +152,9 @@ public static class TaskEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(command with { TaskId = taskId }, ct);
-        return Results.Ok();
+        var task = await mediator.Send(command with { TaskId = taskId }, ct);
+        return task is null
+            ? Results.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(task);
     }
 }

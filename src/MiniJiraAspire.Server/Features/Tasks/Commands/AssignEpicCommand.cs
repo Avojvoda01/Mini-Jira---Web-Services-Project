@@ -4,9 +4,9 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Tasks.Commands;
 
-public class AssignEpicHandler(ITaskRepository repository) : IRequestHandler<AssignEpicCommand>
+public class AssignEpicHandler(ITaskRepository repository) : IRequestHandler<AssignEpicCommand, TaskItemDto?>
 {
-    public async Task Handle(AssignEpicCommand request, CancellationToken ct)
+    public async Task<TaskItemDto?> Handle(AssignEpicCommand request, CancellationToken ct)
     {
         Guid? epicId = null;
         if (!string.IsNullOrWhiteSpace(request.EpicId))
@@ -14,6 +14,9 @@ public class AssignEpicHandler(ITaskRepository repository) : IRequestHandler<Ass
             epicId = Guid.Parse(request.EpicId);
         }
 
-        await repository.AssignEpicAsync(Guid.Parse(request.TaskId), epicId, ct);
+        var task = await repository.AssignEpicAsync(Guid.Parse(request.TaskId), epicId, ct);
+        return task is null
+            ? null
+            : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedAtUtc, task.UpdatedAtUtc);
     }
 }

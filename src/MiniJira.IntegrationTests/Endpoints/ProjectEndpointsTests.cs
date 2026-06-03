@@ -67,18 +67,26 @@ public class ProjectEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task UpdateProject_ExistingProject_ReturnsNoContent()
+    public async Task UpdateProject_ExistingProject_ReturnsOkWithUpdatedProject()
     {
         var created = await CreateProjectAsync();
 
         var response = await _client.PutAsJsonAsync($"/api/projects/{created.Id}", new { Name = "Updated", Description = "Updated Desc" });
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var getResponse = await _client.GetAsync($"/api/projects/{created.Id}");
-        var updated = await getResponse.Content.ReadFromJsonAsync<ProjectDto>();
+        var updated = await response.Content.ReadFromJsonAsync<ProjectDto>();
+        Assert.NotNull(updated);
         Assert.Equal("Updated", updated!.Name);
         Assert.Equal("Updated Desc", updated.Description);
+    }
+
+    [Fact]
+    public async Task UpdateProject_NonExisting_Returns404()
+    {
+        var response = await _client.PutAsJsonAsync($"/api/projects/{Guid.NewGuid()}", new { Name = "Updated", Description = "Updated Desc" });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]

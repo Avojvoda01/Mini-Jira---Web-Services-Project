@@ -16,10 +16,14 @@ public static class EpicEndpoints
             .WithSummary("Create a new epic");
 
         group.MapPut("/{id:guid}", UpdateEpic)
+            .Produces<EpicDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("UpdateEpic")
             .WithSummary("Edit an existing epic");
 
         group.MapDelete("/{id:guid}", DeleteEpic)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("DeleteEpic")
             .WithSummary("Delete an epic");
 
@@ -62,22 +66,26 @@ public static class EpicEndpoints
         return TypedResults.Created($"/api/epics/{epic.Id}", epic);
     }
 
-    private static async Task<NoContent> UpdateEpic(
+    private static async Task<Results<Ok<EpicDto>, ProblemHttpResult>> UpdateEpic(
         Guid id,
         UpdateEpicRequest request,
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(new UpdateEpicCommand(id, request.Name, request.Description), ct);
-        return TypedResults.NoContent();
+        var epic = await mediator.Send(new UpdateEpicCommand(id, request.Name, request.Description), ct);
+        return epic is null
+            ? TypedResults.Problem($"Epic with id {id} not found", statusCode: StatusCodes.Status404NotFound)
+            : TypedResults.Ok(epic);
     }
 
-    private static async Task<NoContent> DeleteEpic(
+    private static async Task<Results<NoContent, ProblemHttpResult>> DeleteEpic(
         Guid id,
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(new DeleteEpicCommand(id), ct);
-        return TypedResults.NoContent();
+        var deleted = await mediator.Send(new DeleteEpicCommand(id), ct);
+        return deleted
+            ? TypedResults.NoContent()
+            : TypedResults.Problem($"Epic with id {id} not found", statusCode: StatusCodes.Status404NotFound);
     }
 }

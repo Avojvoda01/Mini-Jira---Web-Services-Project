@@ -25,11 +25,11 @@ public class CommentRepository(AppDbContext db) : ICommentRepository
         return comment;
     }
 
-    public async Task<Comment> UpdateAsync(string taskId, Guid id, string content, CancellationToken cancellationToken = default)
+    public async Task<Comment?> UpdateAsync(string taskId, Guid id, string content, CancellationToken cancellationToken = default)
     {
         var comment = await db.Comments
-            .FirstOrDefaultAsync(x => x.Id == id && x.TaskId == taskId, cancellationToken)
-            ?? throw new Exception($"Comment with id {id} not found");
+            .FirstOrDefaultAsync(x => x.Id == id && x.TaskId == taskId, cancellationToken);
+        if (comment is null) return null;
 
         comment.Content = content;
         comment.UpdatedAtUtc = DateTime.UtcNow;
@@ -37,13 +37,14 @@ public class CommentRepository(AppDbContext db) : ICommentRepository
         return comment;
     }
 
-    public async Task DeleteAsync(string taskId, Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(string taskId, Guid id, CancellationToken cancellationToken = default)
     {
         var comment = await db.Comments
-            .FirstOrDefaultAsync(x => x.Id == id && x.TaskId == taskId, cancellationToken)
-            ?? throw new Exception($"Comment with id {id} not found");
+            .FirstOrDefaultAsync(x => x.Id == id && x.TaskId == taskId, cancellationToken);
+        if (comment is null) return false;
 
         db.Comments.Remove(comment);
         await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }
