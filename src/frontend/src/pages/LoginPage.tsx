@@ -7,17 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { BackToHomeButton } from '@/components/common/BackToHomeButton';
-import { authSessionAtom } from '@/store/authAtoms';
+import { authSessionAtom, isTokenExpired } from '@/store/authAtoms';
 import { loginUser } from '@/features/auth/authApi';
 import { getSafeRedirectPath } from '@/utils/safeRedirect';
-
-function getDisplayName(email: string) {
-  const localPart = email.split('@')[0] ?? email;
-  return localPart
-    .replace(/[._-]+/g, ' ')
-    .replace(/\b\w/g, (character) => character.toUpperCase())
-    .trim();
-}
 
 export function LoginPage() {
   const session = useAtomValue(authSessionAtom);
@@ -33,16 +25,7 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleDemoLogin = () => {
-    setSession({
-      token: 'demo-session-token',
-      email: 'demo@mini-jira.local',
-      displayName: 'Demo User',
-    });
-    navigate(redirectTo, { replace: true });
-  };
-
-  if (session) {
+  if (session && !isTokenExpired(session.token)) {
     return <Navigate to={redirectTo} replace />;
   }
 
@@ -55,8 +38,10 @@ export function LoginPage() {
       const response = await loginUser({ email, password });
       setSession({
         token: response.token,
-        email,
-        displayName: getDisplayName(email),
+        userId: response.user.id,
+        email: response.user.email,
+        displayName: response.user.displayName,
+        role: response.user.role,
       });
       navigate(redirectTo, { replace: true });
     } catch (submitError) {
@@ -139,14 +124,9 @@ export function LoginPage() {
                 <p className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
               ) : null}
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Button type="submit" className="w-full shadow-sm" disabled={isSubmitting}>
-                  {isSubmitting ? 'Signing in...' : 'Sign in'}
-                </Button>
-                <Button type="button" variant="outline" className="w-full border-border/70 bg-background/80 shadow-sm" onClick={handleDemoLogin}>
-                  Use demo login
-                </Button>
-              </div>
+              <Button type="submit" className="w-full shadow-sm" disabled={isSubmitting}>
+                {isSubmitting ? 'Signing in...' : 'Sign in'}
+              </Button>
             </form>
 
             <p className="mt-4 text-sm text-muted-foreground">
