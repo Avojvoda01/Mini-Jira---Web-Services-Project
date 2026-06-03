@@ -8,7 +8,7 @@ public static class UserEndpoints
 {
     public static void MapUserEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/users")
+        var group = app.MapGroup("/users")
             .WithTags("Users");
 
         group.MapGet("/", GetUsers)
@@ -19,7 +19,7 @@ public static class UserEndpoints
             .WithName("GetUser")
             .WithSummary("Get user by id");
 
-        var adminGroup = app.MapGroup("/api/users")
+        var adminGroup = app.MapGroup("/users")
             .WithTags("Users")
             .RequireAuthorization(policy => policy.RequireRole(UserRole.Admin.ToRoleString()));
 
@@ -64,7 +64,7 @@ public static class UserEndpoints
         var result = await mediator.Send(new CreateUserCommand(request.Email, request.Password, request.DisplayName), ct);
 
         return result is { Succeeded: true, User: not null }
-            ? TypedResults.Created($"/api/users/{result.User.Id}", result.User)
+            ? TypedResults.Created($"/api/v1/users/{result.User.Id}", result.User)
             : TypedResults.ValidationProblem(result.Errors);
     }
 

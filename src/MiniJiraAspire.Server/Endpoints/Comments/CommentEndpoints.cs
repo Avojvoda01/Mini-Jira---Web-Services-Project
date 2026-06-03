@@ -8,7 +8,7 @@ public static class CommentEndpoints
 {
     public static void MapCommentEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/tasks/{taskId}/comments")
+        var group = app.MapGroup("/tasks/{taskId}/comments")
             .WithTags("Comments");
 
         group.MapPost("/", CreateComment)
@@ -41,7 +41,7 @@ public static class CommentEndpoints
         CancellationToken ct)
     {
         var comment = await mediator.Send(new CreateCommentCommand(taskId, request.Content, request.UserId), ct);
-        return TypedResults.Created($"/api/tasks/{taskId}/comments/{comment.Id}", comment);
+        return TypedResults.Created($"/api/v1/tasks/{taskId}/comments/{comment.Id}", comment);
     }
 
     private static async Task<Ok<CommentDto[]>> GetComments(

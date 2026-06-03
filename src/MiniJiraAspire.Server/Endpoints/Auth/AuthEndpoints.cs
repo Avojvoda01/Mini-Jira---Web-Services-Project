@@ -8,7 +8,7 @@ public static class AuthEndpoints
 {
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/auth")
+        var group = app.MapGroup("/auth")
             .WithTags("Auth");
 
         group.MapPost("/login", Login)
@@ -45,7 +45,7 @@ public static class AuthEndpoints
             ct);
 
         return result.Succeeded && result.User is not null
-            ? TypedResults.Created($"/api/users/{result.User.Id}", result.User)
+            ? TypedResults.Created($"/api/v1/users/{result.User.Id}", result.User)
             : TypedResults.Problem(
                 title: "Unable to register.",
                 detail: GetFirstError(result.Errors),

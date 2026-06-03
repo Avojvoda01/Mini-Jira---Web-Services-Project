@@ -8,7 +8,7 @@ public static class EpicEndpoints
 {
     public static void MapEpicEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/epics")
+        var group = app.MapGroup("/epics")
             .WithTags("Epics");
 
         group.MapPost("/", CreateEpic)
@@ -63,7 +63,7 @@ public static class EpicEndpoints
         CancellationToken ct)
     {
         var epic = await mediator.Send(new CreateEpicCommand(request.Name, request.Description, request.ProjectId), ct);
-        return TypedResults.Created($"/api/epics/{epic.Id}", epic);
+        return TypedResults.Created($"/api/v1/epics/{epic.Id}", epic);
     }
 
     private static async Task<Results<Ok<EpicDto>, ProblemHttpResult>> UpdateEpic(

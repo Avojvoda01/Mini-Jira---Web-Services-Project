@@ -8,7 +8,7 @@ public static class ProjectEndpoints
 {
     public static void MapProjectEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/projects")
+        var group = app.MapGroup("/projects")
             .WithTags("Projects");
 
         group.MapPost("/", CreateProject)
@@ -48,7 +48,7 @@ public static class ProjectEndpoints
         CancellationToken ct)
     {
         var result = await mediator.Send(new CreateProjectCommand(request.Name, request.Description), ct);
-        return TypedResults.Created($"/api/projects/{result.Id}", result);
+        return TypedResults.Created($"/api/v1/projects/{result.Id}", result);
     }
 
     private static async Task<IResult> UpdateProject(
