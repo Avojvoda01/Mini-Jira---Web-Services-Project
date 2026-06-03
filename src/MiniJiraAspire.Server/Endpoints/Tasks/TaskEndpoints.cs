@@ -10,68 +10,25 @@ public static class TaskEndpoints
         var tasks = app.MapGroup("/api/tasks")
             .WithTags("Tasks");
 
-        tasks.MapPost("/", async (
-                CreateTaskCommand command,
-                IMediator mediator,
-                CancellationToken ct) =>
-            {
-                var result = await mediator.Send(command, ct);
-                return Results.Created($"/api/tasks/{result.Id}", result);
-            })
+        tasks.MapPost("/", CreateTask)
             .WithName("CreateTask")
             .WithSummary("Create a new task");
 
-        tasks.MapPut("/{taskId}", async (
-                string taskId,
-                UpdateTaskCommand command,
-                IMediator mediator,
-                CancellationToken ct) =>
-            {
-                await mediator.Send(command with { TaskId = taskId }, ct);
-                return Results.Ok();
-            })
+        tasks.MapPut("/{taskId}", UpdateTask)
             .WithName("UpdateTask")
             .WithSummary("Edit an existing task");
 
-        tasks.MapDelete("/{taskId}", async (
-                string taskId,
-                IMediator mediator,
-                CancellationToken ct) =>
-            {
-                await mediator.Send(new DeleteTaskCommand(taskId), ct);
-                return Results.NoContent();
-            })
+        tasks.MapDelete("/{taskId}", DeleteTask)
             .WithName("DeleteTask")
             .WithSummary("Delete a task");
 
-        tasks.MapGet("/{taskId}", async (
-                string taskId,
-                IMediator mediator,
-                CancellationToken ct) =>
-            {
-                var result = await mediator.Send(new GetTaskQuery(taskId), ct);
-                if (result is null)
-                    return Results.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound);
-                return Results.Ok(result);
-            })
+        tasks.MapGet("/{taskId}", GetTask)
             .Produces<TaskItemDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("GetTask")
             .WithSummary("Get a single task by ID");
 
-        tasks.MapGet("/", async (
-                string? search,
-                string? status,
-                string? priority,
-                string? assigneeId,
-                string? epicId,
-                string? projectId,
-                IMediator mediator,
-                CancellationToken ct) =>
-            {
-                var result = await mediator.Send(new GetTasksQuery(search, status, priority, assigneeId, epicId, projectId), ct);
-                return Results.Ok(result);
-            })
+        tasks.MapGet("/", GetTasks)
             .Produces<TaskItemDto[]>(StatusCodes.Status200OK)
             .WithName("GetTasks")
             .WithSummary("Search and filter tasks");
@@ -79,52 +36,113 @@ public static class TaskEndpoints
         var actions = app.MapGroup("/api/tasks")
             .WithTags("Task Actions");
 
-        actions.MapPatch("/{taskId}/status", async (
-                string taskId,
-                ChangeStatusCommand command,
-                IMediator mediator,
-                CancellationToken ct) =>
-            {
-                await mediator.Send(command with { TaskId = taskId }, ct);
-                return Results.Ok();
-            })
+        actions.MapPatch("/{taskId}/status", ChangeStatus)
             .WithName("ChangeTaskStatus")
             .WithSummary("Change the status of a task");
 
-        actions.MapPatch("/{taskId}/priority", async (
-                string taskId,
-                ChangePriorityCommand command,
-                IMediator mediator,
-                CancellationToken ct) =>
-            {
-                await mediator.Send(command with { TaskId = taskId }, ct);
-                return Results.Ok();
-            })
+        actions.MapPatch("/{taskId}/priority", ChangePriority)
             .WithName("ChangeTaskPriority")
             .WithSummary("Change the priority of a task");
 
-        actions.MapPatch("/{taskId}/assign-user", async (
-                string taskId,
-                AssignUserCommand command,
-                IMediator mediator,
-                CancellationToken ct) =>
-            {
-                await mediator.Send(command with { TaskId = taskId }, ct);
-                return Results.Ok();
-            })
+        actions.MapPatch("/{taskId}/assign-user", AssignUser)
             .WithName("AssignUserToTask")
             .WithSummary("Assign a user to a task");
 
-        actions.MapPatch("/{taskId}/assign-epic", async (
-                string taskId,
-                AssignEpicCommand command,
-                IMediator mediator,
-                CancellationToken ct) =>
-            {
-                await mediator.Send(command with { TaskId = taskId }, ct);
-                return Results.Ok();
-            })
+        actions.MapPatch("/{taskId}/assign-epic", AssignEpic)
             .WithName("AssignEpicToTask")
             .WithSummary("Assign an epic to a task");
+    }
+
+    private static async Task<IResult> CreateTask(
+        CreateTaskCommand command,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var result = await mediator.Send(command, ct);
+        return Results.Created($"/api/tasks/{result.Id}", result);
+    }
+
+    private static async Task<IResult> UpdateTask(
+        string taskId,
+        UpdateTaskCommand command,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        await mediator.Send(command with { TaskId = taskId }, ct);
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> DeleteTask(
+        string taskId,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        await mediator.Send(new DeleteTaskCommand(taskId), ct);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> GetTask(
+        string taskId,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetTaskQuery(taskId), ct);
+        return result is null
+            ? Results.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(result);
+    }
+
+    private static async Task<IResult> GetTasks(
+        string? search,
+        string? status,
+        string? priority,
+        string? assigneeId,
+        string? epicId,
+        string? projectId,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetTasksQuery(search, status, priority, assigneeId, epicId, projectId), ct);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> ChangeStatus(
+        string taskId,
+        ChangeStatusCommand command,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        await mediator.Send(command with { TaskId = taskId }, ct);
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> ChangePriority(
+        string taskId,
+        ChangePriorityCommand command,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        await mediator.Send(command with { TaskId = taskId }, ct);
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> AssignUser(
+        string taskId,
+        AssignUserCommand command,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        await mediator.Send(command with { TaskId = taskId }, ct);
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> AssignEpic(
+        string taskId,
+        AssignEpicCommand command,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        await mediator.Send(command with { TaskId = taskId }, ct);
+        return Results.Ok();
     }
 }
