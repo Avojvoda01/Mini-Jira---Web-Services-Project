@@ -10,7 +10,7 @@ public static class AdminUserEndpoints
     {
         var group = app.MapGroup("/api/admin/users")
             .WithTags("Admin - Users")
-            .RequireAuthorization(policy => policy.RequireRole("Admin"));
+            .RequireAuthorization(policy => policy.RequireRole(UserRole.Admin.ToRoleString()));
 
         group.MapGet("/", GetUsers)
             .WithName("AdminGetUsers")

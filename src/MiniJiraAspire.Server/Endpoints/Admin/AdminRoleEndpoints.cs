@@ -10,7 +10,7 @@ public static class AdminRoleEndpoints
     {
         var group = app.MapGroup("/api/admin/roles")
             .WithTags("Admin - Roles")
-            .RequireAuthorization(policy => policy.RequireRole("Admin"));
+            .RequireAuthorization(policy => policy.RequireRole(UserRole.Admin.ToRoleString()));
 
         group.MapPatch("/{userId}", ChangeUserRole)
             .WithName("ChangeUserRole")

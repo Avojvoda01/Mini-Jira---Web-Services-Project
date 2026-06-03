@@ -8,20 +8,15 @@ public class ChangeUserRoleHandler(IUserRepository repository) : IRequestHandler
 {
     public async Task<ChangeUserRoleResponse> Handle(ChangeUserRoleCommand request, CancellationToken ct)
     {
-        var role = request.Role.Trim();
-
-        if (!UserRoles.All.Contains(role, StringComparer.OrdinalIgnoreCase))
+        if (!UserRoleExtensions.TryParse(request.Role, out var role))
         {
             return ChangeUserRoleResponse.ValidationFailed(new Dictionary<string, string[]>
             {
-                [nameof(request.Role)] = [$"Role must be one of: {string.Join(", ", UserRoles.All)}."]
+                [nameof(request.Role)] = [$"Role must be one of: {string.Join(", ", UserRoleExtensions.All.Select(r => r.ToRoleString()))}."]
             });
         }
 
-        var normalizedRole = UserRoles.All.First(allowedRole =>
-            string.Equals(allowedRole, role, StringComparison.OrdinalIgnoreCase));
-
-        var user = await repository.ChangeRoleAsync(request.UserId, normalizedRole, ct);
+        var user = await repository.ChangeRoleAsync(request.UserId, role.ToRoleString(), ct);
 
         return user is null
             ? ChangeUserRoleResponse.UserNotFound()
