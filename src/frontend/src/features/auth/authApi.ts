@@ -2,6 +2,12 @@ import { apiClient } from '@/lib/apiClient';
 
 type LoginResponse = {
   token: string;
+  user: {
+    id: string;
+    email: string;
+    displayName: string;
+    role: string;
+  };
 };
 
 type RegisterResponse = {
