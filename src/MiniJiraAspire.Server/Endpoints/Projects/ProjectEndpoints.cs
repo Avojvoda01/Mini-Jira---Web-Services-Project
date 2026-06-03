@@ -57,15 +57,10 @@ public static class ProjectEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        try
-        {
-            await mediator.Send(new UpdateProjectCommand(id, request.Name, request.Description), ct);
-            return Results.NoContent();
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem(ex.Message, statusCode: StatusCodes.Status404NotFound);
-        }
+        var project = await mediator.Send(new UpdateProjectCommand(id, request.Name, request.Description), ct);
+        return project is null
+            ? Results.Problem($"Project with id {id} not found", statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(project);
     }
 
     private static async Task<IResult> DeleteProject(
@@ -73,15 +68,10 @@ public static class ProjectEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        try
-        {
-            await mediator.Send(new DeleteProjectCommand(id), ct);
-            return Results.NoContent();
-        }
-        catch (Exception ex)
-        {
-            return Results.Problem(ex.Message, statusCode: StatusCodes.Status404NotFound);
-        }
+        var deleted = await mediator.Send(new DeleteProjectCommand(id), ct);
+        return deleted
+            ? Results.NoContent()
+            : Results.Problem($"Project with id {id} not found", statusCode: StatusCodes.Status404NotFound);
     }
 
     private static async Task<Ok<List<ProjectDto>>> GetAllProjects(
@@ -109,8 +99,10 @@ public static class ProjectEndpoints
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(command with { ProjectId = projectId.ToString() }, ct);
-        return Results.Created($"/api/projects/{projectId}/members", new { });
+        var added = await mediator.Send(command with { ProjectId = projectId.ToString() }, ct);
+        return added
+            ? Results.Created($"/api/projects/{projectId}/members", new { })
+            : Results.Problem("Project or user not found", statusCode: StatusCodes.Status404NotFound);
     }
 
     private static async Task<NoContent> RemoveProjectMember(

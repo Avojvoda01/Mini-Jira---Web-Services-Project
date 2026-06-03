@@ -22,12 +22,14 @@ public static class CommentEndpoints
             .WithSummary("Get all comments for a task");
 
         group.MapPut("/{commentId:guid}", UpdateComment)
-            .Produces(StatusCodes.Status204NoContent)
+            .Produces<CommentDto>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("UpdateComment")
             .WithSummary("Edit an existing comment");
 
         group.MapDelete("/{commentId:guid}", DeleteComment)
             .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("DeleteComment")
             .WithSummary("Delete a comment");
     }
@@ -51,24 +53,28 @@ public static class CommentEndpoints
         return TypedResults.Ok(comments);
     }
 
-    private static async Task<NoContent> UpdateComment(
+    private static async Task<Results<Ok<CommentDto>, ProblemHttpResult>> UpdateComment(
         string taskId,
         Guid commentId,
         UpdateCommentRequest request,
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(new UpdateCommentCommand(taskId, commentId, request.Content), ct);
-        return TypedResults.NoContent();
+        var comment = await mediator.Send(new UpdateCommentCommand(taskId, commentId, request.Content), ct);
+        return comment is null
+            ? TypedResults.Problem($"Comment with id {commentId} not found", statusCode: StatusCodes.Status404NotFound)
+            : TypedResults.Ok(comment);
     }
 
-    private static async Task<NoContent> DeleteComment(
+    private static async Task<Results<NoContent, ProblemHttpResult>> DeleteComment(
         string taskId,
         Guid commentId,
         IMediator mediator,
         CancellationToken ct)
     {
-        await mediator.Send(new DeleteCommentCommand(taskId, commentId), ct);
-        return TypedResults.NoContent();
+        var deleted = await mediator.Send(new DeleteCommentCommand(taskId, commentId), ct);
+        return deleted
+            ? TypedResults.NoContent()
+            : TypedResults.Problem($"Comment with id {commentId} not found", statusCode: StatusCodes.Status404NotFound);
     }
 }

@@ -4,8 +4,13 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Tasks.Commands;
 
-public class ChangeStatusHandler(ITaskRepository repository) : IRequestHandler<ChangeStatusCommand>
+public class ChangeStatusHandler(ITaskRepository repository) : IRequestHandler<ChangeStatusCommand, TaskItemDto?>
 {
-    public async Task Handle(ChangeStatusCommand request, CancellationToken ct)
-        => await repository.ChangeStatusAsync(Guid.Parse(request.TaskId), request.Status, ct);
+    public async Task<TaskItemDto?> Handle(ChangeStatusCommand request, CancellationToken ct)
+    {
+        var task = await repository.ChangeStatusAsync(Guid.Parse(request.TaskId), request.Status, ct);
+        return task is null
+            ? null
+            : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedAtUtc, task.UpdatedAtUtc);
+    }
 }

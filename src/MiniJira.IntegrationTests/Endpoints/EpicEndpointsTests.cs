@@ -80,18 +80,26 @@ public class EpicEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task UpdateEpic_ExistingEpic_ReturnsNoContent()
+    public async Task UpdateEpic_ExistingEpic_ReturnsOkWithUpdatedEpic()
     {
         var created = await CreateEpicAsync();
 
         var response = await _client.PutAsJsonAsync($"/api/epics/{created.Id}", new { Name = "Updated", Description = "Updated Desc" });
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var getResponse = await _client.GetAsync($"/api/epics/{created.Id}");
-        var updated = await getResponse.Content.ReadFromJsonAsync<EpicDto>();
+        var updated = await response.Content.ReadFromJsonAsync<EpicDto>();
+        Assert.NotNull(updated);
         Assert.Equal("Updated", updated!.Name);
         Assert.Equal("Updated Desc", updated.Description);
+    }
+
+    [Fact]
+    public async Task UpdateEpic_NonExisting_Returns404()
+    {
+        var response = await _client.PutAsJsonAsync($"/api/epics/{Guid.NewGuid()}", new { Name = "Updated", Description = "Updated Desc" });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]

@@ -4,11 +4,13 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Project.Commands;
 
-public class UpdateProjectHandler(IProjectRepository repository) : IRequestHandler<UpdateProjectCommand, ProjectDto>
+public class UpdateProjectHandler(IProjectRepository repository) : IRequestHandler<UpdateProjectCommand, ProjectDto?>
 {
-    public async Task<ProjectDto> Handle(UpdateProjectCommand request, CancellationToken ct)
+    public async Task<ProjectDto?> Handle(UpdateProjectCommand request, CancellationToken ct)
     {
         var updated = await repository.UpdateAsync(request.Id, request.Name, request.Description, ct);
-        return new ProjectDto(updated.Id, updated.Name, updated.Description, [], updated.CreatedAtUtc, updated.UpdatedAtUtc);
+        return updated is null
+            ? null
+            : new ProjectDto(updated.Id, updated.Name, updated.Description, [], updated.CreatedAtUtc, updated.UpdatedAtUtc);
     }
 }

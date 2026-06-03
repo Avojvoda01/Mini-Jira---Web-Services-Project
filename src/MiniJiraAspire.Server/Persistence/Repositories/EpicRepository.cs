@@ -24,10 +24,10 @@ public class EpicRepository(AppDbContext db) : IEpicRepository
         return epic;
     }
 
-    public async Task<Epic> UpdateAsync(Guid id, string name, string? description, CancellationToken cancellationToken = default)
+    public async Task<Epic?> UpdateAsync(Guid id, string name, string? description, CancellationToken cancellationToken = default)
     {
-        var epic = await db.Epics.FindAsync([id], cancellationToken)
-            ?? throw new Exception($"Epic with id {id} not found");
+        var epic = await db.Epics.FindAsync([id], cancellationToken);
+        if (epic is null) return null;
 
         epic.Name = name;
         epic.Description = description;
@@ -35,10 +35,10 @@ public class EpicRepository(AppDbContext db) : IEpicRepository
         return epic;
     }
 
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var epic = await db.Epics.FindAsync([id], cancellationToken)
-            ?? throw new Exception($"Epic with id {id} not found");
+        var epic = await db.Epics.FindAsync([id], cancellationToken);
+        if (epic is null) return false;
 
         var assignedTasks = await db.TaskItems
             .Where(task => task.EpicId == id)
@@ -51,5 +51,6 @@ public class EpicRepository(AppDbContext db) : IEpicRepository
 
         db.Epics.Remove(epic);
         await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }
