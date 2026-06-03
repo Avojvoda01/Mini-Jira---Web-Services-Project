@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { BackToHomeButton } from '@/components/common/BackToHomeButton';
-import { authSessionAtom } from '@/store/authAtoms';
+import { authSessionAtom, isTokenExpired } from '@/store/authAtoms';
 import { registerUser } from '@/features/auth/authApi';
 import { getSafeRedirectPath } from '@/utils/safeRedirect';
 
@@ -23,7 +23,7 @@ export function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (session) {
+  if (session && !isTokenExpired(session.token)) {
     return <Navigate to={redirectTo} replace />;
   }
 

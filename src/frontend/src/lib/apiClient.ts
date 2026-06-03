@@ -1,4 +1,6 @@
+import { authSessionAtom } from '@/store/authAtoms';
 import { env } from './env';
+import { jotaiStore } from './jotaiStore';
 
 export class ApiError extends Error {
   public readonly status: number;
@@ -18,6 +20,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers.set('Content-Type', 'application/json');
   }
 
+  const session = jotaiStore.get(authSessionAtom);
+  if (session?.token) {
+    headers.set('Authorization', `Bearer ${session.token}`);
+  }
+
   let response: Response;
 
   try {
@@ -30,6 +37,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      jotaiStore.set(authSessionAtom, null);
+    }
+
     let message = `Request failed with status ${response.status}`;
 
     try {
