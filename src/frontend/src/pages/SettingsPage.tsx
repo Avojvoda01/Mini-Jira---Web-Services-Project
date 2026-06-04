@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
-import { Pencil, Trash2, X } from 'lucide-react';
+import { ChevronDown, Pencil, Trash2, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { usePageHeader } from '@/components/layout/PageHeaderContext';
@@ -130,8 +131,19 @@ export function SettingsPage() {
   };
 
   const handleChangeOwner = async () => {
-    if (!projectId || !selectedNewOwnerId) return;
+    if (!projectId || !selectedNewOwnerId || !project) return;
+
+    // Remove the incoming owner from members (they become PO, not a member)
+    await removeProjectMemberMutation.mutateAsync({ projectId, userId: selectedNewOwnerId });
+
+    // Transfer ownership
     await changeOwnerMutation.mutateAsync({ projectId, newOwnerId: selectedNewOwnerId });
+
+    // Add the previous owner as a regular member
+    if (project.createdById) {
+      await addProjectMemberMutation.mutateAsync({ projectId, userId: project.createdById, role: 'Member' });
+    }
+
     setSelectedNewOwnerId('');
   };
 
@@ -247,27 +259,51 @@ export function SettingsPage() {
                 <div className="space-y-2 border-t border-border/50 pt-4">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Transfer ownership</p>
                   <div className="flex gap-2">
-                    <select
-                      value={selectedNewOwnerId}
-                      onChange={(e) => setSelectedNewOwnerId(e.target.value)}
-                      className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-                    >
-                      <option value="">Select new owner…</option>
-                      {users
-                        .filter((u) => u.id.toLowerCase() !== (project.createdById ?? '').toLowerCase())
-                        .map((u) => (
-                          <option key={u.id} value={u.id}>
-                            {u.displayName} ({u.email})
-                          </option>
-                        ))}
-                    </select>
-                    <Button
-                      size="sm"
-                      onClick={handleChangeOwner}
-                      disabled={!selectedNewOwnerId || changeOwnerMutation.isPending}
-                    >
-                      Transfer
-                    </Button>
+                    {(() => {
+                      const eligibleMembers = users.filter(
+                        (u) =>
+                          u.id.toLowerCase() !== (project.createdById ?? '').toLowerCase() &&
+                          (project.memberIds ?? []).some((id) => id.toLowerCase() === u.id.toLowerCase()),
+                      );
+                      const selected = eligibleMembers.find((u) => u.id === selectedNewOwnerId);
+                      return (
+                        <>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="flex-1 justify-between font-normal"
+                                disabled={eligibleMembers.length === 0}
+                              >
+                                <span className={selected ? 'text-foreground' : 'text-muted-foreground'}>
+                                  {selected ? selected.displayName : eligibleMembers.length === 0 ? 'No members eligible' : 'Select new owner…'}
+                                </span>
+                                <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-72">
+                              {eligibleMembers.map((u) => (
+                                <DropdownMenuItem
+                                  key={u.id}
+                                  onClick={() => setSelectedNewOwnerId(u.id)}
+                                  className="flex flex-col items-start gap-0.5"
+                                >
+                                  <span className="font-medium">{u.displayName}</span>
+                                  <span className="text-xs text-muted-foreground">{u.email}</span>
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <Button
+                            size="sm"
+                            onClick={handleChangeOwner}
+                            disabled={!selectedNewOwnerId || changeOwnerMutation.isPending}
+                          >
+                            Transfer
+                          </Button>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
