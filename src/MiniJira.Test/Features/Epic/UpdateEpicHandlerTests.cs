@@ -19,7 +19,7 @@ public class UpdateEpicHandlerTests
         var id = Guid.NewGuid();
         var command = new UpdateEpicCommand(id, "Updated", "New Desc");
 
-        _repoMock.Setup(r => r.UpdateAsync(id, "Updated", "New Desc", It.IsAny<CancellationToken>()))
+        _repoMock.Setup(r => r.UpdateAsync(id, "Updated", "New Desc", It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MiniJiraAspire.Server.Models.Epic
             {
                 Id = id,
@@ -32,6 +32,6 @@ public class UpdateEpicHandlerTests
 
         await _handler.Handle(command, CancellationToken.None);
 
-        _repoMock.Verify(r => r.UpdateAsync(id, "Updated", "New Desc", It.IsAny<CancellationToken>()), Times.Once);
+        _repoMock.Verify(r => r.UpdateAsync(id, "Updated", "New Desc", It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
