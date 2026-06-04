@@ -115,13 +115,13 @@ export function ProjectsPage() {
                 <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem disabled className="text-muted-foreground">
+            <DropdownMenuContent align="end" className="w-44" onCloseAutoFocus={(e) => e.preventDefault()}>
+              <DropdownMenuItem onClick={() => navigate('/app/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
               {session?.role === 'Admin' && (
-                <DropdownMenuItem disabled className="text-muted-foreground">
+                <DropdownMenuItem onClick={() => navigate('/app/admin-settings')}>
                   <ShieldCheck className="mr-2 h-4 w-4" />
                   Admin settings
                 </DropdownMenuItem>
