@@ -12,5 +12,15 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
             .WithMany()
             .HasForeignKey(t => t.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(t => t.CreatedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(t => t.UpdatedById)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
