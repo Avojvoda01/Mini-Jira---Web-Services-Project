@@ -1,4 +1,6 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -42,13 +44,21 @@ public static class CommentEndpoints
             .WithSummary("Delete a comment");
     }
 
+    private static Guid? GetUserId(ClaimsPrincipal user)
+    {
+        var sub = user.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                  ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(sub, out var id) ? id : null;
+    }
+
     private static async Task<Results<Created<CommentDto>, ProblemHttpResult>> CreateComment(
         string taskId,
         CreateCommentRequest request,
+        ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct)
     {
-        var comment = await mediator.Send(new CreateCommentCommand(taskId, request.Content, request.UserId), ct);
+        var comment = await mediator.Send(new CreateCommentCommand(taskId, request.Content, GetUserId(user)), ct);
         return comment is null
             ? TypedResults.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound)
             : TypedResults.Created($"/api/v1/tasks/{taskId}/comments/{comment.Id}", comment);
