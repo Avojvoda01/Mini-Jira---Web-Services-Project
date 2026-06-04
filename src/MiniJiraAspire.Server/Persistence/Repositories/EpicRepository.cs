@@ -24,13 +24,14 @@ public class EpicRepository(AppDbContext db) : IEpicRepository
         return epic;
     }
 
-    public async Task<Epic?> UpdateAsync(Guid id, string name, string? description, CancellationToken cancellationToken = default)
+    public async Task<Epic?> UpdateAsync(Guid id, string name, string? description, Guid? updatedById = null, CancellationToken cancellationToken = default)
     {
         var epic = await db.Epics.FindAsync([id], cancellationToken);
         if (epic is null) return null;
 
         epic.Name = name;
         epic.Description = description;
+        epic.UpdatedById = updatedById;
         await db.SaveChangesAsync(cancellationToken);
         return epic;
     }

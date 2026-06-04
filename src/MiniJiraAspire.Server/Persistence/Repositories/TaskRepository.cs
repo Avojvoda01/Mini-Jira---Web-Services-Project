@@ -41,13 +41,14 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
         return task;
     }
 
-    public async Task<TaskItem?> UpdateAsync(Guid id, string title, string? description, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> UpdateAsync(Guid id, string title, string? description, Guid? updatedById = null, CancellationToken cancellationToken = default)
     {
         var task = await db.TaskItems.FindAsync([id], cancellationToken);
         if (task is null) return null;
 
         task.Title = title;
         task.Description = description;
+        task.UpdatedById = updatedById;
         await db.SaveChangesAsync(cancellationToken);
         return task;
     }
@@ -62,42 +63,46 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
         return true;
     }
 
-    public async Task<TaskItem?> ChangeStatusAsync(Guid id, string status, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> ChangeStatusAsync(Guid id, string status, Guid? updatedById = null, CancellationToken cancellationToken = default)
     {
         var task = await db.TaskItems.FindAsync([id], cancellationToken);
         if (task is null) return null;
 
         task.Status = status;
+        task.UpdatedById = updatedById;
         await db.SaveChangesAsync(cancellationToken);
         return task;
     }
 
-    public async Task<TaskItem?> ChangePriorityAsync(Guid id, string priority, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> ChangePriorityAsync(Guid id, string priority, Guid? updatedById = null, CancellationToken cancellationToken = default)
     {
         var task = await db.TaskItems.FindAsync([id], cancellationToken);
         if (task is null) return null;
 
         task.Priority = priority;
+        task.UpdatedById = updatedById;
         await db.SaveChangesAsync(cancellationToken);
         return task;
     }
 
-    public async Task<TaskItem?> AssignUserAsync(Guid id, Guid? userId, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> AssignUserAsync(Guid id, Guid? userId, Guid? updatedById = null, CancellationToken cancellationToken = default)
     {
         var task = await db.TaskItems.FindAsync([id], cancellationToken);
         if (task is null) return null;
 
         task.AssigneeId = userId;
+        task.UpdatedById = updatedById;
         await db.SaveChangesAsync(cancellationToken);
         return task;
     }
 
-    public async Task<TaskItem?> AssignEpicAsync(Guid id, Guid? epicId, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> AssignEpicAsync(Guid id, Guid? epicId, Guid? updatedById = null, CancellationToken cancellationToken = default)
     {
         var task = await db.TaskItems.FindAsync([id], cancellationToken);
         if (task is null) return null;
 
         task.EpicId = epicId;
+        task.UpdatedById = updatedById;
         await db.SaveChangesAsync(cancellationToken);
         return task;
     }
