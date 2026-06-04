@@ -109,9 +109,7 @@ public class DbSeeder
         // Seed project memberships.
         var desiredMemberships = new[]
         {
-            new { ProjectId = projectAlpha.Id, UserId = alice?.Id },
             new { ProjectId = projectAlpha.Id, UserId = bob?.Id },
-            new { ProjectId = projectBeta.Id,  UserId = carol?.Id },
             new { ProjectId = projectBeta.Id,  UserId = dave?.Id },
         };
 
