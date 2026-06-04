@@ -86,22 +86,64 @@ public class DbSeeder
 
         await db.SaveChangesAsync();
 
-        // Seed epics.
+        // Seed epics — one per user, owner creates first, member creates second.
         var alphaEpicExists = await db.Epics.AnyAsync(e => e.ProjectId == projectAlpha.Id);
-        var betaEpicExists  = await db.Epics.AnyAsync(e => e.ProjectId == projectBeta.Id);
-
         if (!alphaEpicExists)
         {
             db.Epics.AddRange(
-                new Epic { Name = "Security",  Description = "Security related tickets regarding Authentication",  ProjectId = projectAlpha.Id },
-                new Epic { Name = "Backend",   Description = "Tasks regarding Persistence and Business Logic",     ProjectId = projectAlpha.Id });
+                new Epic
+                {
+                    Name = "Security",
+                    Description = "Security related tickets regarding Authentication",
+                    ProjectId = projectAlpha.Id,
+                    CreatedById = alice?.Id,
+                },
+                new Epic
+                {
+                    Name = "Backend",
+                    Description = "Tasks regarding Persistence and Business Logic",
+                    ProjectId = projectAlpha.Id,
+                    CreatedById = bob?.Id,
+                });
+        }
+        else
+        {
+            // Patch existing epics that have no CreatedById.
+            var alphaEpics = await db.Epics.Where(e => e.ProjectId == projectAlpha.Id).ToListAsync();
+            foreach (var (epic, owner) in new[] { (alphaEpics.FirstOrDefault(e => e.Name == "Security"), alice), (alphaEpics.FirstOrDefault(e => e.Name == "Backend"), bob) })
+            {
+                if (epic is not null && epic.CreatedById is null && owner is not null)
+                    epic.CreatedById = owner.Id;
+            }
         }
 
+        var betaEpicExists = await db.Epics.AnyAsync(e => e.ProjectId == projectBeta.Id);
         if (!betaEpicExists)
         {
             db.Epics.AddRange(
-                new Epic { Name = "Frontend",        Description = "All tasks regarding UI",                          ProjectId = projectBeta.Id },
-                new Epic { Name = "API Integration", Description = "Third-party API integrations for the portal",     ProjectId = projectBeta.Id });
+                new Epic
+                {
+                    Name = "Frontend",
+                    Description = "All tasks regarding UI",
+                    ProjectId = projectBeta.Id,
+                    CreatedById = carol?.Id,
+                },
+                new Epic
+                {
+                    Name = "API Integration",
+                    Description = "Third-party API integrations for the portal",
+                    ProjectId = projectBeta.Id,
+                    CreatedById = dave?.Id,
+                });
+        }
+        else
+        {
+            var betaEpics = await db.Epics.Where(e => e.ProjectId == projectBeta.Id).ToListAsync();
+            foreach (var (epic, owner) in new[] { (betaEpics.FirstOrDefault(e => e.Name == "Frontend"), carol), (betaEpics.FirstOrDefault(e => e.Name == "API Integration"), dave) })
+            {
+                if (epic is not null && epic.CreatedById is null && owner is not null)
+                    epic.CreatedById = owner.Id;
+            }
         }
 
         await db.SaveChangesAsync();
@@ -120,6 +162,115 @@ public class DbSeeder
             var exists = await db.ProjectMembers.AnyAsync(pm => pm.ProjectId == m.ProjectId && pm.UserId == m.UserId.Value);
             if (!exists)
                 db.ProjectMembers.Add(new ProjectMember { ProjectId = m.ProjectId, UserId = m.UserId.Value });
+        }
+
+        await db.SaveChangesAsync();
+
+        // Seed tasks — 4 per project with varied statuses, priorities and creators.
+        var alphaTasksExist = await db.TaskItems.AnyAsync(t => t.ProjectId == projectAlpha.Id);
+        if (!alphaTasksExist)
+        {
+            var securityEpic = await db.Epics.FirstOrDefaultAsync(e => e.ProjectId == projectAlpha.Id && e.Name == "Security");
+            var backendEpic  = await db.Epics.FirstOrDefaultAsync(e => e.ProjectId == projectAlpha.Id && e.Name == "Backend");
+
+            db.TaskItems.AddRange(
+                new TaskItem
+                {
+                    Title = "Set up JWT authentication",
+                    Description = "Implement token-based auth using JwtBearer middleware.",
+                    Status = "In Progress",
+                    Priority = "High",
+                    ProjectId = projectAlpha.Id,
+                    EpicId = securityEpic?.Id,
+                    CreatedById = alice?.Id,
+                    AssigneeId = alice?.Id,
+                },
+                new TaskItem
+                {
+                    Title = "Add password hashing",
+                    Description = "Use BCrypt or ASP.NET Identity hasher for stored passwords.",
+                    Status = "Done",
+                    Priority = "High",
+                    ProjectId = projectAlpha.Id,
+                    EpicId = securityEpic?.Id,
+                    CreatedById = alice?.Id,
+                    AssigneeId = bob?.Id,
+                },
+                new TaskItem
+                {
+                    Title = "Design task repository interface",
+                    Description = "Define ITaskRepository with CRUD and filter methods.",
+                    Status = "Open",
+                    Priority = "Medium",
+                    ProjectId = projectAlpha.Id,
+                    EpicId = backendEpic?.Id,
+                    CreatedById = bob?.Id,
+                    AssigneeId = bob?.Id,
+                },
+                new TaskItem
+                {
+                    Title = "Implement EF Core migrations",
+                    Description = "Set up initial schema migrations and seeder.",
+                    Status = "Review",
+                    Priority = "Medium",
+                    ProjectId = projectAlpha.Id,
+                    EpicId = backendEpic?.Id,
+                    CreatedById = bob?.Id,
+                    AssigneeId = alice?.Id,
+                });
+        }
+
+        var betaTasksExist = await db.TaskItems.AnyAsync(t => t.ProjectId == projectBeta.Id);
+        if (!betaTasksExist)
+        {
+            var frontendEpic = await db.Epics.FirstOrDefaultAsync(e => e.ProjectId == projectBeta.Id && e.Name == "Frontend");
+            var apiEpic      = await db.Epics.FirstOrDefaultAsync(e => e.ProjectId == projectBeta.Id && e.Name == "API Integration");
+
+            db.TaskItems.AddRange(
+                new TaskItem
+                {
+                    Title = "Build project dashboard UI",
+                    Description = "Create the main dashboard with task metrics and charts.",
+                    Status = "In Progress",
+                    Priority = "High",
+                    ProjectId = projectBeta.Id,
+                    EpicId = frontendEpic?.Id,
+                    CreatedById = carol?.Id,
+                    AssigneeId = carol?.Id,
+                },
+                new TaskItem
+                {
+                    Title = "Implement dark mode toggle",
+                    Description = "Support system preference and manual override.",
+                    Status = "Open",
+                    Priority = "Low",
+                    ProjectId = projectBeta.Id,
+                    EpicId = frontendEpic?.Id,
+                    CreatedById = carol?.Id,
+                    AssigneeId = dave?.Id,
+                },
+                new TaskItem
+                {
+                    Title = "Integrate Stripe payment API",
+                    Description = "Connect Stripe SDK for subscription billing flows.",
+                    Status = "Open",
+                    Priority = "High",
+                    ProjectId = projectBeta.Id,
+                    EpicId = apiEpic?.Id,
+                    CreatedById = dave?.Id,
+                    AssigneeId = dave?.Id,
+                },
+                new TaskItem
+                {
+                    Title = "Map third-party webhook events",
+                    Description = "Handle incoming events and update internal state accordingly.",
+                    Status = "Review",
+                    Priority = "Medium",
+                    ProjectId = projectBeta.Id,
+                    EpicId = apiEpic?.Id,
+                    CreatedById = dave?.Id,
+                    AssigneeId = carol?.Id,
+                });
         }
 
         await db.SaveChangesAsync();
