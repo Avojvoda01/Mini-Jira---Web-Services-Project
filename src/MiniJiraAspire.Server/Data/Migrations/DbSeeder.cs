@@ -93,18 +93,22 @@ public class DbSeeder
         var sampleUsers = new[]
         {
             new User { Email = "alice.alpha@mini-jira.local", PasswordHash = "", DisplayName = "Alice Alpha", Role = UserRole.Admin },
-            new User { Email = "bob.alpha@mini-jira.local", PasswordHash = "", DisplayName = "Bob Alpha", Role = UserRole.ProjectMember },
-            new User { Email = "carol.beta@mini-jira.local", PasswordHash = "", DisplayName = "Carol Beta", Role = UserRole.ProjectMember },
-            new User { Email = "dave.beta@mini-jira.local", PasswordHash = "", DisplayName = "Dave Beta", Role = UserRole.ProjectMember },
+            new User { Email = "bob.alpha@mini-jira.local", PasswordHash = "", DisplayName = "Bob Alpha", Role = UserRole.User },
+            new User { Email = "carol.beta@mini-jira.local", PasswordHash = "", DisplayName = "Carol Beta", Role = UserRole.User },
+            new User { Email = "dave.beta@mini-jira.local", PasswordHash = "", DisplayName = "Dave Beta", Role = UserRole.User },
         };
 
         foreach (var u in sampleUsers)
         {
-            var exists = await db.Users.AnyAsync(x => x.Email == u.Email);
-            if (!exists)
+            var existing = await db.Users.FirstOrDefaultAsync(x => x.Email == u.Email);
+            if (existing is null)
             {
                 u.PasswordHash = passwordHasher.HashPassword(u, "password123");
                 db.Users.Add(u);
+            }
+            else if (string.IsNullOrEmpty(existing.PasswordHash))
+            {
+                existing.PasswordHash = passwordHasher.HashPassword(existing, "password123");
             }
         }
 
