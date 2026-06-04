@@ -11,6 +11,8 @@ export type TaskItem = {
   assigneeId: string | null;
   projectId: string;
   epicId: string | null;
+  createdById: string | null;
+  updatedById: string | null;
   createdAtUtc: string;
   updatedAtUtc: string | null;
 };

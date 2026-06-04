@@ -503,6 +503,20 @@ export function BoardPage() {
                   <span>Estimate</span>
                   <span className="text-foreground">n/a</span>
                 </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span>Created by</span>
+                  <span className="text-foreground">
+                    {resolveUserDisplayName(activeDetailTask.createdById)}
+                  </span>
+                </div>
+                {activeDetailTask.updatedById && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span>Last edited by</span>
+                    <span className="text-foreground">
+                      {resolveUserDisplayName(activeDetailTask.updatedById)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
