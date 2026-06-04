@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { ChevronDown, Pencil, Trash2, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -25,11 +24,6 @@ import { authSessionAtom } from '@/store/authAtoms';
 const MAX_PROJECT_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 2000;
 
-const workspacePreferences = [
-  { label: 'Default landing page', value: 'Dashboard' },
-  { label: 'Board density', value: 'Comfortable' },
-  { label: 'Date format', value: 'MMM d, yyyy' },
-];
 
 export function SettingsPage() {
   const { setContent } = usePageHeader();
@@ -397,46 +391,6 @@ export function SettingsPage() {
         </>
       )}
 
-      {/* Workspace preferences */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-semibold">Workspace preferences</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-0">
-            {workspacePreferences.map((item, index) => (
-              <div key={item.label}>
-                {index > 0 && <Separator />}
-                <div className="flex items-center justify-between gap-4 py-3">
-                  <p className="text-sm text-foreground">{item.label}</p>
-                  <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
-                    {item.value}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-semibold">Assistant preferences</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-0">
-            <div className="flex items-center justify-between gap-4 py-3">
-              <p className="text-sm text-foreground">Suggestion tone</p>
-              <Button variant="outline" size="sm" className="h-7 border-border/70 bg-background/80 text-xs">
-                Balanced
-              </Button>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between gap-4 py-3">
-              <p className="text-sm text-foreground">Auto summaries</p>
-              <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10">Enabled</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </section>
   );
 }
