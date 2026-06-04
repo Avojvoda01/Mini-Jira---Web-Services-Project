@@ -38,6 +38,9 @@ const normalizeStatus = (value: string | null | undefined): TaskStatus => {
   if (normalized === 'in progress' || normalized === 'in-progress' || normalized === 'progress') {
     return 'in-progress';
   }
+  if (normalized === 'review') {
+    return 'review';
+  }
   if (normalized === 'done' || normalized === 'closed' || normalized === 'complete') {
     return 'done';
   }

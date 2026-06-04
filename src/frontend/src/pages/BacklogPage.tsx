@@ -47,6 +47,7 @@ const priorityLabelMap: Record<TaskPriority, BacklogTicket['priority']> = {
 const statusLabelMap: Record<TaskStatus, string> = {
   todo: 'Open',
   'in-progress': 'In progress',
+  review: 'Review',
   done: 'Done',
   unknown: 'Open',
 };
@@ -456,7 +457,7 @@ export function BacklogPage() {
 
   useEffect(() => {
     setContent({
-      title: 'Backlog',
+      title: 'Epic Management',
       description: 'Group related work into epics, then assign tickets to each initiative.',
       actions: (
         <div className="flex flex-wrap gap-2">

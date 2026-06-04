@@ -25,7 +25,7 @@ type EditTaskModalProps = {
 type EditTaskState = {
   title: string;
   description: string;
-  status: 'Open' | 'In Progress' | 'Done';
+  status: 'Open' | 'In Progress' | 'Review' | 'Done';
   priority: 'Low' | 'Medium' | 'High';
   assigneeId: string;
 };
@@ -33,6 +33,7 @@ type EditTaskState = {
 const statusLabelMap: Record<TaskItem['status'], EditTaskState['status']> = {
   todo: 'Open',
   'in-progress': 'In Progress',
+  review: 'Review',
   done: 'Done',
   unknown: 'Open',
 };
@@ -206,7 +207,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers }
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[12rem]">
-                {(['Open', 'In Progress', 'Done'] as const).map((status) => (
+                {(['Open', 'In Progress', 'Review', 'Done'] as const).map((status) => (
                   <DropdownMenuItem key={status} className="py-1.5" onClick={() => updateField('status', status)}>
                     {status}
                   </DropdownMenuItem>

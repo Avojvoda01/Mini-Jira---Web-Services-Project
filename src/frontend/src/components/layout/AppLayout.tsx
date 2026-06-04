@@ -20,7 +20,7 @@ type NavigationItem = {
 const navigationItems: NavigationItem[] = [
   { to: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: 'board', label: 'Board', icon: SquareKanban },
-  { to: 'backlog', label: 'Backlog', icon: ListTodo },
+  { to: 'backlog', label: 'Epic Management', icon: ListTodo },
   { to: 'settings', label: 'Settings', icon: Settings2 },
 ];
 

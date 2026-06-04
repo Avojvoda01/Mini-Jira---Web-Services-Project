@@ -36,7 +36,7 @@ type TaskCard = {
 };
 
 type BoardColumn = {
-  id: 'backlog' | 'in-progress' | 'done';
+  id: 'ready' | 'in-progress' | 'review' | 'done';
   title: string;
   description: string;
   tasks: TaskCard[];
@@ -52,6 +52,7 @@ const priorityLabelMap: Record<TaskPriority, TaskCard['priority']> = {
 const statusLabelMap: Record<TaskItem['status'], string> = {
   todo: 'Open',
   'in-progress': 'In Progress',
+  review: 'Review',
   done: 'Done',
   unknown: 'Open',
 };
@@ -72,14 +73,19 @@ const priorityBadgeClass = (priority: TaskCard['priority']) => {
 
 const columnConfig: Array<Omit<BoardColumn, 'tasks'>> = [
   {
-    id: 'backlog',
-    title: 'Backlog',
+    id: 'ready',
+    title: 'Ready',
     description: 'Ready for triage and sizing.',
   },
   {
     id: 'in-progress',
     title: 'In progress',
     description: 'Actively being implemented.',
+  },
+  {
+    id: 'review',
+    title: 'Review',
+    description: 'Awaiting review before closing.',
   },
   {
     id: 'done',
@@ -89,8 +95,9 @@ const columnConfig: Array<Omit<BoardColumn, 'tasks'>> = [
 ];
 
 const columnStatusMap: Record<BoardColumn['id'], string> = {
-  backlog: 'Open',
+  ready: 'Open',
   'in-progress': 'In Progress',
+  review: 'Review',
   done: 'Done',
 };
 
@@ -193,14 +200,13 @@ export function BoardPage() {
       return [];
     }
 
-    const memberIds = project?.memberIds ?? [];
-    if (memberIds.length === 0) {
-      return [];
-    }
+    const participantIds = new Set([
+      ...(project?.memberIds ?? []).map((id) => id.toLowerCase()),
+      ...(project?.createdById ? [project.createdById.toLowerCase()] : []),
+    ]);
 
-    const memberIdSet = new Set(memberIds.map((memberId) => memberId.toLowerCase()));
-    return users.filter((user) => memberIdSet.has(user.id.toLowerCase()));
-  }, [project?.memberIds, projectId, users]);
+    return users.filter((user) => participantIds.has(user.id.toLowerCase()));
+  }, [project?.memberIds, project?.createdById, projectId, users]);
 
   const resolveUserDisplayName = (userId: string | null) => {
     if (!userId) {
@@ -222,13 +228,18 @@ export function BoardPage() {
     });
 
     const byColumn = new Map<BoardColumn['id'], TaskCard[]>([
-      ['backlog', []],
+      ['ready', []],
       ['in-progress', []],
+      ['review', []],
       ['done', []],
     ]);
 
     tasks.forEach((task) => {
-      const target = task.status === 'done' ? 'done' : task.status === 'in-progress' ? 'in-progress' : 'backlog';
+      const target =
+        task.status === 'done' ? 'done'
+        : task.status === 'in-progress' ? 'in-progress'
+        : task.status === 'review' ? 'review'
+        : 'ready';
       byColumn.get(target)?.push(toCard(task));
     });
 
@@ -311,7 +322,7 @@ export function BoardPage() {
           <Button
             variant="outline"
             className="border-border/70 bg-background/80 shadow-sm"
-            onClick={() => setCreateColumnId('backlog')}
+            onClick={() => setCreateColumnId('ready')}
           >
             <Plus className="mr-2 h-4 w-4" />
             Add ticket
@@ -342,7 +353,7 @@ export function BoardPage() {
         onClose={() => setCreateColumnId(null)}
         projectId={projectId ?? null}
         defaultStatus={createColumnId ? columnStatusMap[createColumnId] : 'Open'}
-        columnLabel={createColumnId ? columnConfig.find((column) => column.id === createColumnId)?.title ?? 'Backlog' : 'Backlog'}
+        columnLabel={createColumnId ? columnConfig.find((column) => column.id === createColumnId)?.title ?? 'Ready' : 'Ready'}
         assignableUsers={assignableUsers}
       />
 
@@ -448,7 +459,7 @@ export function BoardPage() {
 
               <div className="grid gap-3 text-sm text-muted-foreground">
                 <div className="flex items-center justify-between gap-2">
-                  <span>Owner</span>
+                  <span>Assignee</span>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground">
                       {resolveUserDisplayName(activeDetailTask.assigneeId)}
@@ -674,7 +685,7 @@ export function BoardPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         {boardColumns.map((column) => (
           <Card key={column.title} className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
             <CardHeader className="space-y-3 pb-4">
