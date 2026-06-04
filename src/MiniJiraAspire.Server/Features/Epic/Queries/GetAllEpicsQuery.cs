@@ -10,7 +10,7 @@ public class GetAllEpicsHandler(IEpicRepository repository) : IRequestHandler<Ge
     {
         var epics = await repository.GetAllAsync(ct);
         return epics
-            .Select(epic => new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty, epic.ProjectId, epic.CreatedAtUtc, epic.UpdatedAtUtc))
+            .Select(epic => new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty, epic.ProjectId, epic.CreatedById, epic.UpdatedById, epic.CreatedAtUtc, epic.UpdatedAtUtc))
             .ToList();
     }
 }

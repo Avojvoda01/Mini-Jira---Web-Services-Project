@@ -11,6 +11,6 @@ public class GetEpicByIdHandler(IEpicRepository repository) : IRequestHandler<Ge
         var epic = await repository.GetByIdAsync(request.Id, ct);
         return epic is null
             ? null
-            : new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty, epic.ProjectId, epic.CreatedAtUtc, epic.UpdatedAtUtc);
+            : new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty, epic.ProjectId, epic.CreatedById, epic.UpdatedById, epic.CreatedAtUtc, epic.UpdatedAtUtc);
     }
 }

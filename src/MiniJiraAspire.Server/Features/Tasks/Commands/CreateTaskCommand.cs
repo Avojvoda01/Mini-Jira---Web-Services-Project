@@ -12,9 +12,10 @@ public class CreateTaskHandler(ITaskRepository repository) : IRequestHandler<Cre
         {
             Title = request.Title,
             Description = request.Description,
-            ProjectId = Guid.Parse(request.ProjectId)
+            ProjectId = Guid.Parse(request.ProjectId),
+            CreatedById = request.CreatedById,
         }, ct);
 
-        return new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedAtUtc, task.UpdatedAtUtc);
+        return new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedById, task.UpdatedById, task.CreatedAtUtc, task.UpdatedAtUtc);
     }
 }

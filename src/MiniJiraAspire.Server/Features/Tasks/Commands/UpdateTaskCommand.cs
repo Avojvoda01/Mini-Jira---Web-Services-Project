@@ -8,9 +8,9 @@ public class UpdateTaskHandler(ITaskRepository repository) : IRequestHandler<Upd
 {
     public async Task<TaskItemDto?> Handle(UpdateTaskCommand request, CancellationToken ct)
     {
-        var task = await repository.UpdateAsync(Guid.Parse(request.TaskId), request.Title, request.Description, ct);
+        var task = await repository.UpdateAsync(Guid.Parse(request.TaskId), request.Title, request.Description, request.UpdatedById, ct);
         return task is null
             ? null
-            : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedAtUtc, task.UpdatedAtUtc);
+            : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedById, task.UpdatedById, task.CreatedAtUtc, task.UpdatedAtUtc);
     }
 }
