@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
-import { ArrowRight, ChevronDown, Filter, FolderKanban, LayoutGrid, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, Filter, FolderKanban, LayoutGrid, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,16 +10,7 @@ import { BackToHomeButton } from '@/components/common/BackToHomeButton';
 import { SignOutButton } from '@/components/common/SignOutButton';
 import { ModeToggle } from '@/components/common/ModeToggle';
 import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
-import { DeleteProjectModal } from '@/components/projects/DeleteProjectModal';
-import { EditProjectModal } from '@/components/projects/EditProjectModal';
-import {
-  useAddProjectMemberMutation,
-  useDeleteProjectMutation,
-  useProjectsQuery,
-  useRemoveProjectMemberMutation,
-  useUpdateProjectMutation,
-  type ProjectDto,
-} from '@/features/projects';
+import { useProjectsQuery, type ProjectDto } from '@/features/projects';
 import { useAdminUsersQuery } from '@/features/users';
 import { authSessionAtom } from '@/store/authAtoms';
 
@@ -40,16 +31,8 @@ export function ProjectsPage() {
         (project.memberIds ?? []).some((id) => id.toLowerCase() === currentUserId),
     );
   }, [allProjects, currentUserId, session?.role]);
-  const updateProjectMutation = useUpdateProjectMutation();
-  const addProjectMemberMutation = useAddProjectMemberMutation();
-  const removeProjectMemberMutation = useRemoveProjectMemberMutation();
-  const deleteProjectMutation = useDeleteProjectMutation();
+
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
-  const [editProjectId, setEditProjectId] = useState<string | null>(null);
-  const [editProjectName, setEditProjectName] = useState('');
-  const [editProjectDescription, setEditProjectDescription] = useState('');
-  const [editProjectMemberIds, setEditProjectMemberIds] = useState<string[]>([]);
-  const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [projectSort, setProjectSort] = useState<ProjectSortOption>('newest');
 
   const describedCount = useMemo(() => {
@@ -58,7 +41,8 @@ export function ProjectsPage() {
 
   const sortedProjects = useMemo(() => {
     const next = [...projects];
-    const compareByName = (left: ProjectDto, right: ProjectDto) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
+    const compareByName = (left: ProjectDto, right: ProjectDto) =>
+      left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
     const getCreatedAt = (project: ProjectDto) => {
       const value = Date.parse(project.createdAtUtc);
       return Number.isNaN(value) ? 0 : value;
@@ -97,101 +81,6 @@ export function ProjectsPage() {
     }
   }, [projectSort]);
 
-  const activeEditProject = useMemo(() => {
-    if (!editProjectId) {
-      return undefined;
-    }
-
-    return projects.find((project) => project.id === editProjectId);
-  }, [editProjectId, projects]);
-
-  const projectPendingDelete = useMemo(() => {
-    if (!deleteProjectId) {
-      return undefined;
-    }
-
-    return projects.find((project) => project.id === deleteProjectId);
-  }, [deleteProjectId, projects]);
-
-  const usersById = useMemo(() => {
-    return new Map(users.map((user) => [user.id.toLowerCase(), user]));
-  }, [users]);
-
-  const openEditProjectModal = (project: ProjectDto) => {
-    setEditProjectId(project.id);
-    setEditProjectName(project.name);
-    setEditProjectDescription(project.description);
-    setEditProjectMemberIds(project.memberIds ?? []);
-  };
-
-  const closeEditProjectModal = () => {
-    setEditProjectId(null);
-    setEditProjectName('');
-    setEditProjectDescription('');
-    setEditProjectMemberIds([]);
-  };
-
-  const saveProjectChanges = async () => {
-    if (!editProjectId) {
-      return;
-    }
-
-    const name = editProjectName.trim();
-    const description = editProjectDescription.trim();
-
-    if (name.length < 3 || !description) {
-      return;
-    }
-
-    try {
-      const project = activeEditProject;
-      const currentMemberIds = project?.memberIds ?? [];
-      const desiredMemberIds = Array.from(new Set(editProjectMemberIds));
-      const currentMemberIdSet = new Set(currentMemberIds);
-      const desiredMemberIdSet = new Set(desiredMemberIds);
-      const membersToAdd = desiredMemberIds.filter((memberId) => !currentMemberIdSet.has(memberId));
-      const membersToRemove = currentMemberIds.filter((memberId) => !desiredMemberIdSet.has(memberId));
-
-      await updateProjectMutation.mutateAsync({
-        id: editProjectId,
-        name,
-        description,
-      });
-
-      for (const userId of membersToAdd) {
-        await addProjectMemberMutation.mutateAsync({
-          projectId: editProjectId,
-          userId,
-          role: 'Member',
-        });
-      }
-
-      for (const userId of membersToRemove) {
-        await removeProjectMemberMutation.mutateAsync({
-          projectId: editProjectId,
-          userId,
-        });
-      }
-
-      closeEditProjectModal();
-    } catch (error) {
-      console.error('Error updating project:', error);
-    }
-  };
-
-  const confirmDeleteProject = async () => {
-    if (!deleteProjectId) {
-      return;
-    }
-
-    try {
-      await deleteProjectMutation.mutateAsync(deleteProjectId);
-      setDeleteProjectId(null);
-    } catch (error) {
-      console.error('Error deleting project:', error);
-    }
-  };
-
   return (
     <section className="space-y-6">
       <div className="relative overflow-hidden rounded-b-3xl rounded-t-none border border-border/70 bg-gradient-to-br from-card via-card to-muted/45 p-6 shadow-sm sm:p-8">
@@ -211,7 +100,9 @@ export function ProjectsPage() {
             </Badge>
 
             <div className="space-y-3">
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl lg:text-5xl">Select or Create a Project</h1>
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+                Select or Create a Project
+              </h1>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                 This is the entry layer before dashboard and board views. Pick a project to open its dedicated workspace context.
               </p>
@@ -230,7 +121,10 @@ export function ProjectsPage() {
                     <DropdownMenuItem onClick={() => setProjectSort('name-desc')}>Name Z-A</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button className="border-0 bg-sky-500 text-white shadow-sm hover:bg-sky-600" onClick={() => setIsCreateProjectOpen(true)}>
+                <Button
+                  className="border-0 bg-sky-500 text-white shadow-sm hover:bg-sky-600"
+                  onClick={() => setIsCreateProjectOpen(true)}
+                >
                   Create project
                 </Button>
               </div>
@@ -244,13 +138,11 @@ export function ProjectsPage() {
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Described</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-                {describedCount}
-              </p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{describedCount}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Showing</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{projects.length}</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{sortedProjects.length}</p>
             </div>
           </div>
         </div>
@@ -301,53 +193,7 @@ export function ProjectsPage() {
               </CardHeader>
 
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <details className="group rounded-lg border border-border/70 bg-background/50 px-3 py-2">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-foreground">
-                    <span className="inline-flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      Show members
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {(project.memberIds ?? []).length}
-                      </span>
-                    </span>
-                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
-                  </summary>
-
-                  <div className="mt-3 space-y-2">
-                    {(project.memberIds ?? []).length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No members are assigned to this project yet.</p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {(project.memberIds ?? []).map((memberId) => {
-                          const member = usersById.get(memberId.toLowerCase());
-
-                          return (
-                            <li
-                              key={memberId}
-                              className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/70 px-3 py-2"
-                            >
-                              <div>
-                                <p className="font-medium text-foreground">{member?.displayName ?? `User ${memberId.slice(0, 6)}`}</p>
-                                <p className="text-xs text-muted-foreground">{member?.email ?? memberId}</p>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
-                </details>
-
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => openEditProjectModal(project)}>
-                    Edit
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => setDeleteProjectId(project.id)}>
-                    Delete
-                  </Button>
-                </div>
-
-                <Button asChild className="mt-2 w-full shadow-sm">
+                <Button asChild className="w-full shadow-sm">
                   <Link to={`/app/project/${project.id}/dashboard`}>
                     Open project
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -360,28 +206,6 @@ export function ProjectsPage() {
       </div>
 
       <CreateProjectForm open={isCreateProjectOpen} onClose={() => setIsCreateProjectOpen(false)} members={users} />
-
-      <EditProjectModal
-        isOpen={Boolean(activeEditProject)}
-        projectName={editProjectName}
-        projectDescription={editProjectDescription}
-        selectedMemberIds={editProjectMemberIds}
-        members={users}
-        onClose={closeEditProjectModal}
-        onChangeName={setEditProjectName}
-        onChangeDescription={setEditProjectDescription}
-        onChangeSelectedMemberIds={setEditProjectMemberIds}
-        onSave={saveProjectChanges}
-        isPending={updateProjectMutation.isPending}
-      />
-
-      <DeleteProjectModal
-        isOpen={Boolean(projectPendingDelete)}
-        projectName={projectPendingDelete?.name ?? ''}
-        onClose={() => setDeleteProjectId(null)}
-        onConfirm={confirmDeleteProject}
-        isPending={deleteProjectMutation.isPending}
-      />
     </section>
   );
 }
