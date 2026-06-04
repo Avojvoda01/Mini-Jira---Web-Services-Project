@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { ArrowRight, ChevronDown, Filter, FolderKanban, LayoutGrid, LogOut, Settings, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronDown, Filter, FolderKanban, LayoutGrid, LogOut, Settings, ShieldCheck, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -120,6 +120,12 @@ export function ProjectsPage() {
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
+              {session?.role === 'Admin' && (
+                <DropdownMenuItem disabled className="text-muted-foreground">
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Admin settings
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={handleSignOut} className="text-rose-600 focus:text-rose-600">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
