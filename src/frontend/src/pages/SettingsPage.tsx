@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAtomValue } from 'jotai';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { usePageHeader } from '@/components/layout/PageHeaderContext';
@@ -43,16 +43,16 @@ export function SettingsPage() {
   const addProjectMemberMutation = useAddProjectMemberMutation();
   const removeProjectMemberMutation = useRemoveProjectMemberMutation();
 
+  const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingDetails, setIsSavingDetails] = useState(false);
+  const [isSavingMembers, setIsSavingMembers] = useState(false);
 
   useEffect(() => {
     if (project) {
-      setEditName(project.name);
-      setEditDescription(project.description);
       setMemberIds(project.memberIds ?? []);
     }
   }, [project]);
@@ -78,16 +78,38 @@ export function SettingsPage() {
     [users],
   );
 
-  const handleSave = async () => {
-    if (!projectId || !project) return;
-    setIsSaving(true);
+  const startEditing = () => {
+    if (!project) return;
+    setEditName(project.name);
+    setEditDescription(project.description);
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditName('');
+    setEditDescription('');
+  };
+
+  const handleSaveDetails = async () => {
+    if (!projectId) return;
+    setIsSavingDetails(true);
     try {
       await updateProjectMutation.mutateAsync({
         id: projectId,
         name: editName.trim(),
         description: editDescription.trim(),
       });
+      setIsEditing(false);
+    } finally {
+      setIsSavingDetails(false);
+    }
+  };
 
+  const handleSaveMembers = async () => {
+    if (!projectId || !project) return;
+    setIsSavingMembers(true);
+    try {
       const currentSet = new Set(project.memberIds ?? []);
       const desiredSet = new Set(memberIds);
       const toAdd = memberIds.filter((id) => !currentSet.has(id));
@@ -100,7 +122,7 @@ export function SettingsPage() {
         await removeProjectMemberMutation.mutateAsync({ projectId, userId });
       }
     } finally {
-      setIsSaving(false);
+      setIsSavingMembers(false);
     }
   };
 
@@ -110,65 +132,92 @@ export function SettingsPage() {
     navigate('/app/projects');
   };
 
-  const saveDisabled =
-    editName.trim().length < 3 || !editDescription.trim() || isSaving;
+  const detailsSaveDisabled =
+    editName.trim().length < 3 || !editDescription.trim() || isSavingDetails;
 
   return (
     <section className="space-y-6">
       {project && (
         <>
+          {/* Project details */}
           <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle>Project details</CardTitle>
-              <CardDescription>
-                {canManage ? 'Update the project name and description.' : 'Project information.'}
-              </CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4">
+              <CardTitle className="text-base font-semibold">Project details</CardTitle>
+              {canManage && !isEditing && (
+                <Button variant="outline" size="sm" onClick={startEditing} className="h-8 gap-1.5 text-xs">
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </Button>
+              )}
+              {canManage && isEditing && (
+                <Button variant="ghost" size="sm" onClick={cancelEditing} className="h-8 gap-1.5 text-xs text-muted-foreground">
+                  <X className="h-3.5 w-3.5" />
+                  Cancel
+                </Button>
+              )}
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground" htmlFor="project-name">
-                  Project name
-                </label>
-                {canManage ? (
-                  <Input
-                    id="project-name"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    maxLength={MAX_PROJECT_NAME_LENGTH}
-                  />
-                ) : (
-                  <p className="text-sm text-foreground">{project.name}</p>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground" htmlFor="project-description">
-                  Description
-                </label>
-                {canManage ? (
-                  <textarea
-                    id="project-description"
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    maxLength={MAX_DESCRIPTION_LENGTH}
-                    className="min-h-24 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
-                  />
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {project.description || 'No description.'}
-                  </p>
-                )}
-              </div>
+            <CardContent>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground" htmlFor="project-name">
+                      Name
+                    </label>
+                    <Input
+                      id="project-name"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      maxLength={MAX_PROJECT_NAME_LENGTH}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground" htmlFor="project-description">
+                      Description
+                    </label>
+                    <textarea
+                      id="project-description"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      maxLength={MAX_DESCRIPTION_LENGTH}
+                      rows={4}
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
+                    />
+                  </div>
+                  <Button size="sm" onClick={handleSaveDetails} disabled={detailsSaveDisabled}>
+                    Save changes
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Name</p>
+                    <p className="mt-1 text-sm font-medium text-foreground">{project.name}</p>
+                  </div>
+                  <Separator />
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Description</p>
+                    <p className="mt-1 text-sm leading-relaxed text-foreground">
+                      {project.description || <span className="italic text-muted-foreground">No description provided.</span>}
+                    </p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
+          {/* Members */}
           <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle>Members</CardTitle>
-              <CardDescription>
-                {canManage ? 'Add or remove project members.' : 'Current project members.'}
-              </CardDescription>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between gap-4">
+                <CardTitle className="text-base font-semibold">Members</CardTitle>
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  {(project.memberIds ?? []).length}
+                </span>
+              </div>
             </CardHeader>
+
             <CardContent className="space-y-4">
               {canManage ? (
                 <>
@@ -176,36 +225,33 @@ export function SettingsPage() {
                     members={users}
                     selectedMemberIds={memberIds}
                     onAdd={(userId) => setMemberIds((prev) => [...prev, userId])}
-                    onRemove={(userId) =>
-                      setMemberIds((prev) => prev.filter((id) => id !== userId))
-                    }
+                    onRemove={(userId) => setMemberIds((prev) => prev.filter((id) => id !== userId))}
                     searchInputId="settings-member-search"
-                    isBusy={isSaving}
+                    isBusy={isSavingMembers}
                   />
-                  <Button onClick={handleSave} disabled={saveDisabled}>
-                    Save changes
+                  <Button size="sm" onClick={handleSaveMembers} disabled={isSavingMembers}>
+                    Save members
                   </Button>
                 </>
               ) : (
                 <div className="space-y-2">
                   {(project.memberIds ?? []).length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No members assigned.</p>
+                    <p className="text-sm text-muted-foreground">No members assigned to this project.</p>
                   ) : (
-                    <ul className="space-y-2">
+                    <ul className="space-y-1">
                       {(project.memberIds ?? []).map((id) => {
                         const user = usersById.get(id.toLowerCase());
+                        const initials = user?.displayName?.slice(0, 2).toUpperCase() ?? '??';
                         return (
-                          <li
-                            key={id}
-                            className="flex items-center gap-3 rounded-md border border-border/60 bg-background/70 px-3 py-2"
-                          >
-                            <div>
-                              <p className="text-sm font-medium text-foreground">
+                          <li key={id} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/50">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                              {initials}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-foreground">
                                 {user?.displayName ?? `User ${id.slice(0, 6)}`}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                {user?.email ?? id}
-                              </p>
+                              <p className="truncate text-xs text-muted-foreground">{user?.email ?? id}</p>
                             </div>
                           </li>
                         );
@@ -217,27 +263,21 @@ export function SettingsPage() {
             </CardContent>
           </Card>
 
+          {/* Danger zone */}
           {canManage && (
-            <Card className="border-destructive/50 bg-card/80 shadow-sm backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-destructive">Danger zone</CardTitle>
-                <CardDescription>Irreversible project actions.</CardDescription>
+            <Card className="border-destructive/40 bg-card/80 shadow-sm backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold text-destructive">Danger zone</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                <div className="flex items-center justify-between gap-4 rounded-lg border border-destructive/25 bg-destructive/5 p-4">
                   <div>
                     <p className="text-sm font-medium text-foreground">Delete this project</p>
-                    <p className="text-sm text-muted-foreground">
-                      Permanently removes the project and all its data.
-                    </p>
+                    <p className="text-xs text-muted-foreground">Permanently removes the project and all its data.</p>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setIsDeleteOpen(true)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete project
+                  <Button variant="destructive" size="sm" onClick={() => setIsDeleteOpen(true)}>
+                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                    Delete
                   </Button>
                 </div>
               </CardContent>
@@ -254,25 +294,19 @@ export function SettingsPage() {
         </>
       )}
 
+      {/* Workspace preferences */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Workspace preferences</CardTitle>
-            <CardDescription>Core settings that shape the day-to-day experience.</CardDescription>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-semibold">Workspace preferences</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-0">
             {workspacePreferences.map((item, index) => (
               <div key={item.label}>
-                {index > 0 ? <Separator className="mb-4" /> : null}
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{item.label}</p>
-                    <p className="text-sm text-muted-foreground">Apply across the entire workspace.</p>
-                  </div>
-                  <Badge
-                    variant="secondary"
-                    className="border border-border/60 bg-background/80 text-foreground"
-                  >
+                {index > 0 && <Separator />}
+                <div className="flex items-center justify-between gap-4 py-3">
+                  <p className="text-sm text-foreground">{item.label}</p>
+                  <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
                     {item.value}
                   </Badge>
                 </div>
@@ -282,33 +316,20 @@ export function SettingsPage() {
         </Card>
 
         <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Assistant preferences</CardTitle>
-            <CardDescription>
-              Keep future AI assistance helpful without becoming intrusive.
-            </CardDescription>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base font-semibold">Assistant preferences</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/70 bg-background/80 p-4">
-              <div>
-                <p className="text-sm font-medium text-foreground">Suggestion tone</p>
-                <p className="text-sm text-muted-foreground">Prefer concise task recommendations.</p>
-              </div>
-              <Button variant="outline" size="sm" className="border-border/70 bg-background/80">
+          <CardContent className="space-y-0">
+            <div className="flex items-center justify-between gap-4 py-3">
+              <p className="text-sm text-foreground">Suggestion tone</p>
+              <Button variant="outline" size="sm" className="h-7 border-border/70 bg-background/80 text-xs">
                 Balanced
               </Button>
             </div>
-
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/70 bg-background/80 p-4">
-              <div>
-                <p className="text-sm font-medium text-foreground">Auto summaries</p>
-                <p className="text-sm text-muted-foreground">
-                  Prepare short board summaries for standups.
-                </p>
-              </div>
-              <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10">
-                Enabled
-              </Badge>
+            <Separator />
+            <div className="flex items-center justify-between gap-4 py-3">
+              <p className="text-sm text-foreground">Auto summaries</p>
+              <Badge className="bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/10">Enabled</Badge>
             </div>
           </CardContent>
         </Card>
