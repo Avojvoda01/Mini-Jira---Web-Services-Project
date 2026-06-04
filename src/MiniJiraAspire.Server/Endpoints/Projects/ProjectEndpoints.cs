@@ -54,6 +54,13 @@ public static class ProjectEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("RemoveProjectMember")
             .WithSummary("Remove a member from a project");
+
+        group.MapPatch("/{id:guid}/owner", ChangeProjectOwner)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithName("ChangeProjectOwner")
+            .WithSummary("Change project owner (Admin only)");
     }
 
     private static async Task<Created<ProjectDto>> CreateProject(
@@ -138,5 +145,21 @@ public static class ProjectEndpoints
         return removed
             ? TypedResults.NoContent()
             : TypedResults.Problem("Project membership not found", statusCode: StatusCodes.Status404NotFound);
+    }
+
+    private static async Task<IResult> ChangeProjectOwner(
+        Guid id,
+        ChangeProjectOwnerRequest request,
+        ClaimsPrincipal user,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        if (!user.IsInRole("Admin"))
+            return Results.Problem("Only admins can change the project owner.", statusCode: StatusCodes.Status403Forbidden);
+
+        var changed = await mediator.Send(new ChangeProjectOwnerCommand(id, request.OwnerId), ct);
+        return changed
+            ? Results.NoContent()
+            : Results.Problem("Project or user not found.", statusCode: StatusCodes.Status404NotFound);
     }
 }

@@ -87,4 +87,18 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
         await db.SaveChangesAsync(cancellationToken);
         return true;
     }
+
+    public async Task<bool> ChangeOwnerAsync(Guid projectId, Guid newOwnerId, CancellationToken cancellationToken = default)
+    {
+        var project = await db.Projects.FindAsync([projectId], cancellationToken);
+        if (project is null) return false;
+
+        var userExists = await db.Users.AnyAsync(u => u.Id == newOwnerId, cancellationToken);
+        if (!userExists) return false;
+
+        project.CreatedById = newOwnerId;
+        project.UpdatedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
 }

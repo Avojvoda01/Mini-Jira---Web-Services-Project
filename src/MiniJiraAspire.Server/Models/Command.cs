@@ -48,6 +48,8 @@ public record AddProjectMemberCommand(string ProjectId, string UserId, string Ro
 
 public record RemoveProjectMemberCommand(string ProjectId, string UserId) : IRequest<bool>;
 
+public record ChangeProjectOwnerCommand(Guid ProjectId, Guid NewOwnerId) : IRequest<bool>;
+
 // Users
 public record CreateUserCommand(string Email, string Password, string DisplayName) : IRequest<CreateUserResponse>;
 
