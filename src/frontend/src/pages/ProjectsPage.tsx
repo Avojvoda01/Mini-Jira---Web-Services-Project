@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react';
-import { useAtomValue } from 'jotai';
-import { ArrowRight, Filter, FolderKanban, LayoutGrid, Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { ArrowRight, ChevronDown, Filter, FolderKanban, LayoutGrid, LogOut, Settings, Sparkles } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { BackToHomeButton } from '@/components/common/BackToHomeButton';
-import { SignOutButton } from '@/components/common/SignOutButton';
 import { ModeToggle } from '@/components/common/ModeToggle';
 import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
 import { useProjectsQuery, type ProjectDto } from '@/features/projects';
@@ -18,7 +16,21 @@ type ProjectSortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
 
 export function ProjectsPage() {
   const session = useAtomValue(authSessionAtom);
+  const setSession = useSetAtom(authSessionAtom);
+  const navigate = useNavigate();
   const currentUserId = session?.userId?.toLowerCase();
+
+  const userInitials = session?.displayName
+    ?.split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() ?? '?';
+
+  const handleSignOut = () => {
+    setSession(null);
+    navigate('/', { replace: true });
+  };
   const { data: allProjects = [], isError, isLoading, error, refetch } = useProjectsQuery();
   const { data: users = [] } = useAdminUsersQuery();
 
@@ -84,10 +96,36 @@ export function ProjectsPage() {
   return (
     <section className="space-y-6">
       <div className="relative overflow-hidden rounded-b-3xl rounded-t-none border border-border/70 bg-gradient-to-br from-card via-card to-muted/45 p-6 shadow-sm sm:p-8">
-        <div>
-          <ModeToggle className="absolute right-28 top-4 z-10 h-11 w-11" />
-          <SignOutButton align="right" className="right-16" />
-          <BackToHomeButton align="right" />
+        <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+          <ModeToggle className="h-11 w-11" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                aria-label="User menu"
+                className="flex h-11 items-center gap-2.5 rounded-xl border-border/70 bg-background/85 px-3 shadow-md backdrop-blur-sm hover:bg-background"
+              >
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  {userInitials}
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-semibold leading-none text-foreground">{session?.displayName}</p>
+                  <p className="mt-0.5 text-[10px] leading-none text-muted-foreground">{session?.email}</p>
+                </div>
+                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem disabled className="text-muted-foreground">
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut} className="text-rose-600 focus:text-rose-600">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" aria-hidden="true" />
