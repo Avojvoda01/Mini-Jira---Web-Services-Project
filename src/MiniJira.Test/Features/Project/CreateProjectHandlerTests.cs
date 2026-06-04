@@ -16,12 +16,14 @@ public class CreateProjectHandlerTests
     [Fact]
     public async Task Handle_CreatesProjectAndReturnsDto()
     {
-        var command = new CreateProjectCommand("Test Project", "A description");
+        var creatorId = Guid.NewGuid();
+        var command = new CreateProjectCommand("Test Project", "A description", creatorId);
         var created = new MiniJiraAspire.Server.Models.Project
         {
             Id = Guid.NewGuid(),
             Name = "Test Project",
             Description = "A description",
+            CreatedById = creatorId,
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -33,15 +35,16 @@ public class CreateProjectHandlerTests
         Assert.Equal(created.Id, result.Id);
         Assert.Equal("Test Project", result.Name);
         Assert.Equal("A description", result.Description);
+        Assert.Equal(creatorId, result.CreatedById);
         _repoMock.Verify(r => r.CreateAsync(It.Is<MiniJiraAspire.Server.Models.Project>(p =>
-            p.Name == "Test Project" && p.Description == "A description"
+            p.Name == "Test Project" && p.Description == "A description" && p.CreatedById == creatorId
         ), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task Handle_WithNullDescription_CreatesProject()
     {
-        var command = new CreateProjectCommand("No Desc", null);
+        var command = new CreateProjectCommand("No Desc", null, null);
         var created = new MiniJiraAspire.Server.Models.Project
         {
             Id = Guid.NewGuid(),
