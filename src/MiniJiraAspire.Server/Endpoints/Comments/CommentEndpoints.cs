@@ -1,5 +1,11 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Routing;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Endpoints.Comments;
@@ -9,7 +15,8 @@ public static class CommentEndpoints
     public static void MapCommentEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/tasks/{taskId}/comments")
-            .WithTags("Comments");
+            .WithTags("Comments")
+            .RequireAuthorization();
 
         group.MapPost("/", CreateComment)
             .Produces<CommentDto>(StatusCodes.Status201Created)

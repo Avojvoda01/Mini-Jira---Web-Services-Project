@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Persistence.Repositories;
@@ -14,7 +17,7 @@ public interface IUserRepository
 
     Task<bool> DeleteAsync(string userId, CancellationToken cancellationToken = default);
 
-    Task<User?> ChangeRoleAsync(string userId, string role, CancellationToken cancellationToken = default);
+    Task<User?> ChangeRoleAsync(string userId, UserRole role, CancellationToken cancellationToken = default);
 
     Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
 

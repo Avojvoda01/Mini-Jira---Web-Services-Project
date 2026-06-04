@@ -1,5 +1,11 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Routing;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Endpoints.Users;
@@ -9,7 +15,8 @@ public static class UserEndpoints
     public static void MapUserEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/users")
-            .WithTags("Users");
+            .WithTags("Users")
+            .RequireAuthorization();
 
         group.MapGet("/", GetUsers)
             .WithName("GetUsers")
@@ -23,7 +30,7 @@ public static class UserEndpoints
 
         var adminGroup = app.MapGroup("/users")
             .WithTags("Users")
-            .RequireAuthorization(policy => policy.RequireRole(UserRole.Admin.ToRoleString()));
+            .RequireAuthorization(policy => policy.RequireRole(nameof(UserRole.Admin)));
 
         adminGroup.MapPost("/", CreateUser)
             .WithName("CreateUser")

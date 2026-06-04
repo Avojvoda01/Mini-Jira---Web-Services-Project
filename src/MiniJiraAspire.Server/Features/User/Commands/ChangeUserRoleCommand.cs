@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
@@ -8,15 +12,15 @@ public class ChangeUserRoleHandler(IUserRepository repository) : IRequestHandler
 {
     public async Task<ChangeUserRoleResponse> Handle(ChangeUserRoleCommand request, CancellationToken ct)
     {
-        if (!UserRoleExtensions.TryParse(request.Role, out var role))
+        if (!Enum.TryParse<UserRole>(request.Role, ignoreCase: true, out var role) || !Enum.IsDefined(role))
         {
             return ChangeUserRoleResponse.ValidationFailed(new Dictionary<string, string[]>
             {
-                [nameof(request.Role)] = [$"Role must be one of: {string.Join(", ", UserRoleExtensions.All.Select(r => r.ToRoleString()))}."]
+                [nameof(request.Role)] = [$"Role must be one of: {string.Join(", ", Enum.GetNames<UserRole>())}."]
             });
         }
 
-        var user = await repository.ChangeRoleAsync(request.UserId, role.ToRoleString(), ct);
+        var user = await repository.ChangeRoleAsync(request.UserId, role, ct);
 
         return user is null
             ? ChangeUserRoleResponse.UserNotFound()

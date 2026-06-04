@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace MiniJiraAspire.Server.Models;
 
 public class Project : BaseEntity

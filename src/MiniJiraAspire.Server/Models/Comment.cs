@@ -1,3 +1,5 @@
+using System;
+
 namespace MiniJiraAspire.Server.Models
 {
     public class Comment : BaseEntity
