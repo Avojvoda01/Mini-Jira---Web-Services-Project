@@ -73,28 +73,47 @@ public static class CommentEndpoints
         return TypedResults.Ok(comments);
     }
 
-    private static async Task<Results<Ok<CommentDto>, ProblemHttpResult>> UpdateComment(
+    private static async Task<IResult> UpdateComment(
         string taskId,
         Guid commentId,
         UpdateCommentRequest request,
+        ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct)
     {
-        var comment = await mediator.Send(new UpdateCommentCommand(taskId, commentId, request.Content), ct);
-        return comment is null
-            ? TypedResults.Problem($"Comment with id {commentId} not found", statusCode: StatusCodes.Status404NotFound)
-            : TypedResults.Ok(comment);
+        var existing = await mediator.Send(new GetCommentByIdQuery(taskId, commentId), ct);
+        if (existing is null)
+            return Results.Problem($"Comment with id {commentId} not found", statusCode: StatusCodes.Status404NotFound);
+
+        if (!CanModify(user, existing.UserId))
+            return Results.Problem("You are not allowed to edit this comment.", statusCode: StatusCodes.Status403Forbidden);
+
+        var updated = await mediator.Send(new UpdateCommentCommand(taskId, commentId, request.Content), ct);
+        return updated is null
+            ? Results.Problem($"Comment with id {commentId} not found", statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(updated);
     }
 
-    private static async Task<Results<NoContent, ProblemHttpResult>> DeleteComment(
+    private static async Task<IResult> DeleteComment(
         string taskId,
         Guid commentId,
+        ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct)
     {
+        var existing = await mediator.Send(new GetCommentByIdQuery(taskId, commentId), ct);
+        if (existing is null)
+            return Results.Problem($"Comment with id {commentId} not found", statusCode: StatusCodes.Status404NotFound);
+
+        if (!CanModify(user, existing.UserId))
+            return Results.Problem("You are not allowed to delete this comment.", statusCode: StatusCodes.Status403Forbidden);
+
         var deleted = await mediator.Send(new DeleteCommentCommand(taskId, commentId), ct);
         return deleted
-            ? TypedResults.NoContent()
-            : TypedResults.Problem($"Comment with id {commentId} not found", statusCode: StatusCodes.Status404NotFound);
+            ? Results.NoContent()
+            : Results.Problem($"Comment with id {commentId} not found", statusCode: StatusCodes.Status404NotFound);
     }
+
+    private static bool CanModify(ClaimsPrincipal user, Guid? commentUserId)
+        => user.IsInRole("Admin") || (GetUserId(user) is { } id && id == commentUserId);
 }

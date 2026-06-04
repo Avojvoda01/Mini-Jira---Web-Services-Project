@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAtomValue } from 'jotai';
 import { useParams } from 'react-router-dom';
 import { ArrowLeftRight, Bot, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
 import { CreateTaskModal } from '@/components/board/CreateTaskModal';
@@ -18,6 +19,7 @@ import { useAssignUserMutation, useDeleteTaskMutation, useTasksQuery, type TaskI
 import { useAdminUsersQuery } from '@/features/users';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { cn } from '@/lib/utils';
+import { authSessionAtom } from '@/store/authAtoms';
 
 type ChatMessage = {
   id: number;
@@ -117,6 +119,7 @@ const truncateText = (value: string, maxLength: number) => {
 };
 
 export function BoardPage() {
+  const session = useAtomValue(authSessionAtom);
   const { setContent } = usePageHeader();
   const { projectId } = useParams();
   const { data: project } = useProjectQuery(projectId ?? null);
@@ -556,32 +559,34 @@ export function BoardPage() {
                               {resolveUserDisplayName(comment.userId)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => {
-                                setEditingCommentId(comment.id);
-                                setCommentEditDrafts((current) => ({
-                                  ...current,
-                                  [comment.id]: comment.content,
-                                }));
-                              }}
-                              aria-label="Edit comment"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-rose-600 hover:text-rose-700"
-                              onClick={() => setDeleteCommentId(comment.id)}
-                              aria-label="Delete comment"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                          {(session?.role === 'Admin' || comment.userId?.toLowerCase() === session?.userId?.toLowerCase()) && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => {
+                                  setEditingCommentId(comment.id);
+                                  setCommentEditDrafts((current) => ({
+                                    ...current,
+                                    [comment.id]: comment.content,
+                                  }));
+                                }}
+                                aria-label="Edit comment"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-rose-600 hover:text-rose-700"
+                                onClick={() => setDeleteCommentId(comment.id)}
+                                aria-label="Delete comment"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                         {editingCommentId === comment.id ? (
                           <div className="mt-2 space-y-2">
