@@ -12,6 +12,7 @@ import { DeleteProjectModal } from '@/components/projects/DeleteProjectModal';
 import { ProjectMemberPicker } from '@/components/projects/ProjectMemberPicker';
 import {
   useAddProjectMemberMutation,
+  useChangeProjectOwnerMutation,
   useDeleteProjectMutation,
   useProjectQuery,
   useRemoveProjectMemberMutation,
@@ -42,11 +43,13 @@ export function SettingsPage() {
   const deleteProjectMutation = useDeleteProjectMutation();
   const addProjectMemberMutation = useAddProjectMemberMutation();
   const removeProjectMemberMutation = useRemoveProjectMemberMutation();
+  const changeOwnerMutation = useChangeProjectOwnerMutation();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [memberIds, setMemberIds] = useState<string[]>([]);
+  const [selectedNewOwnerId, setSelectedNewOwnerId] = useState('');
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [isSavingMembers, setIsSavingMembers] = useState(false);
@@ -124,6 +127,12 @@ export function SettingsPage() {
     } finally {
       setIsSavingMembers(false);
     }
+  };
+
+  const handleChangeOwner = async () => {
+    if (!projectId || !selectedNewOwnerId) return;
+    await changeOwnerMutation.mutateAsync({ projectId, newOwnerId: selectedNewOwnerId });
+    setSelectedNewOwnerId('');
   };
 
   const handleDelete = async () => {
@@ -207,6 +216,64 @@ export function SettingsPage() {
             </CardContent>
           </Card>
 
+          {/* Owner */}
+          <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold">Project owner</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {(() => {
+                const owner = usersById.get((project.createdById ?? '').toLowerCase());
+                const initials = owner?.displayName?.slice(0, 2).toUpperCase() ?? '??';
+                return (
+                  <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/70 px-3 py-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                      {initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {owner?.displayName ?? 'Unknown'}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{owner?.email ?? project.createdById}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      Owner
+                    </span>
+                  </div>
+                );
+              })()}
+
+              {session?.role === 'Admin' && (
+                <div className="space-y-2 border-t border-border/50 pt-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Transfer ownership</p>
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedNewOwnerId}
+                      onChange={(e) => setSelectedNewOwnerId(e.target.value)}
+                      className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+                    >
+                      <option value="">Select new owner…</option>
+                      {users
+                        .filter((u) => u.id.toLowerCase() !== (project.createdById ?? '').toLowerCase())
+                        .map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.displayName} ({u.email})
+                          </option>
+                        ))}
+                    </select>
+                    <Button
+                      size="sm"
+                      onClick={handleChangeOwner}
+                      disabled={!selectedNewOwnerId || changeOwnerMutation.isPending}
+                    >
+                      Transfer
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Members */}
           <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
             <CardHeader className="pb-4">
@@ -222,7 +289,7 @@ export function SettingsPage() {
               {canManage ? (
                 <>
                   <ProjectMemberPicker
-                    members={users}
+                    members={users.filter((u) => u.id.toLowerCase() !== (project.createdById ?? '').toLowerCase())}
                     selectedMemberIds={memberIds}
                     onAdd={(userId) => setMemberIds((prev) => [...prev, userId])}
                     onRemove={(userId) => setMemberIds((prev) => prev.filter((id) => id !== userId))}

@@ -205,7 +205,7 @@ export function ProjectsPage() {
         )}
       </div>
 
-      <CreateProjectForm open={isCreateProjectOpen} onClose={() => setIsCreateProjectOpen(false)} members={users} />
+      <CreateProjectForm open={isCreateProjectOpen} onClose={() => setIsCreateProjectOpen(false)} members={users} currentUserId={currentUserId} />
     </section>
   );
 }

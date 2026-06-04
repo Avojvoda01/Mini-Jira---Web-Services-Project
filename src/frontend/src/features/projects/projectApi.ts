@@ -38,3 +38,7 @@ export async function updateProject(input: UpdateProjectInput): Promise<void> {
 export async function deleteProject(id: string): Promise<void> {
   return apiClient.delete<void>(`/projects/${id}`);
 }
+
+export async function changeProjectOwner(projectId: string, newOwnerId: string): Promise<void> {
+  return apiClient.patch<void>(`/projects/${projectId}/owner`, { ownerId: newOwnerId });
+}
