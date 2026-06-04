@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useAtomValue } from 'jotai';
 import { ArrowRight, ChevronDown, Filter, FolderKanban, LayoutGrid, Sparkles, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
@@ -20,12 +21,25 @@ import {
   type ProjectDto,
 } from '@/features/projects';
 import { useAdminUsersQuery } from '@/features/users';
+import { authSessionAtom } from '@/store/authAtoms';
 
 type ProjectSortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
 
 export function ProjectsPage() {
-  const { data: projects = [], isError, isLoading, error, refetch } = useProjectsQuery();
+  const session = useAtomValue(authSessionAtom);
+  const currentUserId = session?.userId?.toLowerCase();
+  const { data: allProjects = [], isError, isLoading, error, refetch } = useProjectsQuery();
   const { data: users = [] } = useAdminUsersQuery();
+
+  const projects = useMemo(() => {
+    if (!currentUserId) return [];
+    if (session?.role === 'Admin') return allProjects;
+    return allProjects.filter(
+      (project) =>
+        project.createdById?.toLowerCase() === currentUserId ||
+        (project.memberIds ?? []).some((id) => id.toLowerCase() === currentUserId),
+    );
+  }, [allProjects, currentUserId, session?.role]);
   const updateProjectMutation = useUpdateProjectMutation();
   const addProjectMemberMutation = useAddProjectMemberMutation();
   const removeProjectMemberMutation = useRemoveProjectMemberMutation();
