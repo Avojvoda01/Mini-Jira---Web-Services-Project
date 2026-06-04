@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import { useCommentsQuery, useCreateCommentMutation, useDeleteCommentMutation, useUpdateCommentMutation } from '@/features/comments';
+import { useEpicsQuery } from '@/features/epics';
 import { useProjectQuery } from '@/features/projects';
 import { useAssignUserMutation, useDeleteTaskMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
 import { useAdminUsersQuery } from '@/features/users';
@@ -127,6 +128,7 @@ export function BoardPage() {
   const { data: tasks = [], isLoading, isError, error, refetch } = useTasksQuery({
     projectId: projectId ?? null,
   });
+  const { data: epics = [] } = useEpicsQuery({ projectId: projectId ?? null });
   const createCommentMutation = useCreateCommentMutation();
   const updateCommentMutation = useUpdateCommentMutation();
   const deleteCommentMutation = useDeleteCommentMutation();
@@ -358,6 +360,7 @@ export function BoardPage() {
         defaultStatus={createColumnId ? columnStatusMap[createColumnId] : 'Open'}
         columnLabel={createColumnId ? columnConfig.find((column) => column.id === createColumnId)?.title ?? 'Ready' : 'Ready'}
         assignableUsers={assignableUsers}
+        epics={epics}
       />
 
       <EditTaskModal
@@ -369,6 +372,7 @@ export function BoardPage() {
         }}
         task={activeEditTask}
         assignableUsers={assignableUsers}
+        epics={epics}
       />
 
       <DeleteTaskModal
@@ -502,6 +506,14 @@ export function BoardPage() {
                     {assigneeError ? <p className="mt-2 text-xs text-rose-700">{assigneeError}</p> : null}
                   </div>
                 ) : null}
+                {activeDetailTask.epicId && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span>Epic</span>
+                    <span className="text-foreground">
+                      {epics.find((e) => e.id === activeDetailTask.epicId)?.name ?? 'Unknown'}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between gap-2">
                   <span>Estimate</span>
                   <span className="text-foreground">n/a</span>

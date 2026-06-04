@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Layers } from 'lucide-react';
 import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { useAssignUserMutation, useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
+import { useAssignEpicMutation, useAssignUserMutation, useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
+import type { EpicDto } from '@/features/epics';
 import type { UserDto } from '@/features/users';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ type EditTaskModalProps = {
   onSave?: () => void;
   task: TaskItem | null;
   assignableUsers: UserDto[];
+  epics: EpicDto[];
 };
 
 type EditTaskState = {
@@ -28,6 +30,7 @@ type EditTaskState = {
   status: 'Open' | 'In Progress' | 'Review' | 'Done';
   priority: 'Low' | 'Medium' | 'High';
   assigneeId: string;
+  epicId: string;
 };
 
 const statusLabelMap: Record<TaskItem['status'], EditTaskState['status']> = {
@@ -51,17 +54,19 @@ const priorityToneClass: Record<EditTaskState['priority'], string> = {
   Low: 'bg-slate-500/10 text-slate-700',
 };
 
-export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers }: EditTaskModalProps) {
+export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, epics }: EditTaskModalProps) {
   const updateTaskMutation = useUpdateTaskMutation();
   const changeStatusMutation = useChangeTaskStatusMutation();
   const changePriorityMutation = useChangeTaskPriorityMutation();
   const assignUserMutation = useAssignUserMutation();
+  const assignEpicMutation = useAssignEpicMutation();
   const [form, setForm] = useState<EditTaskState>({
     title: '',
     description: '',
     status: 'Open',
     priority: 'Medium',
     assigneeId: '',
+    epicId: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof EditTaskState, string>>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -77,12 +82,14 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers }
       status: statusLabelMap[task.status],
       priority: priorityLabelMap[task.priority],
       assigneeId: task.assigneeId ?? '',
+      epicId: task.epicId ?? '',
     });
     setErrors({});
     setSubmitError(null);
   }, [isOpen, task]);
 
   const trimmedTitle = useMemo(() => form.title.trim(), [form.title]);
+  const selectedEpic = useMemo(() => epics.find((e) => e.id === form.epicId) ?? null, [epics, form.epicId]);
 
   if (!isOpen || !task) {
     return null;
@@ -138,10 +145,11 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers }
       }
 
       if ((task.assigneeId ?? '') !== form.assigneeId) {
-        await assignUserMutation.mutateAsync({
-          taskId: task.id,
-          userId: form.assigneeId,
-        });
+        await assignUserMutation.mutateAsync({ taskId: task.id, userId: form.assigneeId });
+      }
+
+      if ((task.epicId ?? '') !== form.epicId) {
+        await assignEpicMutation.mutateAsync({ taskId: task.id, epicId: form.epicId || null });
       }
 
       if (onSave) {
@@ -239,6 +247,40 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers }
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground" htmlFor="edit-task-epic">
+            Epic
+          </label>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-11 w-full justify-between border-border/70 bg-background/80 shadow-sm">
+                <span className="flex items-center gap-1.5 truncate text-sm">
+                  {selectedEpic ? (
+                    <>
+                      <Layers className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span className="truncate font-medium text-foreground">{selectedEpic.name}</span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">No epic</span>
+                  )}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[14rem]">
+              <DropdownMenuItem className="py-1.5 text-muted-foreground" onClick={() => updateField('epicId', '')}>
+                No epic
+              </DropdownMenuItem>
+              {epics.map((epic) => (
+                <DropdownMenuItem key={epic.id} className="py-1.5" onClick={() => updateField('epicId', epic.id)}>
+                  <Layers className="mr-2 h-3.5 w-3.5 text-primary" />
+                  {epic.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="space-y-2">

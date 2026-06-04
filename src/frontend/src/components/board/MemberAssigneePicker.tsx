@@ -52,16 +52,26 @@ export function MemberAssigneePicker({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span>
-          {selectedMember ? `Assigned: ${selectedMember.displayName}` : 'Assigned: Unassigned'}
-        </span>
+      <div className="flex items-center justify-between gap-2">
+        {selectedMember ? (
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+              {selectedMember.displayName.slice(0, 2).toUpperCase()}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">{selectedMember.displayName}</p>
+              <p className="text-xs text-muted-foreground">{selectedMember.email}</p>
+            </div>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">No assignee</span>
+        )}
         {selectedMember && (
           <Button
             type="button"
             variant="outline"
             size="icon"
-            className="h-7 w-7 border-rose-300/80 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+            className="h-7 w-7 shrink-0 border-rose-300/80 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
             onClick={onRemove}
             disabled={isBusy}
             aria-label={`Remove ${selectedMember.displayName} as assignee`}
