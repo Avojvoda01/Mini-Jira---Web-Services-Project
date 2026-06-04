@@ -51,10 +51,11 @@ public static class EpicEndpoints
     }
 
     private static async Task<Ok<List<EpicDto>>> GetAllEpics(
+        Guid? projectId,
         IMediator mediator,
         CancellationToken ct)
     {
-        var epics = await mediator.Send(new GetAllEpicsQuery(), ct);
+        var epics = await mediator.Send(new GetAllEpicsQuery(projectId), ct);
         return TypedResults.Ok(epics);
     }
 

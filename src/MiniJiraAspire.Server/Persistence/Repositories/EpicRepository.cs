@@ -6,11 +6,13 @@ namespace MiniJiraAspire.Server.Persistence.Repositories;
 
 public class EpicRepository(AppDbContext db) : IEpicRepository
 {
-    public Task<List<Epic>> GetAllAsync(CancellationToken cancellationToken = default)
-        => db.Epics
-            .AsNoTracking()
-            .OrderBy(e => e.Name)
-            .ToListAsync(cancellationToken);
+    public Task<List<Epic>> GetAllAsync(Guid? projectId = null, CancellationToken cancellationToken = default)
+    {
+        var query = db.Epics.AsNoTracking().AsQueryable();
+        if (projectId.HasValue)
+            query = query.Where(e => e.ProjectId == projectId.Value);
+        return query.OrderBy(e => e.Name).ToListAsync(cancellationToken);
+    }
 
     public Task<Epic?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         => db.Epics
