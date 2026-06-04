@@ -1,8 +1,11 @@
+using System;
 using System.Text;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using MiniJiraAspire.Server.Endpoints.Auth;
 using MiniJiraAspire.Server.Endpoints.Comments;
 using MiniJiraAspire.Server.Endpoints.Epics;
@@ -13,6 +16,9 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 using MiniJiraAspire.Server.Services.Auth;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using MiniJiraAspire.Server.Endpoints.Projects;
 using MiniJiraAspire.Server.Endpoints.Users;
 
@@ -27,7 +33,23 @@ builder.Services.AddProblemDetails();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter the JWT bearer token (without the 'Bearer ' prefix)."
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference(JwtBearerDefaults.AuthenticationScheme, document)] = []
+    });
+});
 
 // CORS policy for development - allows the frontend running on localhost:5173 to access the API.
 if (builder.Environment.IsDevelopment())

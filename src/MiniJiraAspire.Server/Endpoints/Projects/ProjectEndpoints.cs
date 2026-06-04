@@ -1,5 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Routing;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Endpoints.Projects;
@@ -9,7 +16,8 @@ public static class ProjectEndpoints
     public static void MapProjectEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/projects")
-            .WithTags("Projects");
+            .WithTags("Projects")
+            .RequireAuthorization();
 
         group.MapPost("/", CreateProject)
             .WithName("CreateProject")

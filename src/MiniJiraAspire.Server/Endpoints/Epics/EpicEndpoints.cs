@@ -1,5 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Routing;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Endpoints.Epics;
@@ -9,7 +16,8 @@ public static class EpicEndpoints
     public static void MapEpicEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/epics")
-            .WithTags("Epics");
+            .WithTags("Epics")
+            .RequireAuthorization();
 
         group.MapPost("/", CreateEpic)
             .Produces<EpicDto>(StatusCodes.Status201Created)

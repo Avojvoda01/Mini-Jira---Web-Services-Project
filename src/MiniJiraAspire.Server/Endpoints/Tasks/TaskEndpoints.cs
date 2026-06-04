@@ -8,7 +8,8 @@ public static class TaskEndpoints
     public static void MapTaskEndpoints(this IEndpointRouteBuilder app)
     {
         var tasks = app.MapGroup("/tasks")
-            .WithTags("Tasks");
+            .WithTags("Tasks")
+            .RequireAuthorization();
 
         tasks.MapPost("/", CreateTask)
             .WithName("CreateTask")
@@ -34,7 +35,8 @@ public static class TaskEndpoints
             .WithSummary("Search and filter tasks");
 
         var actions = app.MapGroup("/tasks")
-            .WithTags("Task Actions");
+            .WithTags("Task Actions")
+            .RequireAuthorization();
 
         actions.MapPatch("/{taskId}/status", ChangeStatus)
             .WithName("ChangeTaskStatus")
