@@ -58,6 +58,9 @@ export function DashboardPage() {
     return usersById.get(id.toLowerCase()) ?? null;
   };
 
+  const formatDate = (iso: string) =>
+    new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+
   const statusBadgeClass = (status: string) => {
     if (status === 'done') return 'bg-emerald-500/10 text-emerald-700';
     if (status === 'in-progress') return 'bg-sky-500/10 text-sky-700';
@@ -117,7 +120,7 @@ export function DashboardPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
-                      <p className="text-xs text-muted-foreground">{creator?.displayName ?? 'Unknown'}</p>
+                      <p className="text-xs text-muted-foreground">{creator?.displayName ?? 'Unknown'} · {formatDate(task.createdAtUtc)}</p>
                     </div>
                     <Badge className={`shrink-0 text-[10px] font-medium hover:opacity-100 ${statusBadgeClass(task.status)}`}>
                       {statusLabel(task.status)}
@@ -153,7 +156,7 @@ export function DashboardPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{epic.name}</p>
-                      <p className="text-xs text-muted-foreground">{creator?.displayName ?? 'Unknown'}</p>
+                      <p className="text-xs text-muted-foreground">{creator?.displayName ?? 'Unknown'} · {formatDate(epic.createdAtUtc)}</p>
                     </div>
                     {epic.description?.trim() && (
                       <p className="hidden max-w-[120px] truncate text-xs text-muted-foreground sm:block">
