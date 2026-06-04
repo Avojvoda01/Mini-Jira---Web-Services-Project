@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from 'react';
 import { ArrowLeft, LayoutDashboard, ListTodo, LogOut, Settings2, SquareKanban } from 'lucide-react';
 import { NavLink, Outlet, type NavLinkRenderProps, useNavigate, useParams } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
@@ -29,8 +30,26 @@ export function AppLayout() {
   const setSession = useSetAtom(authSessionAtom);
   const navigate = useNavigate();
   const { projectId } = useParams();
-  const { data: projects = [], error, isError, isLoading: isLoadingProjects } = useProjectsQuery();
-  const project = projects.find((item) => item.id === projectId);
+  const { data: allProjects = [], error, isError, isLoading: isLoadingProjects } = useProjectsQuery();
+  const currentUserId = session?.userId?.toLowerCase();
+
+  const accessibleProjects = useMemo(() => {
+    if (!currentUserId) return [];
+    if (session?.role === 'Admin') return allProjects;
+    return allProjects.filter(
+      (p) =>
+        p.createdById?.toLowerCase() === currentUserId ||
+        (p.memberIds ?? []).some((id) => id.toLowerCase() === currentUserId),
+    );
+  }, [allProjects, currentUserId, session?.role]);
+
+  const project = accessibleProjects.find((p) => p.id === projectId);
+
+  useEffect(() => {
+    if (!isLoadingProjects && !isError && !project) {
+      navigate('/app/projects', { replace: true });
+    }
+  }, [isLoadingProjects, isError, project, navigate]);
 
   const handleSignOut = () => {
     setSession(null);
