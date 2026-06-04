@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MiniJiraAspire.Server.Migrations;
 using MiniJiraAspire.Server.Models;
@@ -59,7 +64,7 @@ public class UserRepository(AppDbContext db) : IUserRepository
         return true;
     }
 
-    public async Task<User?> ChangeRoleAsync(string userId, string role, CancellationToken cancellationToken = default)
+    public async Task<User?> ChangeRoleAsync(string userId, UserRole role, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(userId, out var id))
         {

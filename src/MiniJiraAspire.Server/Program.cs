@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Text.Json.Serialization;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -19,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MiniJiraAspire.Server.Data.Migrations;
 using MiniJiraAspire.Server.Endpoints.Projects;
 using MiniJiraAspire.Server.Endpoints.Users;
 
@@ -30,6 +32,10 @@ builder.AddServiceDefaults();
 
 // Add services to the container.
 builder.Services.AddProblemDetails();
+
+// Serialize/deserialize enums (e.g. UserRole) as their string name instead of the numeric value.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

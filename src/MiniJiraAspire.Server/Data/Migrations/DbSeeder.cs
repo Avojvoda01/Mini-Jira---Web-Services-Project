@@ -2,9 +2,10 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using MiniJiraAspire.Server.Migrations;
 using MiniJiraAspire.Server.Models;
 
-namespace MiniJiraAspire.Server.Migrations;
+namespace MiniJiraAspire.Server.Data.Migrations;
 
 public class DbSeeder
 {
@@ -89,10 +90,10 @@ public class DbSeeder
         // surrounding seeding logic and do not alter existing project/epic seeding.
         var sampleUsers = new[]
         {
-            new User { Email = "alice.alpha@mini-jira.local", PasswordHash = "password123", DisplayName = "Alice Alpha", Role = "User" },
-            new User { Email = "bob.alpha@mini-jira.local", PasswordHash = "password123", DisplayName = "Bob Alpha", Role = "User" },
-            new User { Email = "carol.beta@mini-jira.local", PasswordHash = "password123", DisplayName = "Carol Beta", Role = "User" },
-            new User { Email = "dave.beta@mini-jira.local", PasswordHash = "password123", DisplayName = "Dave Beta", Role = "User" },
+            new User { Email = "alice.alpha@mini-jira.local", PasswordHash = "password123", DisplayName = "Alice Alpha", Role = UserRole.Admin },
+            new User { Email = "bob.alpha@mini-jira.local", PasswordHash = "password123", DisplayName = "Bob Alpha", Role = UserRole.ProjectMember },
+            new User { Email = "carol.beta@mini-jira.local", PasswordHash = "password123", DisplayName = "Carol Beta", Role = UserRole.ProjectMember },
+            new User { Email = "dave.beta@mini-jira.local", PasswordHash = "password123", DisplayName = "Dave Beta", Role = UserRole.ProjectMember },
         };
 
         foreach (var u in sampleUsers)

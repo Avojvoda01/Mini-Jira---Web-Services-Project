@@ -39,7 +39,6 @@
     <Folder Include="Features\Epic\" />
     <Folder Include="Features\Tasks\Commands\" />
     <Folder Include="Features\Tasks\Queries\" />
-    <Folder Include="Models\CommentDTO\Respond\" />
   </ItemGroup>
 
   <ItemGroup>

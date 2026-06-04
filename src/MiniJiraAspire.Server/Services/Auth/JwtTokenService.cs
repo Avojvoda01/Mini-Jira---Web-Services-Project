@@ -1,6 +1,8 @@
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using MiniJiraAspire.Server.Models;
 
@@ -20,7 +22,7 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(ClaimTypes.Name, user.DisplayName),
-            new Claim(ClaimTypes.Role, user.Role)
+            new Claim(ClaimTypes.Role, user.Role.ToString())
         };
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
