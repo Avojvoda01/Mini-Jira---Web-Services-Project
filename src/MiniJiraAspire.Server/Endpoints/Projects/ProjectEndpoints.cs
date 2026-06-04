@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -56,11 +58,20 @@ public static class ProjectEndpoints
 
     private static async Task<Created<ProjectDto>> CreateProject(
         CreateProjectRequest request,
+        ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct)
     {
-        var result = await mediator.Send(new CreateProjectCommand(request.Name, request.Description), ct);
+        var creatorId = GetUserId(user);
+        var result = await mediator.Send(new CreateProjectCommand(request.Name, request.Description, creatorId), ct);
         return TypedResults.Created($"/api/v1/projects/{result.Id}", result);
+    }
+
+    private static Guid? GetUserId(ClaimsPrincipal user)
+    {
+        var sub = user.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                  ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(sub, out var id) ? id : null;
     }
 
     private static async Task<IResult> UpdateProject(

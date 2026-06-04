@@ -11,9 +11,10 @@ public class CreateProjectHandler(IProjectRepository repository) : IRequestHandl
         var project = new Models.Project
         {
             Name = request.Name,
-            Description = request.Description
+            Description = request.Description,
+            CreatedById = request.CreatedById
         };
         var created = await repository.CreateAsync(project, ct);
-        return new ProjectDto(created.Id, created.Name, created.Description, [], created.CreatedAtUtc, created.UpdatedAtUtc);
+        return new ProjectDto(created.Id, created.Name, created.Description, [], created.CreatedById, created.CreatedAtUtc, created.UpdatedAtUtc);
     }
 }

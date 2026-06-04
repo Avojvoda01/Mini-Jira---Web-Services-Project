@@ -15,6 +15,7 @@ public class GetAllProjectsHandler(IProjectRepository repository) : IRequestHand
                 project.Name,
                 project.Description,
                 [.. project.Members.Select(member => member.UserId.ToString())],
+                project.CreatedById,
                 project.CreatedAtUtc,
                 project.UpdatedAtUtc))
             .ToList();

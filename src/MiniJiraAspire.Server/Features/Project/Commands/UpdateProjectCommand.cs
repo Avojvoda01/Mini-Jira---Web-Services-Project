@@ -11,6 +11,6 @@ public class UpdateProjectHandler(IProjectRepository repository) : IRequestHandl
         var updated = await repository.UpdateAsync(request.Id, request.Name, request.Description, ct);
         return updated is null
             ? null
-            : new ProjectDto(updated.Id, updated.Name, updated.Description, [], updated.CreatedAtUtc, updated.UpdatedAtUtc);
+            : new ProjectDto(updated.Id, updated.Name, updated.Description, [], updated.CreatedById, updated.CreatedAtUtc, updated.UpdatedAtUtc);
     }
 }

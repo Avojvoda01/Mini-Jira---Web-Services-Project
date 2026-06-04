@@ -38,7 +38,7 @@ public record UpdateEpicCommand(Guid Id, string Name, string? Description) : IRe
 public record DeleteEpicCommand(Guid Id) : IRequest<bool>;
 
 // Projects
-public record CreateProjectCommand(string Name, string? Description) : IRequest<ProjectDto>;
+public record CreateProjectCommand(string Name, string? Description, Guid? CreatedById) : IRequest<ProjectDto>;
 
 public record UpdateProjectCommand(Guid Id, string Name, string? Description) : IRequest<ProjectDto?>;
 
