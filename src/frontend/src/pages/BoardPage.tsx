@@ -548,7 +548,14 @@ export function BoardPage() {
                     activeComments.map((comment) => (
                       <div key={comment.id} className="rounded-2xl border border-border/70 bg-background/80 p-3">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-xs text-muted-foreground">{resolveUserDisplayName(comment.userId)}</p>
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
+                              {resolveUserDisplayName(comment.userId).slice(0, 2).toUpperCase()}
+                            </div>
+                            <span className="text-xs font-medium text-foreground">
+                              {resolveUserDisplayName(comment.userId)}
+                            </span>
+                          </div>
                           <div className="flex items-center gap-2">
                             <Button
                               variant="ghost"
@@ -668,7 +675,6 @@ export function BoardPage() {
                         await createCommentMutation.mutateAsync({
                           taskId: activeDetailTask.id,
                           content,
-                          userId: null,
                         });
                         setCommentDraftByTask((current) => ({
                           ...current,
