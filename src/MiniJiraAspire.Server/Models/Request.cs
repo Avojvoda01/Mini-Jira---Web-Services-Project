@@ -52,6 +52,6 @@ public record UpdateTaskRequest(
     [property: StringLength(2000)] string? Description);
 
 // Comments
-public record CreateCommentRequest(string Content, Guid? UserId);
+public record CreateCommentRequest(string Content);
 
 public record UpdateCommentRequest(string Content);
