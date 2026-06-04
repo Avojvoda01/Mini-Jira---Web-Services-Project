@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Bot, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
+import { ArrowLeftRight, Bot, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
 import { CreateTaskModal } from '@/components/board/CreateTaskModal';
 import { DeleteCommentModal } from '@/components/board/DeleteCommentModal';
 import { DeleteTaskModal } from '@/components/board/DeleteTaskModal';
@@ -475,7 +475,11 @@ export function BoardPage() {
                       onClick={() => setIsAssigneePickerOpen((current) => !current)}
                       aria-label={isAssigneePickerOpen ? 'Close assignee picker' : 'Change assignee'}
                     >
-                      {isAssigneePickerOpen ? <Minus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                      {isAssigneePickerOpen
+                        ? <Minus className="h-4 w-4" />
+                        : activeDetailTask.assigneeId
+                          ? <ArrowLeftRight className="h-4 w-4" />
+                          : <UserPlus className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>

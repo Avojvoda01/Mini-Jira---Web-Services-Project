@@ -76,7 +76,7 @@ export function MemberAssigneePicker({
           type="button"
           variant="outline"
           size="sm"
-          className="w-full justify-start gap-2"
+          className="w-full justify-start gap-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
           onClick={() => onAssign(currentUser.id)}
           disabled={isBusy}
         >
