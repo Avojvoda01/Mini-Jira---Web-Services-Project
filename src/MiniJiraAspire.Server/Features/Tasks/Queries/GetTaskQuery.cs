@@ -10,6 +10,6 @@ public class GetTaskHandler(ITaskRepository repository) : IRequestHandler<GetTas
     {
         var task = await repository.GetByIdAsync(Guid.Parse(request.TaskId), ct);
         if (task is null) return null;
-        return new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedById, task.UpdatedById, task.CreatedAtUtc, task.UpdatedAtUtc);
+        return new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedById, task.UpdatedById, task.CreatedAtUtc, task.UpdatedAtUtc, task.EstimateMinutes);
     }
 }

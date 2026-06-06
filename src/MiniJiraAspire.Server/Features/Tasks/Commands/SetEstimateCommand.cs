@@ -4,11 +4,12 @@ using MiniJiraAspire.Server.Persistence.Repositories;
 
 namespace MiniJiraAspire.Server.Features.Tasks.Commands;
 
-public class ChangeStatusHandler(ITaskRepository repository) : IRequestHandler<ChangeStatusCommand, TaskItemDto?>
+public class SetEstimateHandler(ITaskRepository repository) : IRequestHandler<SetEstimateCommand, TaskItemDto?>
 {
-    public async Task<TaskItemDto?> Handle(ChangeStatusCommand request, CancellationToken ct)
+    public async Task<TaskItemDto?> Handle(SetEstimateCommand request, CancellationToken ct)
     {
-        var task = await repository.ChangeStatusAsync(Guid.Parse(request.TaskId), request.Status, request.UpdatedById, ct);
+        var estimate = request.EstimateMinutes > 0 ? request.EstimateMinutes : null;
+        var task = await repository.SetEstimateAsync(Guid.Parse(request.TaskId), estimate, request.UpdatedById, ct);
         return task is null
             ? null
             : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedById, task.UpdatedById, task.CreatedAtUtc, task.UpdatedAtUtc, task.EstimateMinutes);
