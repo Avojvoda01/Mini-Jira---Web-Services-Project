@@ -13,7 +13,8 @@ public static class ChatbotEndpoints
         app.MapPost("/api/chat", AskChatbot)
             .WithName("AskChatbot")
             .WithTags("Chatbot")
-            .WithSummary("Ask the Mini Jira chatbot a question");
+            .WithSummary("Ask the Mini Jira chatbot a question")
+            .RequireAuthorization();
     }
 
     private static async Task<Results<Ok<ChatResponse>, BadRequest<ChatResponse>, ProblemHttpResult>> AskChatbot(
