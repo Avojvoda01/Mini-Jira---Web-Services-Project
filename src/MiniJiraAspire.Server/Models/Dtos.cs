@@ -8,7 +8,7 @@ public record EpicDto(Guid Id, string Name, string Description, Guid ProjectId, 
 
 public record ProjectDto(Guid Id, string Name, string Description, string[] MemberIds, Guid? CreatedById, DateTime CreatedAtUtc, DateTime? UpdatedAtUtc);
 
-public record TaskItemDto(Guid Id, string Title, string? Description, string Status, string Priority, Guid ProjectId, Guid? AssigneeId, Guid? EpicId, Guid? CreatedById, Guid? UpdatedById, DateTime CreatedAtUtc, DateTime? UpdatedAtUtc);
+public record TaskItemDto(Guid Id, string Title, string? Description, string Status, string Priority, Guid ProjectId, Guid? AssigneeId, Guid? EpicId, Guid? CreatedById, Guid? UpdatedById, DateTime CreatedAtUtc, DateTime? UpdatedAtUtc, int? EstimateMinutes);
 
 public record CommentDto(
     Guid Id,
