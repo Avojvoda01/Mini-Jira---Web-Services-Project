@@ -10,7 +10,6 @@ export type CommentItem = {
 export type CreateCommentInput = {
   taskId: string;
   content: string;
-  userId: string | null;
 };
 
 export type UpdateCommentInput = {

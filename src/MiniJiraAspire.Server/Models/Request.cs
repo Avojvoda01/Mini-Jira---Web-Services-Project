@@ -39,6 +39,8 @@ public record UpdateProjectRequest(
     [property: StringLength(100, MinimumLength = 3)] string Name,
     [property: StringLength(2000)] string Description);
 
+public record ChangeProjectOwnerRequest([property: Required] Guid OwnerId);
+
 // Tasks
 public record CreateTaskRequest(
     [property: Required, StringLength(200, MinimumLength = 3)] string Title,
@@ -50,6 +52,6 @@ public record UpdateTaskRequest(
     [property: StringLength(2000)] string? Description);
 
 // Comments
-public record CreateCommentRequest(string Content, Guid? UserId);
+public record CreateCommentRequest(string Content);
 
 public record UpdateCommentRequest(string Content);

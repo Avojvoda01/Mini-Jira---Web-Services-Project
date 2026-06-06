@@ -4,7 +4,7 @@ using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Data.Configurations;
 
-public class EpicConfiguraiton : IEntityTypeConfiguration<Epic>
+public class EpicConfiguration : IEntityTypeConfiguration<Epic>
 {
     public void Configure(EntityTypeBuilder<Epic> builder)
     {
@@ -21,7 +21,15 @@ public class EpicConfiguraiton : IEntityTypeConfiguration<Epic>
             .WithMany()
             .HasForeignKey(e => e.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(e => e.CreatedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(e => e.UpdatedById)
+            .OnDelete(DeleteBehavior.SetNull);
     }
-
 }
-

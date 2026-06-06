@@ -42,6 +42,15 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
         var project = await db.Projects.FindAsync([id], cancellationToken);
         if (project is null) return false;
 
+        // Comments have no DB-level FK to TaskItems, so delete them first.
+        var taskIds = await db.TaskItems
+            .Where(t => t.ProjectId == id)
+            .Select(t => t.Id.ToString())
+            .ToListAsync(cancellationToken);
+
+        if (taskIds.Count > 0)
+            await db.Comments.Where(c => taskIds.Contains(c.TaskId)).ExecuteDeleteAsync(cancellationToken);
+
         db.Projects.Remove(project);
         await db.SaveChangesAsync(cancellationToken);
         return true;
@@ -84,6 +93,20 @@ public class ProjectRepository(AppDbContext db) : IProjectRepository
             return false;
 
         db.ProjectMembers.Remove(membership);
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ChangeOwnerAsync(Guid projectId, Guid newOwnerId, CancellationToken cancellationToken = default)
+    {
+        var project = await db.Projects.FindAsync([projectId], cancellationToken);
+        if (project is null) return false;
+
+        var userExists = await db.Users.AnyAsync(u => u.Id == newOwnerId, cancellationToken);
+        if (!userExists) return false;
+
+        project.CreatedById = newOwnerId;
+        project.UpdatedAtUtc = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         return true;
     }

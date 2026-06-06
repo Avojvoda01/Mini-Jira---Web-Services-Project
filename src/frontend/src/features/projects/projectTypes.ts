@@ -3,6 +3,7 @@ export type ProjectDto = {
   name: string;
   description: string;
   memberIds?: string[];
+  createdById?: string;
   createdAtUtc: string;
   updatedAtUtc: string | null;
 };

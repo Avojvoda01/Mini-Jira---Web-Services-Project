@@ -1,8 +1,11 @@
 import { createBrowserRouter, Navigate, useRouteError } from 'react-router-dom';
+import { AdminRoute } from '../components/auth/AdminRoute';
 import { GuestOnlyRoute } from '../components/auth/GuestOnlyRoute';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ErrorState } from '../components/ui/ErrorState';
+import { AdminSettingsPage } from '../pages/AdminSettingsPage';
+import { UserSettingsPage } from '../pages/UserSettingsPage';
 import { BacklogPage } from '../pages/BacklogPage';
 import { BoardPage } from '../pages/BoardPage';
 import { DashboardPage } from '../pages/DashboardPage';
@@ -57,6 +60,19 @@ export const router = createBrowserRouter([
 			{
 				path: 'projects',
 				element: <ProjectsPage />,
+			},
+			{
+				path: 'settings',
+				element: <UserSettingsPage />,
+			},
+			{
+				element: <AdminRoute />,
+				children: [
+					{
+						path: 'admin-settings',
+						element: <AdminSettingsPage />,
+					},
+				],
 			},
 			{
 				path: 'project/:projectId',

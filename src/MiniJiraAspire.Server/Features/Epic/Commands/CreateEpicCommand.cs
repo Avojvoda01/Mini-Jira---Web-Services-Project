@@ -18,9 +18,10 @@ public class CreateEpicHandler(IEpicRepository repository, IProjectRepository pr
         {
             Name = request.Name,
             Description = request.Description,
-            ProjectId = request.ProjectId
+            ProjectId = request.ProjectId,
+            CreatedById = request.CreatedById,
         }, ct);
 
-        return new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty, epic.ProjectId, epic.CreatedAtUtc, epic.UpdatedAtUtc);
+        return new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty, epic.ProjectId, epic.CreatedById, epic.UpdatedById, epic.CreatedAtUtc, epic.UpdatedAtUtc);
     }
 }

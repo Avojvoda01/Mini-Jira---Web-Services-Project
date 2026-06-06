@@ -3,6 +3,7 @@ export type EpicDto = {
   name: string;
   description: string;
   projectId: string;
+  createdById: string | null;
   createdAtUtc: string;
   updatedAtUtc: string | null;
 };

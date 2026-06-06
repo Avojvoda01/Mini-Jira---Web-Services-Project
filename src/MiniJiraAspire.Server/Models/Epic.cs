@@ -8,4 +8,6 @@ public class Epic : BaseEntity
     public string? Description { get; set; }
     public Guid ProjectId { get; set; }
     public Project Project { get; set; } = null!;
+    public Guid? CreatedById { get; set; }
+    public Guid? UpdatedById { get; set; }
 }
