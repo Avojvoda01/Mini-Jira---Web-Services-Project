@@ -9,4 +9,6 @@ public class ChatbotOptions
     public string BaseUrl { get; set; } = "http://localhost:1234/v1";
 
     public string Model { get; set; } = "local-model";
+
+    public int MaxTokens { get; set; } = 900;
 }

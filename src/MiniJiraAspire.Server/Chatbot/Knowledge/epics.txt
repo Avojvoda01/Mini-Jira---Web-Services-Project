@@ -1,22 +1,23 @@
 Epics are larger feature groups inside Mini Jira.
 
-An epic has:
-- Id
-- Name
-- Description
-- ProjectId
-- CreatedAtUtc
-- UpdatedAtUtc
-
-An epic belongs to a project through ProjectId.
+An epic belongs to one project.
 Tasks can be assigned to an epic.
 
-Important epic routes:
-- GET /api/epics gets all epics.
-- GET /api/epics/{id} gets one epic by id.
-- POST /api/epics creates an epic.
-- PUT /api/epics/{id} updates an epic.
-- DELETE /api/epics/{id} deletes an epic.
+Where users find epics in the app:
+Epics are found inside a project workspace on the Backlog page.
+To find epics, sign in, open Projects, choose a project with Open project, then click Backlog in the left sidebar.
+
+What users can do with epics on Backlog:
+- view all epics for the current project
+- sort epics
+- create an epic with Create epic
+- edit an epic
+- delete an epic
+- assign unassigned tickets to an epic
+- remove tickets from an epic
+
+If a user asks where epics are, give the full click path in a friendly way.
+Example answer: To find epics, go to the Projects page, open the project you want, then click Backlog in the left sidebar. The Backlog page is where epics are shown and managed.
 
 Use epics when several tasks are part of one bigger feature.
 Example: an Authentication epic could contain login, register, password reset, and role management tasks.

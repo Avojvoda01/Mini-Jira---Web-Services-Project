@@ -1,31 +1,17 @@
 Mini Jira has users and admin user management.
 
-A user has:
-- Id
-- Email
-- DisplayName
-- Role
-- CreatedAtUtc
-- UpdatedAtUtc
-
-The UserDto returned by the API does not expose PasswordHash.
-
 Known roles:
 - Admin
 - Project Manager
 - Project Member
 
-Important auth routes:
-- POST /api/auth/register registers a new user.
-- POST /api/auth/login logs in a user and returns a token.
+Where users sign in or register:
+Users sign in from the Sign in page.
+Users create an account from the Create account page.
+The home page has Sign in and Create account buttons.
 
-Important user/admin routes:
-- GET /api/users gets users.
-- GET /api/users/{userId} gets one user.
-- GET /api/admin/users gets all users for admin.
-- GET /api/admin/users/{userId} gets one user for admin.
-- POST /api/admin/users creates a user as admin.
-- DELETE /api/admin/users/{userId} deletes a user as admin.
-- PATCH /api/admin/roles/{userId} changes a user's role.
+Where users see their signed-in identity:
+Inside a project workspace, the left sidebar shows Signed in as, display name, and email.
+The same sidebar has Sign out.
 
-Changing a role accepts Admin, Project Manager, or Project Member.
+The normal visible app flow is sign in, create account, projects, project workspace, and sign out.

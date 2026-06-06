@@ -1,22 +1,18 @@
 Projects are top-level work areas in Mini Jira.
 
-A project has:
-- Id
-- Name
-- Description
-- MemberIds
-- CreatedAtUtc
-- UpdatedAtUtc
+Where users find projects in the app:
+Projects are found on the Projects page after signing in.
+Users can also return there from a project workspace by clicking Back to projects in the sidebar.
 
-Users can create, view, update, and delete projects through the project API.
+What users can do on the Projects page:
+- view all projects
+- sort projects
+- create a new project with Create project
+- show project members
+- edit a project
+- delete a project
+- open a project with Open project
 
-Important project routes:
-- GET /api/projects gets all projects.
-- GET /api/projects/{id} gets one project by id.
-- POST /api/projects creates a project.
-- PUT /api/projects/{id} updates a project.
-- DELETE /api/projects/{id} deletes a project.
-- POST /api/projects/{projectId}/members adds a member to a project.
-- DELETE /api/projects/{projectId}/members/{userId} removes a member from a project.
+When a user opens a project, they enter that project's workspace with Dashboard, Board, Backlog, and Settings.
 
 Projects are useful because tasks and epics belong to a project.

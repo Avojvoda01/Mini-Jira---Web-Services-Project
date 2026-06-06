@@ -81,7 +81,13 @@ builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.Configure<ChatbotOptions>(builder.Configuration.GetSection(ChatbotOptions.SectionName));
 builder.Services.AddSingleton<IMiniJiraKnowledgeProvider, MiniJiraKnowledgeProvider>();
-builder.Services.AddHttpClient<ILmStudioChatClient, LmStudioChatClient>();
+#pragma warning disable EXTEXP0001
+builder.Services.AddHttpClient<ILmStudioChatClient, LmStudioChatClient>(client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(2);
+})
+.RemoveAllResilienceHandlers();
+#pragma warning restore EXTEXP0001
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is not configured.");

@@ -26,6 +26,7 @@ x86/
 [Ll]ogs/
 artifacts/
 out/
+.codex-build/
 
 # .NET / NuGet / test output
 project.lock.json

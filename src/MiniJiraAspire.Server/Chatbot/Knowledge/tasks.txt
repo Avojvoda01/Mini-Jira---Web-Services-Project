@@ -1,37 +1,26 @@
 Tasks are individual work items in Mini Jira.
 
-A task has:
-- Id
-- Title
-- Description
-- Status
-- Priority
-- ProjectId
-- AssigneeId
-- EpicId
-- CreatedAtUtc
-- UpdatedAtUtc
+A task belongs to a project.
+A task can have a title, description, status, priority, assignee, comments, and optionally an epic.
 
-A task belongs to a project through ProjectId.
-A task can optionally be assigned to a user through AssigneeId.
-A task can optionally be assigned to an epic through EpicId.
+Where users find tasks in the app:
+Tasks are mainly found inside a project workspace on the Board page.
+To find tasks, sign in, open Projects, choose a project with Open project, then click Board in the left sidebar.
 
-Important task routes:
-- GET /api/tasks gets tasks and can filter them.
-- GET /api/tasks/{taskId} gets one task by id.
-- POST /api/tasks creates a task.
-- PUT /api/tasks/{taskId} updates a task.
-- DELETE /api/tasks/{taskId} deletes a task.
+What users can do with tasks on Board:
+- see tasks grouped into board columns
+- add a ticket with Add ticket
+- click a task card to open task details
+- view task status, priority, assignee, and description
+- change or clear the assignee
+- delete a task
+- read and write comments on the task details panel
 
-Task filters:
+Tasks can also appear on the Backlog page when assigning tickets to epics.
+
+Users may see task filters or sorting options such as:
 - search
 - status
 - priority
-- assigneeId
-- epicId
-
-Task action routes:
-- PATCH /api/tasks/{taskId}/status changes the task status.
-- PATCH /api/tasks/{taskId}/priority changes the task priority.
-- PATCH /api/tasks/{taskId}/assign-user assigns a user to the task.
-- PATCH /api/tasks/{taskId}/assign-epic assigns an epic to the task.
+- assignee
+- epic
