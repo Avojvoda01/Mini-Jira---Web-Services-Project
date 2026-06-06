@@ -15,18 +15,26 @@ export type TaskItem = {
   updatedById: string | null;
   createdAtUtc: string;
   updatedAtUtc: string | null;
+  estimateMinutes: number | null;
 };
 
 export type CreateTaskInput = {
   title: string;
   description: string | null;
   projectId: string;
+  estimateMinutes?: number | null;
 };
 
 export type UpdateTaskInput = {
   taskId: string;
   title: string;
   description: string | null;
+  estimateMinutes?: number | null;
+};
+
+export type SetEstimateInput = {
+  taskId: string;
+  estimateMinutes: number | null;
 };
 
 export type DeleteTaskInput = {

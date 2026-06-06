@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { assignEpic, assignUser, changeTaskPriority, changeTaskStatus, createTask, deleteTask, fetchTasks, updateTask } from './taskApi';
+import { assignEpic, assignUser, changeTaskPriority, changeTaskStatus, createTask, deleteTask, fetchTasks, setEstimate, updateTask } from './taskApi';
 import type {
   AssignEpicInput,
   AssignUserInput,
@@ -7,6 +7,7 @@ import type {
   ChangeTaskStatusInput,
   CreateTaskInput,
   DeleteTaskInput,
+  SetEstimateInput,
   TaskFilters,
   UpdateTaskInput,
 } from './taskTypes';
@@ -105,6 +106,17 @@ export function useAssignUserMutation() {
 
   return useMutation({
     mutationFn: (input: AssignUserInput) => assignUser(input),
+    onSuccess: () => {
+      return queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
+    },
+  });
+}
+
+export function useSetEstimateMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: SetEstimateInput) => setEstimate(input),
     onSuccess: () => {
       return queryClient.invalidateQueries({ queryKey: taskQueryKeys.all });
     },
