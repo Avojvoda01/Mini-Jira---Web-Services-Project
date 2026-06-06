@@ -134,7 +134,7 @@ public static class ChatbotEndpoints
 
             var visibleProjects = await GetVisibleProjectsAsync(userId.Value, user, projectRepository, cancellationToken);
             var visibleProjectIds = visibleProjects.Select(project => project.Id).ToHashSet();
-            var epics = await epicRepository.GetAllAsync(cancellationToken);
+            var epics = await epicRepository.GetAllAsync(null, cancellationToken);
             var epic = epics
                 .Where(epic => visibleProjectIds.Contains(epic.ProjectId))
                 .FirstOrDefault(epic => epic.Name.Contains(epicName, StringComparison.OrdinalIgnoreCase));
