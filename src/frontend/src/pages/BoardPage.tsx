@@ -19,7 +19,7 @@ import { useProjectQuery } from '@/features/projects';
 import { useAssignUserMutation, useDeleteTaskMutation, useSetEstimateMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
 import { useAdminUsersQuery } from '@/features/users';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
-import { formatEstimate, parseEstimate } from '@/lib/estimate';
+import { formatEstimate, minutesToEditValue, parseEstimate } from '@/lib/estimate';
 import { cn } from '@/lib/utils';
 import { authSessionAtom } from '@/store/authAtoms';
 
@@ -592,7 +592,7 @@ export function BoardPage() {
                           size="icon"
                           className="h-8 w-8"
                           onClick={() => {
-                            setEstimateDraft(activeDetailTask.estimateMinutes ? formatEstimate(activeDetailTask.estimateMinutes) : '');
+                            setEstimateDraft(minutesToEditValue(activeDetailTask.estimateMinutes));
                             setEstimateError(null);
                             setIsEstimateEditing(true);
                           }}

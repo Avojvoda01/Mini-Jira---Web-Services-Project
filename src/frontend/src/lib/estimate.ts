@@ -52,6 +52,18 @@ export function formatEstimate(minutes: number | null): string {
 }
 
 /**
+ * Convert minutes to a single-unit input string suitable for pre-filling an edit field.
+ * Prefers the largest whole unit: days → hours → minutes.
+ * e.g. 480 → "1d", 600 → "10h", 90 → "90m"
+ */
+export function minutesToEditValue(minutes: number | null): string {
+  if (!minutes || minutes <= 0) return '';
+  if (minutes % MINUTES_PER_DAY === 0) return `${minutes / MINUTES_PER_DAY}d`;
+  if (minutes % MINUTES_PER_HOUR === 0) return `${minutes / MINUTES_PER_HOUR}h`;
+  return `${minutes}m`;
+}
+
+/**
  * Returns true if the estimate string is valid (parseable to a positive number).
  */
 export function isValidEstimate(input: string): boolean {

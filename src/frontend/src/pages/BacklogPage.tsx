@@ -28,6 +28,7 @@ type BacklogTicket = {
   priority: 'High' | 'Medium' | 'Low';
   status: string;
   estimate: string;
+  estimateMinutes: number | null;
 };
 
 type Epic = EpicDto & {
@@ -61,6 +62,7 @@ const mapTaskToTicket = (task: TaskItem, displayId: string): BacklogTicket => ({
   priority: priorityLabelMap[task.priority],
   status: statusLabelMap[task.status],
   estimate: formatEstimate(task.estimateMinutes),
+  estimateMinutes: task.estimateMinutes,
 });
 
 export function BacklogPage() {

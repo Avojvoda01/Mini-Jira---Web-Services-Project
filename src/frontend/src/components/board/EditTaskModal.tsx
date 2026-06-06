@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { useAssignEpicMutation, useAssignUserMutation, useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useSetEstimateMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
 import type { EpicDto } from '@/features/epics';
 import type { UserDto } from '@/features/users';
-import { formatEstimate, isValidEstimate, parseEstimate } from '@/lib/estimate';
+import { isValidEstimate, minutesToEditValue, parseEstimate } from '@/lib/estimate';
 import { cn } from '@/lib/utils';
 
 const MAX_TITLE_LENGTH = 200;
@@ -87,7 +87,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
       priority: priorityLabelMap[task.priority],
       assigneeId: task.assigneeId ?? '',
       epicId: task.epicId ?? '',
-      estimate: task.estimateMinutes ? formatEstimate(task.estimateMinutes) : '',
+      estimate: minutesToEditValue(task.estimateMinutes),
     });
     setErrors({});
     setSubmitError(null);
