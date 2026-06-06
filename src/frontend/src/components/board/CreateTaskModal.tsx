@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useCreateTaskMutation, useAssignUserMutation, useAssignEpicMutation } from '@/features/tasks';
+import { useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useCreateTaskMutation, useAssignUserMutation, useAssignEpicMutation, useSetEstimateMutation } from '@/features/tasks';
 import type { EpicDto } from '@/features/epics';
 import type { UserDto } from '@/features/users';
+import { isValidEstimate, parseEstimate } from '@/lib/estimate';
 import { cn } from '@/lib/utils';
 
 const MAX_TITLE_LENGTH = 200;
@@ -31,6 +32,7 @@ type CreateTaskState = {
   priority: 'Low' | 'Medium' | 'High';
   assigneeId: string;
   epicId: string;
+  estimate: string;
 };
 
 const priorityToneClass: Record<CreateTaskState['priority'], string> = {
@@ -45,13 +47,14 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
   const changePriorityMutation = useChangeTaskPriorityMutation();
   const assignUserMutation = useAssignUserMutation();
   const assignEpicMutation = useAssignEpicMutation();
-  const [form, setForm] = useState<CreateTaskState>({ title: '', description: '', priority: 'Medium', assigneeId: '', epicId: '' });
+  const setEstimateMutation = useSetEstimateMutation();
+  const [form, setForm] = useState<CreateTaskState>({ title: '', description: '', priority: 'Medium', assigneeId: '', epicId: '', estimate: '' });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateTaskState, string>>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
-      setForm({ title: '', description: '', priority: 'Medium', assigneeId: '', epicId: '' });
+      setForm({ title: '', description: '', priority: 'Medium', assigneeId: '', epicId: '', estimate: '' });
       setErrors({});
       setSubmitError(null);
     }
@@ -82,6 +85,10 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
 
     if (form.description.trim().length > MAX_DESCRIPTION_LENGTH) {
       nextErrors.description = `Description must be ${MAX_DESCRIPTION_LENGTH} characters or less.`;
+    }
+
+    if (form.estimate.trim() && !isValidEstimate(form.estimate)) {
+      nextErrors.estimate = 'Use a format like 10m, 2h, or 1d.';
     }
 
     const projectError = !projectId ? 'Select a project before creating tasks.' : null;
@@ -121,13 +128,18 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
         await assignEpicMutation.mutateAsync({ taskId: created.id, epicId: form.epicId });
       }
 
+      const estimateMinutes = form.estimate.trim() ? parseEstimate(form.estimate) : null;
+      if (estimateMinutes !== null) {
+        await setEstimateMutation.mutateAsync({ taskId: created.id, estimateMinutes });
+      }
+
       onClose();
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Failed to create task.');
     }
   };
 
-  const isBusy = createTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending || assignEpicMutation.isPending;
+  const isBusy = createTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending || assignEpicMutation.isPending || setEstimateMutation.isPending;
 
   return (
     <BacklogModal onClose={onClose} cardClassName="w-full max-w-2xl border-border/70 bg-card shadow-2xl">
@@ -244,6 +256,21 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
           <p className="text-xs text-muted-foreground">
             Only project members can be assigned.
           </p>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground" htmlFor="task-estimate">
+            Estimate
+          </label>
+          <Input
+            id="task-estimate"
+            value={form.estimate}
+            onChange={(event) => updateField('estimate', event.target.value)}
+            placeholder="e.g. 10m, 2h, 1d"
+            aria-invalid={Boolean(errors.estimate)}
+          />
+          <p className="text-xs text-muted-foreground">Use m (minutes), h (hours), or d (days — 8h each).</p>
+          {errors.estimate ? <p className="text-xs text-rose-700">{errors.estimate}</p> : null}
         </div>
 
         {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
