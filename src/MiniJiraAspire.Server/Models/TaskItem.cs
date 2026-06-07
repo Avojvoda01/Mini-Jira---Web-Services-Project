@@ -13,4 +13,5 @@ public class TaskItem : BaseEntity
     public Guid? EpicId { get; set; }
     public Guid? CreatedById { get; set; }
     public Guid? UpdatedById { get; set; }
+    public int? EstimateMinutes { get; set; }
 }

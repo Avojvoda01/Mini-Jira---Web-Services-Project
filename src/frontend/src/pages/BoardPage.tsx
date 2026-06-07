@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { useParams } from 'react-router-dom';
-import { ArrowLeftRight, Bot, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
+import { ArrowLeftRight, Bot, Check, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
 import { CreateTaskModal } from '@/components/board/CreateTaskModal';
 import { DeleteCommentModal } from '@/components/board/DeleteCommentModal';
 import { DeleteTaskModal } from '@/components/board/DeleteTaskModal';
@@ -16,9 +16,10 @@ import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import { useCommentsQuery, useCreateCommentMutation, useDeleteCommentMutation, useUpdateCommentMutation } from '@/features/comments';
 import { useEpicsQuery } from '@/features/epics';
 import { useProjectQuery } from '@/features/projects';
-import { useAssignUserMutation, useDeleteTaskMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
+import { useAssignUserMutation, useDeleteTaskMutation, useSetEstimateMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
 import { useAdminUsersQuery } from '@/features/users';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
+import { formatEstimate, minutesToEditValue, parseEstimate } from '@/lib/estimate';
 import { cn } from '@/lib/utils';
 import { authSessionAtom } from '@/store/authAtoms';
 
@@ -134,6 +135,7 @@ export function BoardPage() {
   const deleteCommentMutation = useDeleteCommentMutation();
   const deleteTaskMutation = useDeleteTaskMutation();
   const assignUserMutation = useAssignUserMutation();
+  const setEstimateMutation = useSetEstimateMutation();
   const [createColumnId, setCreateColumnId] = useState<BoardColumn['id'] | null>(null);
   const [editTaskId, setEditTaskId] = useState<string | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
@@ -145,6 +147,9 @@ export function BoardPage() {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isAssigneePickerOpen, setIsAssigneePickerOpen] = useState(false);
   const [assigneeError, setAssigneeError] = useState<string | null>(null);
+  const [isEstimateEditing, setIsEstimateEditing] = useState(false);
+  const [estimateDraft, setEstimateDraft] = useState('');
+  const [estimateError, setEstimateError] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const nextMessageIdRef = useRef(2);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -229,7 +234,7 @@ export function BoardPage() {
       description: truncateText(task.description ?? '', MAX_TASK_DESCRIPTION_LENGTH),
       owner: resolveUserDisplayName(task.assigneeId),
       priority: priorityLabelMap[task.priority],
-      estimate: 'n/a',
+      estimate: formatEstimate(task.estimateMinutes),
     });
 
     const byColumn = new Map<BoardColumn['id'], TaskCard[]>([
@@ -344,6 +349,9 @@ export function BoardPage() {
     setDeleteCommentId(null);
     setIsAssigneePickerOpen(false);
     setAssigneeError(null);
+    setIsEstimateEditing(false);
+    setEstimateDraft('');
+    setEstimateError(null);
 
     if (!detailTaskId) {
       setCommentDraftByTask({});
@@ -516,8 +524,89 @@ export function BoardPage() {
                 )}
                 <div className="flex items-center justify-between gap-2">
                   <span>Estimate</span>
-                  <span className="text-foreground">n/a</span>
+                  <div className="flex items-center gap-2">
+                    {isEstimateEditing ? (
+                      <div className="flex items-center gap-1.5">
+                        <Input
+                          className="h-7 w-24 text-xs"
+                          value={estimateDraft}
+                          onChange={(e) => {
+                            setEstimateDraft(e.target.value);
+                            setEstimateError(null);
+                          }}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              const minutes = estimateDraft.trim() ? parseEstimate(estimateDraft) : null;
+                              if (estimateDraft.trim() && minutes === null) {
+                                setEstimateError('Use 10m, 2h, or 1d.');
+                                return;
+                              }
+                              await setEstimateMutation.mutateAsync({ taskId: activeDetailTask.id, estimateMinutes: minutes });
+                              setIsEstimateEditing(false);
+                            } else if (e.key === 'Escape') {
+                              setIsEstimateEditing(false);
+                              setEstimateError(null);
+                            }
+                          }}
+                          placeholder="10m, 2h, 1d"
+                          autoFocus
+                        />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={async () => {
+                            const minutes = estimateDraft.trim() ? parseEstimate(estimateDraft) : null;
+                            if (estimateDraft.trim() && minutes === null) {
+                              setEstimateError('Use 10m, 2h, or 1d.');
+                              return;
+                            }
+                            await setEstimateMutation.mutateAsync({ taskId: activeDetailTask.id, estimateMinutes: minutes });
+                            setIsEstimateEditing(false);
+                          }}
+                          disabled={setEstimateMutation.isPending}
+                          aria-label="Save estimate"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => { setIsEstimateEditing(false); setEstimateError(null); }}
+                          aria-label="Cancel estimate"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className={cn('text-foreground', !activeDetailTask.estimateMinutes && 'text-muted-foreground')}>
+                          {formatEstimate(activeDetailTask.estimateMinutes)}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEstimateDraft(minutesToEditValue(activeDetailTask.estimateMinutes));
+                            setEstimateError(null);
+                            setIsEstimateEditing(true);
+                          }}
+                          aria-label={activeDetailTask.estimateMinutes ? 'Change estimate' : 'Add estimate'}
+                        >
+                          {activeDetailTask.estimateMinutes ? <ArrowLeftRight className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
+                {isEstimateEditing && estimateError ? (
+                  <p className="text-xs text-rose-700">{estimateError}</p>
+                ) : null}
                 <div className="flex items-center justify-between gap-2">
                   <span>Created by</span>
                   <span className="text-foreground">

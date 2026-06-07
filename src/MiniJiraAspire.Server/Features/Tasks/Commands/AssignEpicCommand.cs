@@ -17,6 +17,6 @@ public class AssignEpicHandler(ITaskRepository repository) : IRequestHandler<Ass
         var task = await repository.AssignEpicAsync(Guid.Parse(request.TaskId), epicId, request.UpdatedById, ct);
         return task is null
             ? null
-            : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedById, task.UpdatedById, task.CreatedAtUtc, task.UpdatedAtUtc);
+            : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedById, task.UpdatedById, task.CreatedAtUtc, task.UpdatedAtUtc, task.EstimateMinutes);
     }
 }

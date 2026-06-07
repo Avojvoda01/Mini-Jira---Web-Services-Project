@@ -41,13 +41,25 @@ public class TaskRepository(AppDbContext db) : ITaskRepository
         return task;
     }
 
-    public async Task<TaskItem?> UpdateAsync(Guid id, string title, string? description, Guid? updatedById = null, CancellationToken cancellationToken = default)
+    public async Task<TaskItem?> UpdateAsync(Guid id, string title, string? description, int? estimateMinutes, Guid? updatedById = null, CancellationToken cancellationToken = default)
     {
         var task = await db.TaskItems.FindAsync([id], cancellationToken);
         if (task is null) return null;
 
         task.Title = title;
         task.Description = description;
+        task.EstimateMinutes = estimateMinutes;
+        task.UpdatedById = updatedById;
+        await db.SaveChangesAsync(cancellationToken);
+        return task;
+    }
+
+    public async Task<TaskItem?> SetEstimateAsync(Guid id, int? estimateMinutes, Guid? updatedById = null, CancellationToken cancellationToken = default)
+    {
+        var task = await db.TaskItems.FindAsync([id], cancellationToken);
+        if (task is null) return null;
+
+        task.EstimateMinutes = estimateMinutes;
         task.UpdatedById = updatedById;
         await db.SaveChangesAsync(cancellationToken);
         return task;

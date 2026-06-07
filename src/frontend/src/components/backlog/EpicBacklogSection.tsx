@@ -4,8 +4,10 @@ import { ErrorState } from '@/components/ui/ErrorState';
 
 type BacklogTicket = {
   id: string;
+  displayId: string;
   title: string;
   estimate: string;
+  estimateMinutes: number | null;
 };
 
 type Epic = {

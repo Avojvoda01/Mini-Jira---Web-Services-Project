@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { useAssignEpicMutation, useAssignUserMutation, useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
+import { useAssignEpicMutation, useAssignUserMutation, useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useSetEstimateMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
 import type { EpicDto } from '@/features/epics';
 import type { UserDto } from '@/features/users';
+import { isValidEstimate, minutesToEditValue, parseEstimate } from '@/lib/estimate';
 import { cn } from '@/lib/utils';
 
 const MAX_TITLE_LENGTH = 200;
@@ -31,6 +32,7 @@ type EditTaskState = {
   priority: 'Low' | 'Medium' | 'High';
   assigneeId: string;
   epicId: string;
+  estimate: string;
 };
 
 const statusLabelMap: Record<TaskItem['status'], EditTaskState['status']> = {
@@ -60,6 +62,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
   const changePriorityMutation = useChangeTaskPriorityMutation();
   const assignUserMutation = useAssignUserMutation();
   const assignEpicMutation = useAssignEpicMutation();
+  const setEstimateMutation = useSetEstimateMutation();
   const [form, setForm] = useState<EditTaskState>({
     title: '',
     description: '',
@@ -67,6 +70,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
     priority: 'Medium',
     assigneeId: '',
     epicId: '',
+    estimate: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof EditTaskState, string>>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -83,6 +87,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
       priority: priorityLabelMap[task.priority],
       assigneeId: task.assigneeId ?? '',
       epicId: task.epicId ?? '',
+      estimate: minutesToEditValue(task.estimateMinutes),
     });
     setErrors({});
     setSubmitError(null);
@@ -113,6 +118,10 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
 
     if (form.description.trim().length > MAX_DESCRIPTION_LENGTH) {
       nextErrors.description = `Description must be ${MAX_DESCRIPTION_LENGTH} characters or less.`;
+    }
+
+    if (form.estimate.trim() && !isValidEstimate(form.estimate)) {
+      nextErrors.estimate = 'Use a format like 10m, 2h, or 1d.';
     }
 
     setErrors(nextErrors);
@@ -150,6 +159,11 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
 
       if ((task.epicId ?? '') !== form.epicId) {
         await assignEpicMutation.mutateAsync({ taskId: task.id, epicId: form.epicId || null });
+      }
+
+      const newEstimate = form.estimate.trim() ? parseEstimate(form.estimate) : null;
+      if (newEstimate !== (task.estimateMinutes ?? null)) {
+        await setEstimateMutation.mutateAsync({ taskId: task.id, estimateMinutes: newEstimate });
       }
 
       if (onSave) {
@@ -299,17 +313,32 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
           </p>
         </div>
 
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground" htmlFor="edit-task-estimate">
+            Estimate
+          </label>
+          <Input
+            id="edit-task-estimate"
+            value={form.estimate}
+            onChange={(event) => updateField('estimate', event.target.value)}
+            placeholder="e.g. 10m, 2h, 1d"
+            aria-invalid={Boolean(errors.estimate)}
+          />
+          <p className="text-xs text-muted-foreground">Use m (minutes), h (hours), or d (days — 8h each).</p>
+          {errors.estimate ? <p className="text-xs text-rose-700">{errors.estimate}</p> : null}
+        </div>
+
         {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
 
         <FormActionButtons
           onCancel={onClose}
           confirmLabel={
-            updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending
+            updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending || setEstimateMutation.isPending
               ? 'Saving...'
               : 'Save changes'
           }
           onConfirm={handleSave}
-          confirmDisabled={updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending}
+          confirmDisabled={updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending || setEstimateMutation.isPending}
         />
       </CardContent>
     </BacklogModal>

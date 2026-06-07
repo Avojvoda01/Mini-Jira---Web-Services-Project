@@ -28,7 +28,11 @@ export function DashboardPage() {
     const totalEpics = epics.filter((e) => e.projectId === projectId).length;
     const mediumPriorityTasks = tasks.filter((t) => t.priority === 'medium').length;
     const highPriorityTasks = tasks.filter((t) => t.priority === 'high').length;
-    const teamMembers = project?.memberIds?.length ?? 0;
+    const participantIds = new Set([
+      ...(project?.memberIds ?? []).map((id) => id.toLowerCase()),
+      ...(project?.createdById ? [project.createdById.toLowerCase()] : []),
+    ]);
+    const teamMembers = participantIds.size;
     return { totalTasks, openTasks, inProgressTasks, completedTasks, totalEpics, mediumPriorityTasks, highPriorityTasks, teamMembers };
   }, [tasks, epics, project, projectId]);
 

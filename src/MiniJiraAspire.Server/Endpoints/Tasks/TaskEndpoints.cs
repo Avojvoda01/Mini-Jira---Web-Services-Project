@@ -55,6 +55,10 @@ public static class TaskEndpoints
         actions.MapPatch("/{taskId}/assign-epic", AssignEpic)
             .WithName("AssignEpicToTask")
             .WithSummary("Assign an epic to a task");
+
+        actions.MapPatch("/{taskId}/estimate", SetEstimate)
+            .WithName("SetTaskEstimate")
+            .WithSummary("Set or clear the time estimate for a task");
     }
 
     private static Guid? GetUserId(ClaimsPrincipal user)
@@ -165,6 +169,19 @@ public static class TaskEndpoints
     private static async Task<IResult> AssignEpic(
         string taskId,
         AssignEpicCommand command,
+        ClaimsPrincipal user,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var task = await mediator.Send(command with { TaskId = taskId, UpdatedById = GetUserId(user) }, ct);
+        return task is null
+            ? Results.Problem($"Task with id {taskId} not found", statusCode: StatusCodes.Status404NotFound)
+            : Results.Ok(task);
+    }
+
+    private static async Task<IResult> SetEstimate(
+        string taskId,
+        SetEstimateCommand command,
         ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct)

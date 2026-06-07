@@ -9,9 +9,11 @@ public record LoginUserCommand(string Email, string Password) : IRequest<LoginRe
 public record RegisterUserCommand(string Email, string Password, string DisplayName) : IRequest<RegisterUserResponse>;
 
 // Tasks
-public record CreateTaskCommand(string Title, string? Description, string ProjectId, Guid? CreatedById = null) : IRequest<TaskItemDto>;
+public record CreateTaskCommand(string Title, string? Description, string ProjectId, Guid? CreatedById = null, int? EstimateMinutes = null) : IRequest<TaskItemDto>;
 
-public record UpdateTaskCommand(string TaskId, string Title, string? Description, Guid? UpdatedById = null) : IRequest<TaskItemDto?>;
+public record UpdateTaskCommand(string TaskId, string Title, string? Description, Guid? UpdatedById = null, int? EstimateMinutes = null) : IRequest<TaskItemDto?>;
+
+public record SetEstimateCommand(string TaskId, int? EstimateMinutes, Guid? UpdatedById = null) : IRequest<TaskItemDto?>;
 
 public record DeleteTaskCommand(string TaskId) : IRequest<bool>;
 

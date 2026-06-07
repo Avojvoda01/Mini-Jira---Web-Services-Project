@@ -1,5 +1,6 @@
 import { Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { formatEstimate } from '@/lib/estimate';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -9,6 +10,7 @@ type BacklogTicket = {
   displayId: string;
   title: string;
   estimate: string;
+  estimateMinutes: number | null;
 };
 
 type EpicBacklogCardProps = {
@@ -25,6 +27,11 @@ type EpicBacklogCardProps = {
   onDelete: () => void;
   onRemoveTicket: (ticketId: string) => void;
   showSeparator?: boolean;
+};
+
+const totalEstimate = (tickets: BacklogTicket[]): string => {
+  const total = tickets.reduce((sum, t) => sum + (t.estimateMinutes ?? 0), 0);
+  return total > 0 ? formatEstimate(total) : 'n/a';
 };
 
 export function EpicBacklogCard({
@@ -48,6 +55,9 @@ export function EpicBacklogCard({
               </Badge>
               <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
                 {assignedTickets.length} tickets
+              </Badge>
+              <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
+                {totalEstimate(assignedTickets)} total
               </Badge>
             </div>
             <div className="flex flex-wrap items-center gap-2">

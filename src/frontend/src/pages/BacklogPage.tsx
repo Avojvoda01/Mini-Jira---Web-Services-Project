@@ -18,6 +18,7 @@ import {
   type EpicDto,
 } from '@/features/epics';
 import { useAssignEpicMutation, useTasksQuery, type TaskItem, type TaskPriority, type TaskStatus } from '@/features/tasks';
+import { formatEstimate } from '@/lib/estimate';
 
 type BacklogTicket = {
   id: string;
@@ -27,6 +28,7 @@ type BacklogTicket = {
   priority: 'High' | 'Medium' | 'Low';
   status: string;
   estimate: string;
+  estimateMinutes: number | null;
 };
 
 type Epic = EpicDto & {
@@ -59,7 +61,8 @@ const mapTaskToTicket = (task: TaskItem, displayId: string): BacklogTicket => ({
   description: task.description ?? '',
   priority: priorityLabelMap[task.priority],
   status: statusLabelMap[task.status],
-  estimate: 'n/a',
+  estimate: formatEstimate(task.estimateMinutes),
+  estimateMinutes: task.estimateMinutes,
 });
 
 export function BacklogPage() {
