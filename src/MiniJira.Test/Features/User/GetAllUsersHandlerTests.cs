@@ -19,7 +19,7 @@ public class GetAllUsersHandlerTests
     {
         var users = new List<UserEntity>
         {
-            new() { Id = Guid.NewGuid(), Email = "a@test.com", DisplayName = "User A", Role = UserRole.ProjectMember, PasswordHash = "hash" },
+            new() { Id = Guid.NewGuid(), Email = "a@test.com", DisplayName = "User A", Role = UserRole.User, PasswordHash = "hash" },
             new() { Id = Guid.NewGuid(), Email = "b@test.com", DisplayName = "User B", Role = UserRole.Admin, PasswordHash = "hash" }
         };
         _repoMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync(users);

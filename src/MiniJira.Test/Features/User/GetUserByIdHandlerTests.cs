@@ -18,7 +18,7 @@ public class GetUserByIdHandlerTests
     public async Task Handle_ExistingUser_ReturnsUserDto()
     {
         var userId = Guid.NewGuid();
-        var user = new UserEntity { Id = userId, Email = "test@test.com", DisplayName = "Test", Role = UserRole.ProjectMember, PasswordHash = "hash" };
+        var user = new UserEntity { Id = userId, Email = "test@test.com", DisplayName = "Test", Role = UserRole.User, PasswordHash = "hash" };
         _repoMock.Setup(r => r.GetByIdAsync(userId.ToString(), It.IsAny<CancellationToken>())).ReturnsAsync(user);
 
         var result = await _handler.Handle(new GetUserByIdQuery(userId.ToString()), CancellationToken.None);
