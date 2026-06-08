@@ -8,9 +8,9 @@ public class UpdateEpicHandler(IEpicRepository repository) : IRequestHandler<Upd
 {
     public async Task<EpicDto?> Handle(UpdateEpicCommand request, CancellationToken ct)
     {
-        var epic = await repository.UpdateAsync(request.Id, request.Name, request.Description, ct);
+        var epic = await repository.UpdateAsync(request.Id, request.Name, request.Description, request.UpdatedById, ct);
         return epic is null
             ? null
-            : new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty, epic.ProjectId, epic.CreatedAtUtc, epic.UpdatedAtUtc);
+            : new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty, epic.ProjectId, epic.CreatedById, epic.UpdatedById, epic.CreatedAtUtc, epic.UpdatedAtUtc);
     }
 }

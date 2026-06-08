@@ -48,11 +48,6 @@ export function ProjectMemberPicker({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span>Selected members</span>
-          <span>{selectedMembers.length}</span>
-        </div>
-
         {selectedMembers.length === 0 ? (
           <p className="rounded-md border border-dashed border-border/70 bg-background/60 px-3 py-3 text-xs text-muted-foreground">
             No members assigned yet.
@@ -92,7 +87,7 @@ export function ProjectMemberPicker({
         id={searchInputId}
         value={search}
         onChange={(event) => setSearch(event.target.value)}
-        placeholder="Search available members by name or email..."
+        placeholder="Search available users by name or email..."
       />
 
       <div className="max-h-52 overflow-y-auto rounded-md border border-border/70 bg-background/60">

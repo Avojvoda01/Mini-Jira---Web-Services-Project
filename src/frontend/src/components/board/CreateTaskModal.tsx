@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Layers } from 'lucide-react';
 import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useCreateTaskMutation, useAssignUserMutation } from '@/features/tasks';
+import { useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useCreateTaskMutation, useAssignUserMutation, useAssignEpicMutation, useSetEstimateMutation } from '@/features/tasks';
+import type { EpicDto } from '@/features/epics';
 import type { UserDto } from '@/features/users';
+import { isValidEstimate, parseEstimate } from '@/lib/estimate';
 import { cn } from '@/lib/utils';
 
 const MAX_TITLE_LENGTH = 200;
@@ -21,6 +23,7 @@ type CreateTaskModalProps = {
   defaultStatus: string;
   columnLabel: string;
   assignableUsers: UserDto[];
+  epics: EpicDto[];
 };
 
 type CreateTaskState = {
@@ -28,6 +31,8 @@ type CreateTaskState = {
   description: string;
   priority: 'Low' | 'Medium' | 'High';
   assigneeId: string;
+  epicId: string;
+  estimate: string;
 };
 
 const priorityToneClass: Record<CreateTaskState['priority'], string> = {
@@ -36,24 +41,27 @@ const priorityToneClass: Record<CreateTaskState['priority'], string> = {
   Low: 'bg-slate-500/10 text-slate-700',
 };
 
-export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, columnLabel, assignableUsers }: CreateTaskModalProps) {
+export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, columnLabel, assignableUsers, epics }: CreateTaskModalProps) {
   const createTaskMutation = useCreateTaskMutation();
   const changeStatusMutation = useChangeTaskStatusMutation();
   const changePriorityMutation = useChangeTaskPriorityMutation();
   const assignUserMutation = useAssignUserMutation();
-  const [form, setForm] = useState<CreateTaskState>({ title: '', description: '', priority: 'Medium', assigneeId: '' });
+  const assignEpicMutation = useAssignEpicMutation();
+  const setEstimateMutation = useSetEstimateMutation();
+  const [form, setForm] = useState<CreateTaskState>({ title: '', description: '', priority: 'Medium', assigneeId: '', epicId: '', estimate: '' });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateTaskState, string>>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
-      setForm({ title: '', description: '', priority: 'Medium', assigneeId: '' });
+      setForm({ title: '', description: '', priority: 'Medium', assigneeId: '', epicId: '', estimate: '' });
       setErrors({});
       setSubmitError(null);
     }
   }, [isOpen]);
 
   const trimmedTitle = useMemo(() => form.title.trim(), [form.title]);
+  const selectedEpic = useMemo(() => epics.find((e) => e.id === form.epicId) ?? null, [epics, form.epicId]);
 
   if (!isOpen) {
     return null;
@@ -77,6 +85,10 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
 
     if (form.description.trim().length > MAX_DESCRIPTION_LENGTH) {
       nextErrors.description = `Description must be ${MAX_DESCRIPTION_LENGTH} characters or less.`;
+    }
+
+    if (form.estimate.trim() && !isValidEstimate(form.estimate)) {
+      nextErrors.estimate = 'Use a format like 10m, 2h, or 1d.';
     }
 
     const projectError = !projectId ? 'Select a project before creating tasks.' : null;
@@ -112,11 +124,22 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
         await assignUserMutation.mutateAsync({ taskId: created.id, userId: form.assigneeId });
       }
 
+      if (form.epicId) {
+        await assignEpicMutation.mutateAsync({ taskId: created.id, epicId: form.epicId });
+      }
+
+      const estimateMinutes = form.estimate.trim() ? parseEstimate(form.estimate) : null;
+      if (estimateMinutes !== null) {
+        await setEstimateMutation.mutateAsync({ taskId: created.id, estimateMinutes });
+      }
+
       onClose();
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Failed to create task.');
     }
   };
+
+  const isBusy = createTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending || assignEpicMutation.isPending || setEstimateMutation.isPending;
 
   return (
     <BacklogModal onClose={onClose} cardClassName="w-full max-w-2xl border-border/70 bg-card shadow-2xl">
@@ -158,33 +181,65 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
           {errors.description ? <p className="text-xs text-rose-700">{errors.description}</p> : null}
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground" htmlFor="task-priority">
-            Priority
-          </label>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-11 w-full justify-between border-border/70 bg-background/80 shadow-sm">
-                <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', priorityToneClass[form.priority])}>
-                  {form.priority}
-                </span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[12rem]">
-              {(['High', 'Medium', 'Low'] as const).map((priority) => (
-                <DropdownMenuItem
-                  key={priority}
-                  className="py-1.5"
-                  onClick={() => updateField('priority', priority)}
-                >
-                  <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', priorityToneClass[priority])}>
-                    {priority}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground" htmlFor="task-priority">
+              Priority
+            </label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-11 w-full justify-between border-border/70 bg-background/80 shadow-sm">
+                  <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', priorityToneClass[form.priority])}>
+                    {form.priority}
                   </span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[12rem]">
+                {(['High', 'Medium', 'Low'] as const).map((priority) => (
+                  <DropdownMenuItem key={priority} className="py-1.5" onClick={() => updateField('priority', priority)}>
+                    <span className={cn('rounded-full px-2.5 py-1 text-xs font-medium', priorityToneClass[priority])}>
+                      {priority}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground" htmlFor="task-epic">
+              Epic
+            </label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-11 w-full justify-between border-border/70 bg-background/80 shadow-sm">
+                  <span className="flex items-center gap-1.5 truncate text-sm">
+                    {selectedEpic ? (
+                      <>
+                        <Layers className="h-3.5 w-3.5 shrink-0 text-primary" />
+                        <span className="truncate font-medium text-foreground">{selectedEpic.name}</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">No epic</span>
+                    )}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[14rem]">
+                <DropdownMenuItem className="py-1.5 text-muted-foreground" onClick={() => updateField('epicId', '')}>
+                  No epic
                 </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {epics.map((epic) => (
+                  <DropdownMenuItem key={epic.id} className="py-1.5" onClick={() => updateField('epicId', epic.id)}>
+                    <Layers className="mr-2 h-3.5 w-3.5 text-primary" />
+                    {epic.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -203,17 +258,28 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
           </p>
         </div>
 
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground" htmlFor="task-estimate">
+            Estimate
+          </label>
+          <Input
+            id="task-estimate"
+            value={form.estimate}
+            onChange={(event) => updateField('estimate', event.target.value)}
+            placeholder="e.g. 10m, 2h, 1d"
+            aria-invalid={Boolean(errors.estimate)}
+          />
+          <p className="text-xs text-muted-foreground">Use m (minutes), h (hours), or d (days — 8h each).</p>
+          {errors.estimate ? <p className="text-xs text-rose-700">{errors.estimate}</p> : null}
+        </div>
+
         {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
 
         <FormActionButtons
           onCancel={onClose}
-          confirmLabel={
-            createTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending
-              ? 'Creating...'
-              : 'Create ticket'
-          }
+          confirmLabel={isBusy ? 'Creating...' : 'Create ticket'}
           onConfirm={handleCreate}
-          confirmDisabled={createTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending}
+          confirmDisabled={isBusy}
         />
       </CardContent>
     </BacklogModal>

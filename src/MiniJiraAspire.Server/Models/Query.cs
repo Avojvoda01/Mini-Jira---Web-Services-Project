@@ -21,7 +21,7 @@ public record GetCommentsForTaskQuery(string TaskId) : IRequest<CommentDto[]>;
 public record GetCommentByIdQuery(string TaskId, Guid CommentId) : IRequest<CommentDto?>;
 
 // Epics
-public record GetAllEpicsQuery : IRequest<List<EpicDto>>;
+public record GetAllEpicsQuery(Guid? ProjectId = null) : IRequest<List<EpicDto>>;
 
 public record GetEpicByIdQuery(Guid Id) : IRequest<EpicDto?>;
 

@@ -1,4 +1,4 @@
-export type TaskStatus = 'todo' | 'in-progress' | 'done' | 'unknown';
+export type TaskStatus = 'todo' | 'in-progress' | 'review' | 'done' | 'unknown';
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'unknown';
 
@@ -11,20 +11,30 @@ export type TaskItem = {
   assigneeId: string | null;
   projectId: string;
   epicId: string | null;
+  createdById: string | null;
+  updatedById: string | null;
   createdAtUtc: string;
   updatedAtUtc: string | null;
+  estimateMinutes: number | null;
 };
 
 export type CreateTaskInput = {
   title: string;
   description: string | null;
   projectId: string;
+  estimateMinutes?: number | null;
 };
 
 export type UpdateTaskInput = {
   taskId: string;
   title: string;
   description: string | null;
+  estimateMinutes?: number | null;
+};
+
+export type SetEstimateInput = {
+  taskId: string;
+  estimateMinutes: number | null;
 };
 
 export type DeleteTaskInput = {

@@ -17,4 +17,6 @@ public interface IProjectRepository
     Task<bool> AddMemberAsync(Guid projectId, Guid userId, string role, CancellationToken cancellationToken = default);
 
     Task<bool> RemoveMemberAsync(Guid projectId, Guid userId, CancellationToken cancellationToken = default);
+
+    Task<bool> ChangeOwnerAsync(Guid projectId, Guid newOwnerId, CancellationToken cancellationToken = default);
 }

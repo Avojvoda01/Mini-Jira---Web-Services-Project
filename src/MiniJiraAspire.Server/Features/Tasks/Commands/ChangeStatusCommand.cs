@@ -8,9 +8,9 @@ public class ChangeStatusHandler(ITaskRepository repository) : IRequestHandler<C
 {
     public async Task<TaskItemDto?> Handle(ChangeStatusCommand request, CancellationToken ct)
     {
-        var task = await repository.ChangeStatusAsync(Guid.Parse(request.TaskId), request.Status, ct);
+        var task = await repository.ChangeStatusAsync(Guid.Parse(request.TaskId), request.Status, request.UpdatedById, ct);
         return task is null
             ? null
-            : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedAtUtc, task.UpdatedAtUtc);
+            : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedById, task.UpdatedById, task.CreatedAtUtc, task.UpdatedAtUtc, task.EstimateMinutes);
     }
 }

@@ -10,6 +10,7 @@ type CreateProjectProps = {
   open: boolean;
   onClose: () => void;
   members: UserDto[];
+  currentUserId?: string;
 };
 
 type CreateProjectState = {
@@ -20,7 +21,10 @@ type CreateProjectState = {
 const MAX_PROJECT_NAME_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 2000;
 
-export function CreateProjectForm({ open, onClose, members }: CreateProjectProps) {
+export function CreateProjectForm({ open, onClose, members, currentUserId }: CreateProjectProps) {
+  const pickableMembers = currentUserId
+    ? members.filter((m) => m.id.toLowerCase() !== currentUserId.toLowerCase())
+    : members;
   const createProjectMutation = useCreateProjectMutation();
   const addProjectMemberMutation = useAddProjectMemberMutation();
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -230,7 +234,7 @@ export function CreateProjectForm({ open, onClose, members }: CreateProjectProps
                 Members
               </label>
               <ProjectMemberPicker
-                members={members}
+                members={pickableMembers}
                 selectedMemberIds={selectedMemberIds}
                 onAdd={(userId) => setSelectedMemberIds((current) => [...current, userId])}
                 onRemove={(userId) => setSelectedMemberIds((current) => current.filter((memberId) => memberId !== userId))}

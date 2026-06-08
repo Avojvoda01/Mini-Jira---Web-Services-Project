@@ -24,7 +24,7 @@ public class AssignEpicHandlerTests
 
         await _handler.Handle(command, CancellationToken.None);
 
-        _repoMock.Verify(r => r.AssignEpicAsync(taskId, epicId, It.IsAny<CancellationToken>()), Times.Once);
+        _repoMock.Verify(r => r.AssignEpicAsync(taskId, epicId, It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class AssignEpicHandlerTests
 
         await _handler.Handle(command, CancellationToken.None);
 
-        _repoMock.Verify(r => r.AssignEpicAsync(taskId, null, It.IsAny<CancellationToken>()), Times.Once);
+        _repoMock.Verify(r => r.AssignEpicAsync(taskId, null, It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class AssignEpicHandlerTests
 
         await _handler.Handle(command, CancellationToken.None);
 
-        _repoMock.Verify(r => r.AssignEpicAsync(taskId, null, It.IsAny<CancellationToken>()), Times.Once);
+        _repoMock.Verify(r => r.AssignEpicAsync(taskId, null, It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

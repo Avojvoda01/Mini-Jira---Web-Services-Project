@@ -12,9 +12,9 @@ public class AssignUserHandler(ITaskRepository repository) : IRequestHandler<Ass
             ? (Guid?)null
             : Guid.Parse(request.UserId);
 
-        var task = await repository.AssignUserAsync(Guid.Parse(request.TaskId), userId, ct);
+        var task = await repository.AssignUserAsync(Guid.Parse(request.TaskId), userId, request.UpdatedById, ct);
         return task is null
             ? null
-            : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedAtUtc, task.UpdatedAtUtc);
+            : new TaskItemDto(task.Id, task.Title, task.Description, task.Status, task.Priority, task.ProjectId, task.AssigneeId, task.EpicId, task.CreatedById, task.UpdatedById, task.CreatedAtUtc, task.UpdatedAtUtc, task.EstimateMinutes);
     }
 }

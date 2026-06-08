@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -49,10 +51,11 @@ public static class EpicEndpoints
     }
 
     private static async Task<Ok<List<EpicDto>>> GetAllEpics(
+        Guid? projectId,
         IMediator mediator,
         CancellationToken ct)
     {
-        var epics = await mediator.Send(new GetAllEpicsQuery(), ct);
+        var epics = await mediator.Send(new GetAllEpicsQuery(projectId), ct);
         return TypedResults.Ok(epics);
     }
 
@@ -67,12 +70,20 @@ public static class EpicEndpoints
             : TypedResults.Ok(epic);
     }
 
+    private static Guid? GetUserId(ClaimsPrincipal user)
+    {
+        var sub = user.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                  ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(sub, out var id) ? id : null;
+    }
+
     private static async Task<Results<Created<EpicDto>, ProblemHttpResult>> CreateEpic(
         CreateEpicRequest request,
+        ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct)
     {
-        var epic = await mediator.Send(new CreateEpicCommand(request.Name, request.Description, request.ProjectId), ct);
+        var epic = await mediator.Send(new CreateEpicCommand(request.Name, request.Description, request.ProjectId, GetUserId(user)), ct);
         return epic is null
             ? TypedResults.Problem($"Project with id {request.ProjectId} not found", statusCode: StatusCodes.Status404NotFound)
             : TypedResults.Created($"/api/v1/epics/{epic.Id}", epic);
@@ -81,10 +92,11 @@ public static class EpicEndpoints
     private static async Task<Results<Ok<EpicDto>, ProblemHttpResult>> UpdateEpic(
         Guid id,
         UpdateEpicRequest request,
+        ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct)
     {
-        var epic = await mediator.Send(new UpdateEpicCommand(id, request.Name, request.Description), ct);
+        var epic = await mediator.Send(new UpdateEpicCommand(id, request.Name, request.Description, GetUserId(user)), ct);
         return epic is null
             ? TypedResults.Problem($"Epic with id {id} not found", statusCode: StatusCodes.Status404NotFound)
             : TypedResults.Ok(epic);

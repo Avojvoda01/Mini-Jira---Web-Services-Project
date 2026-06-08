@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAtomValue } from 'jotai';
 import { useParams } from 'react-router-dom';
-import { Bot, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
+import { ArrowLeftRight, Bot, Check, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
 import { CreateTaskModal } from '@/components/board/CreateTaskModal';
 import { DeleteCommentModal } from '@/components/board/DeleteCommentModal';
 import { DeleteTaskModal } from '@/components/board/DeleteTaskModal';
@@ -13,11 +14,14 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import { useCommentsQuery, useCreateCommentMutation, useDeleteCommentMutation, useUpdateCommentMutation } from '@/features/comments';
+import { useEpicsQuery } from '@/features/epics';
 import { useProjectQuery } from '@/features/projects';
-import { useAssignUserMutation, useDeleteTaskMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
+import { useAssignUserMutation, useDeleteTaskMutation, useSetEstimateMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
 import { useAdminUsersQuery } from '@/features/users';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
+import { formatEstimate, minutesToEditValue, parseEstimate } from '@/lib/estimate';
 import { cn } from '@/lib/utils';
+import { authSessionAtom } from '@/store/authAtoms';
 
 type ChatMessage = {
   id: number;
@@ -36,7 +40,7 @@ type TaskCard = {
 };
 
 type BoardColumn = {
-  id: 'backlog' | 'in-progress' | 'done';
+  id: 'ready' | 'in-progress' | 'review' | 'done';
   title: string;
   description: string;
   tasks: TaskCard[];
@@ -52,6 +56,7 @@ const priorityLabelMap: Record<TaskPriority, TaskCard['priority']> = {
 const statusLabelMap: Record<TaskItem['status'], string> = {
   todo: 'Open',
   'in-progress': 'In Progress',
+  review: 'Review',
   done: 'Done',
   unknown: 'Open',
 };
@@ -72,14 +77,19 @@ const priorityBadgeClass = (priority: TaskCard['priority']) => {
 
 const columnConfig: Array<Omit<BoardColumn, 'tasks'>> = [
   {
-    id: 'backlog',
-    title: 'Backlog',
+    id: 'ready',
+    title: 'Ready',
     description: 'Ready for triage and sizing.',
   },
   {
     id: 'in-progress',
     title: 'In progress',
     description: 'Actively being implemented.',
+  },
+  {
+    id: 'review',
+    title: 'Review',
+    description: 'Awaiting review before closing.',
   },
   {
     id: 'done',
@@ -89,8 +99,9 @@ const columnConfig: Array<Omit<BoardColumn, 'tasks'>> = [
 ];
 
 const columnStatusMap: Record<BoardColumn['id'], string> = {
-  backlog: 'Open',
+  ready: 'Open',
   'in-progress': 'In Progress',
+  review: 'Review',
   done: 'Done',
 };
 
@@ -110,6 +121,7 @@ const truncateText = (value: string, maxLength: number) => {
 };
 
 export function BoardPage() {
+  const session = useAtomValue(authSessionAtom);
   const { setContent } = usePageHeader();
   const { projectId } = useParams();
   const { data: project } = useProjectQuery(projectId ?? null);
@@ -117,11 +129,13 @@ export function BoardPage() {
   const { data: tasks = [], isLoading, isError, error, refetch } = useTasksQuery({
     projectId: projectId ?? null,
   });
+  const { data: epics = [] } = useEpicsQuery({ projectId: projectId ?? null });
   const createCommentMutation = useCreateCommentMutation();
   const updateCommentMutation = useUpdateCommentMutation();
   const deleteCommentMutation = useDeleteCommentMutation();
   const deleteTaskMutation = useDeleteTaskMutation();
   const assignUserMutation = useAssignUserMutation();
+  const setEstimateMutation = useSetEstimateMutation();
   const [createColumnId, setCreateColumnId] = useState<BoardColumn['id'] | null>(null);
   const [editTaskId, setEditTaskId] = useState<string | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
@@ -133,6 +147,9 @@ export function BoardPage() {
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isAssigneePickerOpen, setIsAssigneePickerOpen] = useState(false);
   const [assigneeError, setAssigneeError] = useState<string | null>(null);
+  const [isEstimateEditing, setIsEstimateEditing] = useState(false);
+  const [estimateDraft, setEstimateDraft] = useState('');
+  const [estimateError, setEstimateError] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const nextMessageIdRef = useRef(2);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -193,14 +210,13 @@ export function BoardPage() {
       return [];
     }
 
-    const memberIds = project?.memberIds ?? [];
-    if (memberIds.length === 0) {
-      return [];
-    }
+    const participantIds = new Set([
+      ...(project?.memberIds ?? []).map((id) => id.toLowerCase()),
+      ...(project?.createdById ? [project.createdById.toLowerCase()] : []),
+    ]);
 
-    const memberIdSet = new Set(memberIds.map((memberId) => memberId.toLowerCase()));
-    return users.filter((user) => memberIdSet.has(user.id.toLowerCase()));
-  }, [project?.memberIds, projectId, users]);
+    return users.filter((user) => participantIds.has(user.id.toLowerCase()));
+  }, [project?.memberIds, project?.createdById, projectId, users]);
 
   const resolveUserDisplayName = (userId: string | null) => {
     if (!userId) {
@@ -218,17 +234,22 @@ export function BoardPage() {
       description: truncateText(task.description ?? '', MAX_TASK_DESCRIPTION_LENGTH),
       owner: resolveUserDisplayName(task.assigneeId),
       priority: priorityLabelMap[task.priority],
-      estimate: 'n/a',
+      estimate: formatEstimate(task.estimateMinutes),
     });
 
     const byColumn = new Map<BoardColumn['id'], TaskCard[]>([
-      ['backlog', []],
+      ['ready', []],
       ['in-progress', []],
+      ['review', []],
       ['done', []],
     ]);
 
     tasks.forEach((task) => {
-      const target = task.status === 'done' ? 'done' : task.status === 'in-progress' ? 'in-progress' : 'backlog';
+      const target =
+        task.status === 'done' ? 'done'
+        : task.status === 'in-progress' ? 'in-progress'
+        : task.status === 'review' ? 'review'
+        : 'ready';
       byColumn.get(target)?.push(toCard(task));
     });
 
@@ -311,7 +332,7 @@ export function BoardPage() {
           <Button
             variant="outline"
             className="border-border/70 bg-background/80 shadow-sm"
-            onClick={() => setCreateColumnId('backlog')}
+            onClick={() => setCreateColumnId('ready')}
           >
             <Plus className="mr-2 h-4 w-4" />
             Add ticket
@@ -328,6 +349,9 @@ export function BoardPage() {
     setDeleteCommentId(null);
     setIsAssigneePickerOpen(false);
     setAssigneeError(null);
+    setIsEstimateEditing(false);
+    setEstimateDraft('');
+    setEstimateError(null);
 
     if (!detailTaskId) {
       setCommentDraftByTask({});
@@ -342,8 +366,9 @@ export function BoardPage() {
         onClose={() => setCreateColumnId(null)}
         projectId={projectId ?? null}
         defaultStatus={createColumnId ? columnStatusMap[createColumnId] : 'Open'}
-        columnLabel={createColumnId ? columnConfig.find((column) => column.id === createColumnId)?.title ?? 'Backlog' : 'Backlog'}
+        columnLabel={createColumnId ? columnConfig.find((column) => column.id === createColumnId)?.title ?? 'Ready' : 'Ready'}
         assignableUsers={assignableUsers}
+        epics={epics}
       />
 
       <EditTaskModal
@@ -355,6 +380,7 @@ export function BoardPage() {
         }}
         task={activeEditTask}
         assignableUsers={assignableUsers}
+        epics={epics}
       />
 
       <DeleteTaskModal
@@ -448,7 +474,7 @@ export function BoardPage() {
 
               <div className="grid gap-3 text-sm text-muted-foreground">
                 <div className="flex items-center justify-between gap-2">
-                  <span>Owner</span>
+                  <span>Assignee</span>
                   <div className="flex items-center gap-2">
                     <span className="text-foreground">
                       {resolveUserDisplayName(activeDetailTask.assigneeId)}
@@ -464,7 +490,11 @@ export function BoardPage() {
                       onClick={() => setIsAssigneePickerOpen((current) => !current)}
                       aria-label={isAssigneePickerOpen ? 'Close assignee picker' : 'Change assignee'}
                     >
-                      {isAssigneePickerOpen ? <Minus className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                      {isAssigneePickerOpen
+                        ? <Minus className="h-4 w-4" />
+                        : activeDetailTask.assigneeId
+                          ? <ArrowLeftRight className="h-4 w-4" />
+                          : <UserPlus className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
@@ -484,10 +514,113 @@ export function BoardPage() {
                     {assigneeError ? <p className="mt-2 text-xs text-rose-700">{assigneeError}</p> : null}
                   </div>
                 ) : null}
+                {activeDetailTask.epicId && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span>Epic</span>
+                    <span className="text-foreground">
+                      {epics.find((e) => e.id === activeDetailTask.epicId)?.name ?? 'Unknown'}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between gap-2">
                   <span>Estimate</span>
-                  <span className="text-foreground">n/a</span>
+                  <div className="flex items-center gap-2">
+                    {isEstimateEditing ? (
+                      <div className="flex items-center gap-1.5">
+                        <Input
+                          className="h-7 w-24 text-xs"
+                          value={estimateDraft}
+                          onChange={(e) => {
+                            setEstimateDraft(e.target.value);
+                            setEstimateError(null);
+                          }}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              const minutes = estimateDraft.trim() ? parseEstimate(estimateDraft) : null;
+                              if (estimateDraft.trim() && minutes === null) {
+                                setEstimateError('Use 10m, 2h, or 1d.');
+                                return;
+                              }
+                              await setEstimateMutation.mutateAsync({ taskId: activeDetailTask.id, estimateMinutes: minutes });
+                              setIsEstimateEditing(false);
+                            } else if (e.key === 'Escape') {
+                              setIsEstimateEditing(false);
+                              setEstimateError(null);
+                            }
+                          }}
+                          placeholder="10m, 2h, 1d"
+                          autoFocus
+                        />
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={async () => {
+                            const minutes = estimateDraft.trim() ? parseEstimate(estimateDraft) : null;
+                            if (estimateDraft.trim() && minutes === null) {
+                              setEstimateError('Use 10m, 2h, or 1d.');
+                              return;
+                            }
+                            await setEstimateMutation.mutateAsync({ taskId: activeDetailTask.id, estimateMinutes: minutes });
+                            setIsEstimateEditing(false);
+                          }}
+                          disabled={setEstimateMutation.isPending}
+                          aria-label="Save estimate"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => { setIsEstimateEditing(false); setEstimateError(null); }}
+                          aria-label="Cancel estimate"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className={cn('text-foreground', !activeDetailTask.estimateMinutes && 'text-muted-foreground')}>
+                          {formatEstimate(activeDetailTask.estimateMinutes)}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEstimateDraft(minutesToEditValue(activeDetailTask.estimateMinutes));
+                            setEstimateError(null);
+                            setIsEstimateEditing(true);
+                          }}
+                          aria-label={activeDetailTask.estimateMinutes ? 'Change estimate' : 'Add estimate'}
+                        >
+                          {activeDetailTask.estimateMinutes ? <ArrowLeftRight className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
+                {isEstimateEditing && estimateError ? (
+                  <p className="text-xs text-rose-700">{estimateError}</p>
+                ) : null}
+                <div className="flex items-center justify-between gap-2">
+                  <span>Created by</span>
+                  <span className="text-foreground">
+                    {resolveUserDisplayName(activeDetailTask.createdById)}
+                  </span>
+                </div>
+                {activeDetailTask.updatedById && (
+                  <div className="flex items-center justify-between gap-2">
+                    <span>Last edited by</span>
+                    <span className="text-foreground">
+                      {resolveUserDisplayName(activeDetailTask.updatedById)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -519,33 +652,42 @@ export function BoardPage() {
                     activeComments.map((comment) => (
                       <div key={comment.id} className="rounded-2xl border border-border/70 bg-background/80 p-3">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-xs text-muted-foreground">{resolveUserDisplayName(comment.userId)}</p>
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => {
-                                setEditingCommentId(comment.id);
-                                setCommentEditDrafts((current) => ({
-                                  ...current,
-                                  [comment.id]: comment.content,
-                                }));
-                              }}
-                              aria-label="Edit comment"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-rose-600 hover:text-rose-700"
-                              onClick={() => setDeleteCommentId(comment.id)}
-                              aria-label="Delete comment"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
+                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
+                              {resolveUserDisplayName(comment.userId).slice(0, 2).toUpperCase()}
+                            </div>
+                            <span className="text-xs font-medium text-foreground">
+                              {resolveUserDisplayName(comment.userId)}
+                            </span>
                           </div>
+                          {(session?.role === 'Admin' || comment.userId?.toLowerCase() === session?.userId?.toLowerCase()) && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => {
+                                  setEditingCommentId(comment.id);
+                                  setCommentEditDrafts((current) => ({
+                                    ...current,
+                                    [comment.id]: comment.content,
+                                  }));
+                                }}
+                                aria-label="Edit comment"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-rose-600 hover:text-rose-700"
+                                onClick={() => setDeleteCommentId(comment.id)}
+                                aria-label="Delete comment"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                         {editingCommentId === comment.id ? (
                           <div className="mt-2 space-y-2">
@@ -639,7 +781,6 @@ export function BoardPage() {
                         await createCommentMutation.mutateAsync({
                           taskId: activeDetailTask.id,
                           content,
-                          userId: null,
                         });
                         setCommentDraftByTask((current) => ({
                           ...current,
@@ -674,7 +815,7 @@ export function BoardPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         {boardColumns.map((column) => (
           <Card key={column.title} className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
             <CardHeader className="space-y-3 pb-4">

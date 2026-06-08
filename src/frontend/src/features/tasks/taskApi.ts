@@ -6,6 +6,7 @@ import type {
   ChangeTaskStatusInput,
   CreateTaskInput,
   DeleteTaskInput,
+  SetEstimateInput,
   TaskFilters,
   TaskItem,
   TaskPriority,
@@ -22,8 +23,11 @@ type TaskItemResponse = {
   projectId: string;
   assigneeId: string | null;
   epicId: string | null;
+  createdById: string | null;
+  updatedById: string | null;
   createdAtUtc: string;
   updatedAtUtc: string | null;
+  estimateMinutes: number | null;
 };
 
 const normalizeStatus = (value: string | null | undefined): TaskStatus => {
@@ -37,6 +41,9 @@ const normalizeStatus = (value: string | null | undefined): TaskStatus => {
   }
   if (normalized === 'in progress' || normalized === 'in-progress' || normalized === 'progress') {
     return 'in-progress';
+  }
+  if (normalized === 'review') {
+    return 'review';
   }
   if (normalized === 'done' || normalized === 'closed' || normalized === 'complete') {
     return 'done';
@@ -130,4 +137,9 @@ export async function assignEpic(input: AssignEpicInput): Promise<void> {
 export async function assignUser(input: AssignUserInput): Promise<void> {
   const { taskId, userId } = input;
   await apiClient.patch<void>(`/tasks/${taskId}/assign-user`, { userId: userId.trim() });
+}
+
+export async function setEstimate(input: SetEstimateInput): Promise<void> {
+  const { taskId, estimateMinutes } = input;
+  await apiClient.patch<void>(`/tasks/${taskId}/estimate`, { estimateMinutes });
 }

@@ -8,9 +8,9 @@ public class GetAllEpicsHandler(IEpicRepository repository) : IRequestHandler<Ge
 {
     public async Task<List<EpicDto>> Handle(GetAllEpicsQuery request, CancellationToken ct)
     {
-        var epics = await repository.GetAllAsync(ct);
+        var epics = await repository.GetAllAsync(request.ProjectId, ct);
         return epics
-            .Select(epic => new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty, epic.ProjectId, epic.CreatedAtUtc, epic.UpdatedAtUtc))
+            .Select(epic => new EpicDto(epic.Id, epic.Name, epic.Description ?? string.Empty, epic.ProjectId, epic.CreatedById, epic.UpdatedById, epic.CreatedAtUtc, epic.UpdatedAtUtc))
             .ToList();
     }
 }

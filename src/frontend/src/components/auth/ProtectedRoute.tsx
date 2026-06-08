@@ -15,7 +15,8 @@ export function ProtectedRoute() {
   }, [session, setSession]);
 
   if (!session || isTokenExpired(session.token)) {
-    const redirectTo = `${location.pathname}${location.search}`;
+    const isProjectPage = location.pathname.startsWith('/app/project/');
+    const redirectTo = isProjectPage ? '/app/projects' : `${location.pathname}${location.search}`;
     return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTo)}`} replace />;
   }
 

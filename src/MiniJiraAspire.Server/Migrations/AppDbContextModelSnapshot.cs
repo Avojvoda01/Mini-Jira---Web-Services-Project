@@ -59,6 +59,9 @@ namespace MiniJiraAspire.Server.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -74,9 +77,16 @@ namespace MiniJiraAspire.Server.Migrations
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("UpdatedById")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedById");
+
                     b.HasIndex("ProjectId");
+
+                    b.HasIndex("UpdatedById");
 
                     b.ToTable("Epics");
                 });
@@ -138,11 +148,17 @@ namespace MiniJiraAspire.Server.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
                     b.Property<Guid?>("EpicId")
                         .HasColumnType("uuid");
+
+                    b.Property<int?>("EstimateMinutes")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Priority")
                         .IsRequired()
@@ -162,7 +178,16 @@ namespace MiniJiraAspire.Server.Migrations
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("UpdatedById")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("UpdatedById");
 
                     b.ToTable("TaskItems");
                 });
@@ -202,11 +227,21 @@ namespace MiniJiraAspire.Server.Migrations
 
             modelBuilder.Entity("MiniJiraAspire.Server.Models.Epic", b =>
                 {
+                    b.HasOne("MiniJiraAspire.Server.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("MiniJiraAspire.Server.Models.Project", "Project")
                         .WithMany()
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("MiniJiraAspire.Server.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Project");
                 });
@@ -238,6 +273,25 @@ namespace MiniJiraAspire.Server.Migrations
                     b.Navigation("Project");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MiniJiraAspire.Server.Models.TaskItem", b =>
+                {
+                    b.HasOne("MiniJiraAspire.Server.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("MiniJiraAspire.Server.Models.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MiniJiraAspire.Server.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("MiniJiraAspire.Server.Models.Project", b =>

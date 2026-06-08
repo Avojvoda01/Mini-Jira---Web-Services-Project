@@ -23,7 +23,7 @@ public class ChangeStatusHandlerTests
 
         await _handler.Handle(command, CancellationToken.None);
 
-        _repoMock.Verify(r => r.ChangeStatusAsync(taskId, "InProgress", It.IsAny<CancellationToken>()), Times.Once);
+        _repoMock.Verify(r => r.ChangeStatusAsync(taskId, "InProgress", It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
