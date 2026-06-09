@@ -14,7 +14,23 @@ public class CreateProjectHandler(IProjectRepository repository) : IRequestHandl
             Description = request.Description,
             CreatedById = request.CreatedById
         };
+
+        if (request.CreatedById is not null)
+        {
+            project.Members.Add(new ProjectMember
+            {
+                UserId = request.CreatedById.Value
+            });
+        }
+
         var created = await repository.CreateAsync(project, ct);
-        return new ProjectDto(created.Id, created.Name, created.Description, [], created.CreatedById, created.CreatedAtUtc, created.UpdatedAtUtc);
+        return new ProjectDto(
+            created.Id,
+            created.Name,
+            created.Description,
+            [.. created.Members.Select(member => member.UserId.ToString())],
+            created.CreatedById,
+            created.CreatedAtUtc,
+            created.UpdatedAtUtc);
     }
 }
