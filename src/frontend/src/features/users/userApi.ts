@@ -25,3 +25,7 @@ export async function updateUserProfile(userId: string, input: UpdateProfileInpu
 export async function changeUserPassword(userId: string, input: ChangePasswordInput): Promise<void> {
   return apiClient.patch<void>(`/users/${userId}/password`, input);
 }
+
+export async function changeAdminUserRole(userId: string, role: string): Promise<UserDto> {
+  return apiClient.patch<UserDto>(`/users/${userId}/role`, { role });
+}

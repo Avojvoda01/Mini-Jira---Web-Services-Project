@@ -3,6 +3,7 @@ export type UserDto = {
   email: string;
   displayName: string;
   role: string;
+  createdAtUtc: string;
 };
 
 export type CreateAdminUserInput = {
