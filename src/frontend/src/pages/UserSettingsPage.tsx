@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useAtom } from 'jotai';
-import { ArrowLeft, KeyRound, Loader2, Settings, User } from 'lucide-react';
+import { ArrowLeft, KeyRound, Loader2, Settings, TriangleAlert, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { useChangePasswordMutation, useUpdateProfileMutation } from '@/features/users';
+import { useChangePasswordMutation, useDeleteOwnAccountMutation, useUpdateProfileMutation } from '@/features/users';
 import { ApiError } from '@/lib/apiClient';
 import { authSessionAtom } from '@/store/authAtoms';
 
@@ -26,8 +26,12 @@ export function UserSettingsPage() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+
   const updateProfile = useUpdateProfileMutation();
   const changePassword = useChangePasswordMutation();
+  const deleteAccount = useDeleteOwnAccountMutation();
 
   const profileDirty =
     displayName.trim() !== session?.displayName || email.trim() !== session?.email;
@@ -74,6 +78,18 @@ export function UserSettingsPage() {
     displayName.trim().length > 100 ||
     !email.trim() ||
     updateProfile.isPending;
+
+  const handleDeleteAccount = async () => {
+    setDeleteError('');
+    if (!session) return;
+    try {
+      await deleteAccount.mutateAsync(session.userId);
+      setSession(null);
+      navigate('/login');
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : 'Something went wrong.');
+    }
+  };
 
   const passwordMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
 
@@ -260,6 +276,56 @@ export function UserSettingsPage() {
               >
                 {changePassword.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Change password
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        {/* Danger zone */}
+        <Card className="border-destructive/40 bg-card/80 shadow-sm backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-2">
+              <TriangleAlert className="h-4 w-4 text-destructive" />
+              <CardTitle className="text-base font-semibold text-destructive">Danger zone</CardTitle>
+            </div>
+            <CardDescription>
+              Permanently delete your account and all associated data. This cannot be undone.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-muted-foreground">
+              Your account, profile, and any tasks or comments you created will be permanently removed.
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground" htmlFor="delete-confirm">
+                Type <span className="font-semibold text-foreground">{session?.displayName}</span> to confirm
+              </label>
+              <Input
+                id="delete-confirm"
+                value={deleteConfirmation}
+                onChange={(e) => {
+                  setDeleteConfirmation(e.target.value);
+                  setDeleteError('');
+                }}
+                placeholder={session?.displayName}
+                autoComplete="off"
+              />
+            </div>
+
+            {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+
+            <Separator />
+
+            <div className="flex justify-end">
+              <Button
+                variant="destructive"
+                size="sm"
+                className="gap-1.5"
+                disabled={deleteConfirmation !== session?.displayName || deleteAccount.isPending}
+                onClick={handleDeleteAccount}
+              >
+                {deleteAccount.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Delete account
               </Button>
             </div>
           </CardContent>

@@ -29,3 +29,7 @@ export async function changeUserPassword(userId: string, input: ChangePasswordIn
 export async function changeAdminUserRole(userId: string, role: string): Promise<UserDto> {
   return apiClient.patch<UserDto>(`/users/${userId}/role`, { role });
 }
+
+export async function deleteOwnAccount(userId: string): Promise<void> {
+  return apiClient.delete<void>(`/users/${userId}`);
+}

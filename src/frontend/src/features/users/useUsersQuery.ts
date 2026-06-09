@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { changeAdminUserRole, changeUserPassword, createAdminUser, deleteAdminUser, fetchAdminUsers, updateUserProfile, userQueryKeys } from './userApi';
+import { changeAdminUserRole, changeUserPassword, createAdminUser, deleteAdminUser, deleteOwnAccount, fetchAdminUsers, updateUserProfile, userQueryKeys } from './userApi';
 import type { ChangePasswordInput, CreateAdminUserInput, DeleteAdminUserInput, UpdateProfileInput } from './userTypes';
 
 export function useAdminUsersQuery() {
@@ -52,5 +52,11 @@ export function useChangeUserRoleMutation() {
     mutationFn: ({ userId, role }: { userId: string; role: string }) =>
       changeAdminUserRole(userId, role),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: userQueryKeys.all }),
+  });
+}
+
+export function useDeleteOwnAccountMutation() {
+  return useMutation({
+    mutationFn: (userId: string) => deleteOwnAccount(userId),
   });
 }
