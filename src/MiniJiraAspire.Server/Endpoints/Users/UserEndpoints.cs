@@ -38,6 +38,10 @@ public static class UserEndpoints
             .WithName("ChangeUserPassword")
             .WithSummary("Change own password");
 
+        group.MapDelete("/{userId}", DeleteUser)
+            .WithName("DeleteUser")
+            .WithSummary("Delete a user (self or admin)");
+
         var adminGroup = app.MapGroup("/users")
             .WithTags("Users")
             .RequireAuthorization(policy => policy.RequireRole(nameof(UserRole.Admin)));
@@ -45,10 +49,6 @@ public static class UserEndpoints
         adminGroup.MapPost("/", CreateUser)
             .WithName("CreateUser")
             .WithSummary("Create a new user (admin)");
-
-        adminGroup.MapDelete("/{userId}", DeleteUser)
-            .WithName("DeleteUser")
-            .WithSummary("Delete a user (admin)");
 
         adminGroup.MapPatch("/{userId}/role", ChangeUserRole)
             .WithName("ChangeUserRole")
@@ -95,9 +95,16 @@ public static class UserEndpoints
 
     private static async Task<Results<NoContent, ProblemHttpResult>> DeleteUser(
         string userId,
+        ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct)
     {
+        var callerId = user.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = user.IsInRole(nameof(UserRole.Admin));
+
+        if (!isAdmin && callerId != userId)
+            return TypedResults.Problem("Forbidden", statusCode: StatusCodes.Status403Forbidden);
+
         var deleted = await mediator.Send(new DeleteUserCommand(userId), ct);
 
         return deleted
