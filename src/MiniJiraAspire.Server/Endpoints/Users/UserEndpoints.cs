@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -27,6 +29,14 @@ public static class UserEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("GetUser")
             .WithSummary("Get user by id");
+
+        group.MapPatch("/{userId}/profile", UpdateUserProfile)
+            .WithName("UpdateUserProfile")
+            .WithSummary("Update own display name and email");
+
+        group.MapPatch("/{userId}/password", ChangeUserPassword)
+            .WithName("ChangeUserPassword")
+            .WithSummary("Change own password");
 
         var adminGroup = app.MapGroup("/users")
             .WithTags("Users")
@@ -113,5 +123,64 @@ public static class UserEndpoints
             return TypedResults.Problem($"User with id {userId} not found", statusCode: StatusCodes.Status404NotFound);
 
         return TypedResults.Ok(result.User!);
+    }
+
+    private static async Task<Results<Ok<UserDto>, ProblemHttpResult>> UpdateUserProfile(
+        string userId,
+        UpdateUserProfileRequest request,
+        ClaimsPrincipal user,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var callerId = user.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (callerId != userId)
+            return TypedResults.Problem("Forbidden", statusCode: StatusCodes.Status403Forbidden);
+
+        var result = await mediator.Send(new UpdateUserProfileCommand(userId, request.DisplayName, request.Email), ct);
+
+        if (result.NotFound)
+            return TypedResults.Problem($"User with id {userId} not found", statusCode: StatusCodes.Status404NotFound);
+
+        if (result.EmailConflict)
+            return TypedResults.Problem("Email is already taken.", statusCode: StatusCodes.Status409Conflict);
+
+        if (result.DisplayNameConflict)
+            return TypedResults.Problem("Display name is already taken.", statusCode: StatusCodes.Status409Conflict);
+
+        if (result.Errors is not null)
+            return TypedResults.Problem(new HttpValidationProblemDetails(result.Errors)
+            {
+                Status = StatusCodes.Status422UnprocessableEntity
+            });
+
+        return TypedResults.Ok(result.User!);
+    }
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> ChangeUserPassword(
+        string userId,
+        ChangeUserPasswordRequest request,
+        ClaimsPrincipal user,
+        IMediator mediator,
+        CancellationToken ct)
+    {
+        var callerId = user.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (callerId != userId)
+            return TypedResults.Problem("Forbidden", statusCode: StatusCodes.Status403Forbidden);
+
+        var result = await mediator.Send(new ChangeUserPasswordCommand(userId, request.CurrentPassword, request.NewPassword), ct);
+
+        if (result.NotFound)
+            return TypedResults.Problem($"User with id {userId} not found", statusCode: StatusCodes.Status404NotFound);
+
+        if (result.InvalidCurrentPassword)
+            return TypedResults.Problem("Current password is incorrect.", statusCode: StatusCodes.Status400BadRequest);
+
+        if (result.ValidationErrors is not null)
+            return TypedResults.Problem(new HttpValidationProblemDetails(result.ValidationErrors)
+            {
+                Status = StatusCodes.Status422UnprocessableEntity
+            });
+
+        return TypedResults.NoContent();
     }
 }

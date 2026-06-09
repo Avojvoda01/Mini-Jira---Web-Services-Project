@@ -58,3 +58,7 @@ public record CreateUserCommand(string Email, string Password, string DisplayNam
 public record DeleteUserCommand(string UserId) : IRequest<bool>;
 
 public record ChangeUserRoleCommand(string UserId, string Role) : IRequest<ChangeUserRoleResponse>;
+
+public record UpdateUserProfileCommand(string UserId, string DisplayName, string Email) : IRequest<UpdateUserProfileResponse>;
+
+public record ChangeUserPasswordCommand(string UserId, string CurrentPassword, string NewPassword) : IRequest<ChangeUserPasswordResponse>;

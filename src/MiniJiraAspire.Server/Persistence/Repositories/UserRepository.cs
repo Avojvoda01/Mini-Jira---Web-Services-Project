@@ -94,4 +94,33 @@ public class UserRepository(AppDbContext db) : IUserRepository
         var normalizedDisplayName = displayName.Trim().ToLower();
         return db.Users.AnyAsync(user => user.DisplayName.ToLower() == normalizedDisplayName, cancellationToken);
     }
+
+    public async Task<User?> UpdateProfileAsync(string userId, string displayName, string email, CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(userId, out var id))
+            return null;
+
+        var user = await db.Users.FindAsync([id], cancellationToken);
+        if (user is null)
+            return null;
+
+        user.DisplayName = displayName;
+        user.Email = email;
+        await db.SaveChangesAsync(cancellationToken);
+        return user;
+    }
+
+    public async Task<User?> UpdatePasswordHashAsync(string userId, string newPasswordHash, CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(userId, out var id))
+            return null;
+
+        var user = await db.Users.FindAsync([id], cancellationToken);
+        if (user is null)
+            return null;
+
+        user.PasswordHash = newPasswordHash;
+        await db.SaveChangesAsync(cancellationToken);
+        return user;
+    }
 }
