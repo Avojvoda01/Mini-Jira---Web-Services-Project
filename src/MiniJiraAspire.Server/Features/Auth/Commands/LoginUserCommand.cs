@@ -29,7 +29,7 @@ public class LoginUserHandler(
         }
 
         var token = jwtTokenService.CreateToken(user);
-        var userDto = new UserDto(user.Id.ToString(), user.Email, user.DisplayName, user.Role);
+        var userDto = new UserDto(user.Id.ToString(), user.Email, user.DisplayName, user.Role, user.CreatedAtUtc);
 
         return new LoginResponse(token, userDto);
     }

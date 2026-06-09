@@ -24,6 +24,6 @@ public class ChangeUserRoleHandler(IUserRepository repository) : IRequestHandler
 
         return user is null
             ? ChangeUserRoleResponse.UserNotFound()
-            : ChangeUserRoleResponse.Success(new UserDto(user.Id.ToString(), user.Email, user.DisplayName, user.Role));
+            : ChangeUserRoleResponse.Success(new UserDto(user.Id.ToString(), user.Email, user.DisplayName, user.Role, user.CreatedAtUtc));
     }
 }

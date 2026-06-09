@@ -33,7 +33,7 @@ public class UpdateUserProfileHandler(IUserRepository repository) : IRequestHand
         if (updated is null)
             return UpdateUserProfileResponse.UserNotFound();
 
-        return UpdateUserProfileResponse.Success(new UserDto(updated.Id.ToString(), updated.Email, updated.DisplayName, updated.Role));
+        return UpdateUserProfileResponse.Success(new UserDto(updated.Id.ToString(), updated.Email, updated.DisplayName, updated.Role, updated.CreatedAtUtc));
     }
 
     private static Dictionary<string, string[]> ValidateAnnotations(UpdateUserProfileCommand request)

@@ -10,7 +10,7 @@ public class GetAllUsersHandler(IUserRepository repository) : IRequestHandler<Ge
     {
         var users = await repository.GetAllAsync(ct);
         return users
-            .Select(user => new UserDto(user.Id.ToString(), user.Email, user.DisplayName, user.Role))
+            .Select(user => new UserDto(user.Id.ToString(), user.Email, user.DisplayName, user.Role, user.CreatedAtUtc))
             .ToList();
     }
 }

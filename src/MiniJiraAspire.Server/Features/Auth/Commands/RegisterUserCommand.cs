@@ -45,7 +45,7 @@ public class RegisterUserHandler(
         var createdUser = await repository.CreateAsync(user, ct);
 
         return RegisterUserResponse.Success(
-            new UserDto(createdUser.Id.ToString(), createdUser.Email, createdUser.DisplayName, createdUser.Role));
+            new UserDto(createdUser.Id.ToString(), createdUser.Email, createdUser.DisplayName, createdUser.Role, createdUser.CreatedAtUtc));
     }
 
     private static Dictionary<string, string[]> ValidateAnnotations(RegisterUserCommand request)

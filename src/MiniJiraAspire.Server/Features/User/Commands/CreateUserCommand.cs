@@ -40,7 +40,7 @@ public class CreateUserHandler(
 
         var created = await repository.CreateAsync(user, ct);
 
-        return CreateUserResponse.Success(new UserDto(created.Id.ToString(), created.Email, created.DisplayName, created.Role));
+        return CreateUserResponse.Success(new UserDto(created.Id.ToString(), created.Email, created.DisplayName, created.Role, created.CreatedAtUtc));
     }
 
     private static Dictionary<string, string[]> ValidateAnnotations(CreateUserCommand request)

@@ -2,7 +2,7 @@ using System;
 
 namespace MiniJiraAspire.Server.Models;
 
-public record UserDto(string Id, string Email, string DisplayName, UserRole Role);
+public record UserDto(string Id, string Email, string DisplayName, UserRole Role, DateTime CreatedAtUtc);
 
 public record EpicDto(Guid Id, string Name, string Description, Guid ProjectId, Guid? CreatedById, Guid? UpdatedById, DateTime CreatedAtUtc, DateTime? UpdatedAtUtc);
 
