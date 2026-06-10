@@ -32,3 +32,29 @@ public record ChangeUserRoleResponse(UserDto? User, Dictionary<string, string[]>
 
     public static ChangeUserRoleResponse UserNotFound() => new(null, null, true);
 }
+
+public record UpdateUserProfileResponse(UserDto? User, Dictionary<string, string[]>? Errors, bool EmailConflict, bool DisplayNameConflict, bool NotFound)
+{
+    public bool Succeeded => User is not null;
+
+    public static UpdateUserProfileResponse Success(UserDto user) => new(user, null, false, false, false);
+
+    public static UpdateUserProfileResponse ValidationFailed(Dictionary<string, string[]> errors) => new(null, errors, false, false, false);
+
+    public static UpdateUserProfileResponse EmailAlreadyTaken() => new(null, null, true, false, false);
+
+    public static UpdateUserProfileResponse DisplayNameAlreadyTaken() => new(null, null, false, true, false);
+
+    public static UpdateUserProfileResponse UserNotFound() => new(null, null, false, false, true);
+}
+
+public record ChangeUserPasswordResponse(bool Succeeded, bool InvalidCurrentPassword, bool NotFound, Dictionary<string, string[]>? ValidationErrors = null)
+{
+    public static ChangeUserPasswordResponse Success() => new(true, false, false);
+
+    public static ChangeUserPasswordResponse InvalidPassword() => new(false, true, false);
+
+    public static ChangeUserPasswordResponse UserNotFound() => new(false, false, true);
+
+    public static ChangeUserPasswordResponse ValidationFailed(Dictionary<string, string[]> errors) => new(false, false, false, errors);
+}

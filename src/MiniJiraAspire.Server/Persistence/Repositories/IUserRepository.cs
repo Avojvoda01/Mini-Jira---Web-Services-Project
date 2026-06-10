@@ -22,4 +22,8 @@ public interface IUserRepository
     Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken = default);
 
     Task<bool> DisplayNameExistsAsync(string displayName, CancellationToken cancellationToken = default);
+
+    Task<User?> UpdateProfileAsync(string userId, string displayName, string email, CancellationToken cancellationToken = default);
+
+    Task<User?> UpdatePasswordHashAsync(string userId, string newPasswordHash, CancellationToken cancellationToken = default);
 }

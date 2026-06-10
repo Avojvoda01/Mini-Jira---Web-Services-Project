@@ -20,6 +20,19 @@ public record CreateUserRequest(
 
 public record ChangeUserRoleRequest(string Role);
 
+public record UpdateUserProfileRequest(
+    [property: Required, StringLength(100, MinimumLength = 2)] string DisplayName,
+    [property: Required, EmailAddress] string Email);
+
+public record ChangeUserPasswordRequest(
+    [property: Required] string CurrentPassword,
+    [property: Required]
+    [property: MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+    [property: RegularExpression(
+        @"^(?=.*[A-Za-z])(?=.*\d).+$",
+        ErrorMessage = "Password must contain at least one letter and one number.")]
+    string NewPassword);
+
 // Epics
 public record CreateEpicRequest(
     [property: Required, StringLength(100, MinimumLength = 3)] string Name,

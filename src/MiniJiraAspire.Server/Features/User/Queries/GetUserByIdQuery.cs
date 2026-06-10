@@ -11,6 +11,6 @@ public class GetUserByIdHandler(IUserRepository repository) : IRequestHandler<Ge
         var user = await repository.GetByIdAsync(request.UserId, ct);
         return user is null
             ? null
-            : new UserDto(user.Id.ToString(), user.Email, user.DisplayName, user.Role);
+            : new UserDto(user.Id.ToString(), user.Email, user.DisplayName, user.Role, user.CreatedAtUtc);
     }
 }

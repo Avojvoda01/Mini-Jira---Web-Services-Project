@@ -3,6 +3,7 @@ export type UserDto = {
   email: string;
   displayName: string;
   role: string;
+  createdAtUtc: string;
 };
 
 export type CreateAdminUserInput = {
@@ -13,4 +14,14 @@ export type CreateAdminUserInput = {
 
 export type DeleteAdminUserInput = {
   userId: string;
+};
+
+export type UpdateProfileInput = {
+  displayName: string;
+  email: string;
+};
+
+export type ChangePasswordInput = {
+  currentPassword: string;
+  newPassword: string;
 };

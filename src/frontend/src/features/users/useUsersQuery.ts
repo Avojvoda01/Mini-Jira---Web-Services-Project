@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createAdminUser, deleteAdminUser, fetchAdminUsers, userQueryKeys } from './userApi';
-import type { CreateAdminUserInput, DeleteAdminUserInput } from './userTypes';
+import { changeAdminUserRole, changeUserPassword, createAdminUser, deleteAdminUser, deleteOwnAccount, fetchAdminUsers, updateUserProfile, userQueryKeys } from './userApi';
+import type { ChangePasswordInput, CreateAdminUserInput, DeleteAdminUserInput, UpdateProfileInput } from './userTypes';
 
 export function useAdminUsersQuery() {
   return useQuery({
@@ -28,5 +28,35 @@ export function useDeleteAdminUserMutation() {
     onSuccess: () => {
       return queryClient.invalidateQueries({ queryKey: userQueryKeys.all });
     },
+  });
+}
+
+export function useUpdateProfileMutation() {
+  return useMutation({
+    mutationFn: ({ userId, input }: { userId: string; input: UpdateProfileInput }) =>
+      updateUserProfile(userId, input),
+  });
+}
+
+export function useChangePasswordMutation() {
+  return useMutation({
+    mutationFn: ({ userId, input }: { userId: string; input: ChangePasswordInput }) =>
+      changeUserPassword(userId, input),
+  });
+}
+
+export function useChangeUserRoleMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      changeAdminUserRole(userId, role),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: userQueryKeys.all }),
+  });
+}
+
+export function useDeleteOwnAccountMutation() {
+  return useMutation({
+    mutationFn: (userId: string) => deleteOwnAccount(userId),
   });
 }
