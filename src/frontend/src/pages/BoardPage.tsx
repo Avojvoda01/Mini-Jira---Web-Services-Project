@@ -62,6 +62,13 @@ const statusLabelMap: Record<TaskItem['status'], string> = {
   unknown: 'Open',
 };
 
+const priorityBorderClass = (priority: TaskCard['priority']) => {
+  if (priority === 'High') return 'border-l-rose-500';
+  if (priority === 'Medium') return 'border-l-amber-500';
+  if (priority === 'Low') return 'border-l-slate-400';
+  return 'border-l-border/60';
+};
+
 const priorityBadgeClass = (priority: TaskCard['priority']) => {
   if (priority === 'High') {
     return 'bg-rose-500/10 text-rose-700 hover:bg-rose-500/10';
@@ -836,7 +843,7 @@ export function BoardPage() {
 
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         {boardColumns.map((column) => (
-          <Card key={column.title} className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+          <Card key={column.title} className="border-border/70 bg-muted/20 shadow-sm">
             <CardHeader className="space-y-3 pb-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -880,14 +887,19 @@ export function BoardPage() {
                   No tasks here yet.
                 </div>
               ) : (
-                column.tasks.map((task, index) => (
-                  <div key={task.taskId}>
-                    {index > 0 ? <Separator className="mb-3" /> : null}
-                    <button
-                      type="button"
-                      className="w-full cursor-pointer rounded-2xl border border-border/70 bg-background/80 p-4 text-left shadow-sm transition-shadow hover:shadow-md"
-                      onClick={() => setDetailTaskId(task.taskId)}
-                    >
+                column.tasks.map((task) => (
+                  <button
+                    key={task.taskId}
+                    type="button"
+                    className={cn(
+                      'w-full cursor-pointer rounded-xl border border-l-4 border-border/40 p-4 text-left',
+                      'bg-white dark:bg-card',
+                      'shadow-md transition-all duration-150',
+                      'hover:-translate-y-0.5 hover:shadow-lg',
+                      priorityBorderClass(task.priority),
+                    )}
+                    onClick={() => setDetailTaskId(task.taskId)}
+                  >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1 space-y-2">
                           <Badge variant="outline" className="border-border/70 bg-background/70 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
@@ -910,8 +922,7 @@ export function BoardPage() {
                         <span>{task.estimate}</span>
                       </div>
 
-                    </button>
-                  </div>
+                  </button>
                 ))
               )}
             </CardContent>
