@@ -46,6 +46,7 @@ export function SettingsPage() {
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [selectedNewOwnerId, setSelectedNewOwnerId] = useState('');
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isManagingMembers, setIsManagingMembers] = useState(false);
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [isSavingMembers, setIsSavingMembers] = useState(false);
 
@@ -308,15 +309,29 @@ export function SettingsPage() {
           <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-4">
-                <CardTitle className="text-base font-semibold">Members</CardTitle>
-                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                  {(project.memberIds ?? []).length}
-                </span>
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-base font-semibold">Members</CardTitle>
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                    {(project.memberIds ?? []).length}
+                  </span>
+                </div>
+                {canManage && (
+                  isManagingMembers ? (
+                    <Button variant="ghost" size="sm" onClick={() => { setIsManagingMembers(false); setMemberIds(project.memberIds ?? []); }} className="h-8 gap-1.5 text-xs text-muted-foreground">
+                      <X className="h-3.5 w-3.5" />
+                      Cancel
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => setIsManagingMembers(true)} className="h-8 gap-1.5 text-xs">
+                      Manage members
+                    </Button>
+                  )
+                )}
               </div>
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {canManage ? (
+              {isManagingMembers ? (
                 <>
                   <ProjectMemberPicker
                     members={users.filter((u) => u.id.toLowerCase() !== (project.createdById ?? '').toLowerCase())}
@@ -326,8 +341,8 @@ export function SettingsPage() {
                     searchInputId="settings-member-search"
                     isBusy={isSavingMembers}
                   />
-                  <Button size="sm" onClick={handleSaveMembers} disabled={isSavingMembers}>
-                    Save members
+                  <Button size="sm" onClick={async () => { await handleSaveMembers(); setIsManagingMembers(false); }} disabled={isSavingMembers}>
+                    {isSavingMembers ? 'Saving...' : 'Save members'}
                   </Button>
                 </>
               ) : (
