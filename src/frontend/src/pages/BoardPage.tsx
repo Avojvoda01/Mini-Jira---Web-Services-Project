@@ -356,6 +356,7 @@ export function BoardPage() {
 
   const totalTasks = boardColumns.reduce((total, column) => total + column.tasks.length, 0);
   const inProgressCount = boardColumns.find((column) => column.id === 'in-progress')?.tasks.length ?? 0;
+  const doneCount = boardColumns.find((column) => column.id === 'done')?.tasks.length ?? 0;
 
   useEffect(() => {
     setContent({
@@ -370,7 +371,7 @@ export function BoardPage() {
             {inProgressCount} in progress
           </Badge>
           <Badge variant="outline" className="border-border/70 bg-background/60 text-muted-foreground">
-            {boardColumns.length} columns
+            {doneCount} done
           </Badge>
         </>
       ),
@@ -389,7 +390,7 @@ export function BoardPage() {
     });
 
     return () => setContent({});
-  }, [boardColumns.length, inProgressCount, setContent, totalTasks]);
+  }, [doneCount, inProgressCount, setContent, totalTasks]);
 
   useEffect(() => {
     document.documentElement.classList.add('board-no-scroll');
