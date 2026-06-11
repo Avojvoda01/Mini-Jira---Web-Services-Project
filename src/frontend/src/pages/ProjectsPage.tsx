@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from '@/components/common/ModeToggle';
 import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
 import { useProjectsQuery, type ProjectDto } from '@/features/projects';
-import { useAdminUsersQuery } from '@/features/users';
+import { useUsersQuery } from '@/features/users';
 import { authSessionAtom } from '@/store/authAtoms';
 
 type ProjectSortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
@@ -33,7 +33,7 @@ export function ProjectsPage() {
     navigate('/', { replace: true });
   };
   const { data: allProjects = [], isError, isLoading, error, refetch } = useProjectsQuery();
-  const { data: users = [] } = useAdminUsersQuery();
+  const { data: users = [] } = useUsersQuery();
 
   const projects = useMemo(() => {
     if (!currentUserId) return [];

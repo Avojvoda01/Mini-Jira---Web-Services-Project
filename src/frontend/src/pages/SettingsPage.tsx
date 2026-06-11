@@ -18,7 +18,7 @@ import {
   useRemoveProjectMemberMutation,
   useUpdateProjectMutation,
 } from '@/features/projects';
-import { useAdminUsersQuery } from '@/features/users';
+import { useUsersQuery } from '@/features/users';
 import { authSessionAtom } from '@/store/authAtoms';
 
 const MAX_PROJECT_NAME_LENGTH = 100;
@@ -32,7 +32,7 @@ export function SettingsPage() {
   const session = useAtomValue(authSessionAtom);
 
   const { data: project } = useProjectQuery(projectId ?? null);
-  const { data: users = [] } = useAdminUsersQuery();
+  const { data: users = [] } = useUsersQuery();
 
   const updateProjectMutation = useUpdateProjectMutation();
   const deleteProjectMutation = useDeleteProjectMutation();

@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { Separator } from '@/components/ui/separator';
 import {
-  useAdminUsersQuery,
+  useUsersQuery,
   useChangeUserRoleMutation,
   useCreateAdminUserMutation,
   useDeleteAdminUserMutation,
@@ -23,7 +23,7 @@ export function AdminSettingsPage() {
   const navigate = useNavigate();
   const session = useAtomValue(authSessionAtom);
 
-  const { data: users = [], isLoading } = useAdminUsersQuery();
+  const { data: users = [], isLoading } = useUsersQuery();
   const changeRoleMutation = useChangeUserRoleMutation();
   const deleteMutation = useDeleteAdminUserMutation();
   const createMutation = useCreateAdminUserMutation();

@@ -7,7 +7,7 @@ import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import { useTasksQuery } from '@/features/tasks';
 import { useEpicsQuery } from '@/features/epics';
 import { useProjectQuery } from '@/features/projects';
-import { useAdminUsersQuery } from '@/features/users';
+import { useUsersQuery } from '@/features/users';
 
 const RECENT_LIMIT = 5;
 
@@ -18,7 +18,7 @@ export function DashboardPage() {
   const { data: tasks = [] } = useTasksQuery({ projectId: projectId ?? null });
   const { data: epics = [] } = useEpicsQuery({ projectId: projectId ?? null });
   const { data: project } = useProjectQuery(projectId ?? null);
-  const { data: users = [] } = useAdminUsersQuery();
+  const { data: users = [] } = useUsersQuery();
 
   const stats = useMemo(() => {
     const totalTasks = tasks.length;

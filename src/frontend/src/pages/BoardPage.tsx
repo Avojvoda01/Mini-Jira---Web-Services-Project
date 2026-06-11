@@ -17,7 +17,7 @@ import { useCommentsQuery, useCreateCommentMutation, useDeleteCommentMutation, u
 import { useEpicsQuery } from '@/features/epics';
 import { useProjectQuery } from '@/features/projects';
 import { useAssignUserMutation, useDeleteTaskMutation, useSetEstimateMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
-import { useAdminUsersQuery } from '@/features/users';
+import { useUsersQuery } from '@/features/users';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { formatEstimate, minutesToEditValue, parseEstimate } from '@/lib/estimate';
 import { cn } from '@/lib/utils';
@@ -125,7 +125,7 @@ export function BoardPage() {
   const { setContent } = usePageHeader();
   const { projectId } = useParams();
   const { data: project } = useProjectQuery(projectId ?? null);
-  const { data: users = [] } = useAdminUsersQuery();
+  const { data: users = [] } = useUsersQuery();
   const { data: tasks = [], isLoading, isError, error, refetch } = useTasksQuery({
     projectId: projectId ?? null,
   });

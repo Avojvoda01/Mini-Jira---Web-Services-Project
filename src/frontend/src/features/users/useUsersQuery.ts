@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { changeAdminUserRole, changeUserPassword, createAdminUser, deleteAdminUser, deleteOwnAccount, fetchAdminUsers, updateUserProfile, userQueryKeys } from './userApi';
 import type { ChangePasswordInput, CreateAdminUserInput, DeleteAdminUserInput, UpdateProfileInput } from './userTypes';
 
-export function useAdminUsersQuery() {
+export function useUsersQuery() {
   return useQuery({
     queryKey: userQueryKeys.adminList(),
     queryFn: fetchAdminUsers,
