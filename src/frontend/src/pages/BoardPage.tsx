@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useAtomValue } from 'jotai';
 import { useParams } from 'react-router-dom';
 import { ArrowLeftRight, Bot, Check, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
@@ -433,7 +434,7 @@ export function BoardPage() {
         isPending={deleteCommentMutation.isPending}
       />
 
-      {activeDetailTask ? (
+      {activeDetailTask ? createPortal(
         <>
           <button
             type="button"
@@ -821,7 +822,8 @@ export function BoardPage() {
               </Button>
             </div>
           </aside>
-        </>
+        </>,
+        document.body,
       ) : null}
 
       {isError ? (
