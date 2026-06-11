@@ -139,15 +139,11 @@ const MAX_TASK_DESCRIPTION_LENGTH = 145;
 
 const truncateText = (value: string, maxLength: number) => {
   const trimmed = value.trim();
-  if (!trimmed) {
-    return '';
-  }
+  if (!trimmed || trimmed.length <= maxLength) return trimmed;
 
-  if (trimmed.length <= maxLength) {
-    return trimmed;
-  }
-
-  return `${trimmed.slice(0, maxLength).trim()}...`;
+  const cut = trimmed.slice(0, maxLength);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trimEnd()}...`;
 };
 
 export function BoardPage() {
@@ -935,7 +931,7 @@ export function BoardPage() {
                           </Badge>
                           <h3 className="text-sm font-medium leading-6 text-foreground">{task.title}</h3>
                           {task.description ? (
-                            <p className="max-w-full text-xs leading-5 text-muted-foreground break-all whitespace-normal">
+                            <p className="max-w-full text-xs leading-5 text-muted-foreground break-words">
                               {task.description}
                             </p>
                           ) : null}
