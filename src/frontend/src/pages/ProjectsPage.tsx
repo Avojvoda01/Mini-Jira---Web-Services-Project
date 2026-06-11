@@ -113,7 +113,7 @@ export function ProjectsPage() {
 
   return (
     <section className="space-y-6">
-      <div className="relative overflow-hidden rounded-b-3xl rounded-t-none border border-border/70 bg-gradient-to-br from-card via-card to-muted/45 p-6 shadow-sm sm:p-8">
+      <div className="sticky top-0 z-10 relative overflow-hidden rounded-b-3xl rounded-t-none border border-border/70 bg-gradient-to-br from-card via-card to-card/95 p-6 shadow-sm backdrop-blur-md sm:p-8">
         <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
           <ModeToggle className="h-11 w-11" />
           <DropdownMenu>
