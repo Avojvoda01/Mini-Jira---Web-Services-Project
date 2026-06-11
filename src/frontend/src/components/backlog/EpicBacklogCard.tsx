@@ -86,7 +86,7 @@ export function EpicBacklogCard({
           ) : (
             <div className="grid gap-2">
               {assignedTickets.map((ticket) => (
-                <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-sm">
+                <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-muted p-3 text-sm">
                   <div>
                     <p className="font-medium text-foreground">
                       {ticket.displayId} - {ticket.title}
