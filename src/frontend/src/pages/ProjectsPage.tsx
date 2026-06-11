@@ -47,9 +47,17 @@ export function ProjectsPage() {
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [projectSort, setProjectSort] = useState<ProjectSortOption>('newest');
 
-  const describedCount = useMemo(() => {
-    return projects.filter((project) => project.description.trim().length > 0).length;
-  }, [projects]);
+  const ownCount = useMemo(() => {
+    return projects.filter((p) => p.createdById?.toLowerCase() === currentUserId).length;
+  }, [projects, currentUserId]);
+
+  const joinedCount = useMemo(() => {
+    return projects.filter(
+      (p) =>
+        p.createdById?.toLowerCase() !== currentUserId &&
+        (p.memberIds ?? []).some((id) => id.toLowerCase() === currentUserId),
+    ).length;
+  }, [projects, currentUserId]);
 
   const sortedProjects = useMemo(() => {
     const next = [...projects];
@@ -148,7 +156,7 @@ export function ProjectsPage() {
                 Select or Create a Project
               </h1>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                This is the entry layer before dashboard and board views. Pick a project to open its dedicated workspace context.
+                Manage your projects, track progress, and collaborate with your team. Open a project to access its board, backlog, and settings.
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <DropdownMenu>
@@ -181,12 +189,12 @@ export function ProjectsPage() {
               <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{projects.length}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Described</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{describedCount}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Own</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{ownCount}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Showing</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{sortedProjects.length}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Joined</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{joinedCount}</p>
             </div>
           </div>
         </div>
