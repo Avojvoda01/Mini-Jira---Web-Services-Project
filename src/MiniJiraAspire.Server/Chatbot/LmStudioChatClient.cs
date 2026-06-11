@@ -173,8 +173,19 @@ public class LmStudioChatClient(HttpClient httpClient, IOptions<ChatbotOptions> 
 
                     Rules:
                     - Understand the user's meaning, not exact wording.
-                    - Choose general_help for conceptual or navigation questions that do not need live database data.
-                    - Choose a live-data intent only when the user asks about their actual projects, tasks, epics, members, summaries, changes, or priorities.
+                    - Choose general_help only for conceptual or navigation questions that do not need live database data.
+                    - If the user asks about "my", "me", "I have", "assigned to me", "our project", counts, lists, summaries, members, or recent changes, choose a live-data intent.
+                    - get_my_projects means the user wants their project count or list. No projectName is needed.
+                    - get_my_tasks means the user wants tasks assigned to them. No projectName is needed.
+                    - newest_tasks means the user wants recent/newest/latest tasks in their accessible work.
+                    - search_tasks means the user wants tasks matching a keyword.
+                    - project_task_filter means the user wants tasks in a specific project, usually filtered by status or priority.
+                    - project_people means the user asks who is in a project or who is working on what.
+                    - project_changes means the user asks what changed recently in a project.
+                    - prioritize_my_tasks means the user asks what they should do first.
+                    - list_project_epics means the user asks which epics are in a project.
+                    - summarize_project means the user asks for a project overview, progress, health, or summary.
+                    - summarize_epic_status means the user asks for an epic overview, progress, health, or summary.
                     - If the user refers to a visible project, set projectName to the closest exact name from the visible project list.
                     - If the user refers to a visible epic, set epicName to the closest exact name from the visible epic list.
                     - If no visible project or epic is clearly referenced, use null.
