@@ -4,7 +4,6 @@ import { NavLink, Outlet, type NavLinkRenderProps, useNavigate, useParams } from
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from '@/components/common/ModeToggle';
 import { PageHeaderProvider, usePageHeader } from '@/components/layout/PageHeaderContext';
