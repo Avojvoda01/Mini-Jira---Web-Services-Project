@@ -37,7 +37,7 @@ type Epic = EpicDto & {
 
 type EpicSummary = Pick<Epic, 'id' | 'name' | 'description' | 'ticketIds'>;
 
-type EpicSortOption = 'newest' | 'oldest' | 'recently-updated' | 'tickets-desc' | 'tickets-asc' | 'name-asc' | 'name-desc';
+type EpicSortOption = 'newest' | 'oldest' | 'recently-updated' | 'tickets-desc' | 'tickets-asc' | 'name-asc' | 'name-desc' | 'workload-desc' | 'workload-asc';
 
 const priorityLabelMap: Record<TaskPriority, BacklogTicket['priority']> = {
   high: 'High',
@@ -157,6 +157,14 @@ export function BacklogPage() {
     }));
   }, [scopedEpicDtos, ticketsByEpicId]);
 
+  const backlogTickets = useMemo(() => {
+    return scopedTasks.map((task) => mapTaskToTicket(task, taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`));
+  }, [scopedTasks, taskDisplayIds]);
+
+  const ticketById = useMemo(() => {
+    return new Map(backlogTickets.map((ticket) => [ticket.id, ticket]));
+  }, [backlogTickets]);
+
   const sortedEpics = useMemo(() => {
     const next = [...epics];
 
@@ -169,6 +177,8 @@ export function BacklogPage() {
       const value = Date.parse(epic.updatedAtUtc ?? epic.createdAtUtc);
       return Number.isNaN(value) ? 0 : value;
     };
+    const getWorkload = (epic: Epic) =>
+      epic.ticketIds.reduce((sum, id) => sum + (ticketById.get(id)?.estimateMinutes ?? 0), 0);
 
     switch (epicSort) {
       case 'tickets-desc':
@@ -176,6 +186,12 @@ export function BacklogPage() {
         break;
       case 'tickets-asc':
         next.sort((left, right) => left.ticketIds.length - right.ticketIds.length);
+        break;
+      case 'workload-desc':
+        next.sort((left, right) => getWorkload(right) - getWorkload(left));
+        break;
+      case 'workload-asc':
+        next.sort((left, right) => getWorkload(left) - getWorkload(right));
         break;
       case 'name-asc':
         next.sort(compareByName);
@@ -196,15 +212,7 @@ export function BacklogPage() {
     }
 
     return next;
-  }, [epics, epicSort]);
-
-  const backlogTickets = useMemo(() => {
-    return scopedTasks.map((task) => mapTaskToTicket(task, taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`));
-  }, [scopedTasks, taskDisplayIds]);
-
-  const ticketById = useMemo(() => {
-    return new Map(backlogTickets.map((ticket) => [ticket.id, ticket]));
-  }, [backlogTickets]);
+  }, [epics, epicSort, ticketById]);
 
   const activeAssignEpic = useMemo(() => {
     if (assignEpicId === null) {
@@ -450,6 +458,10 @@ export function BacklogPage() {
         return 'Name A-Z';
       case 'name-desc':
         return 'Name Z-A';
+      case 'workload-desc':
+        return 'Most workload';
+      case 'workload-asc':
+        return 'Least workload';
       case 'oldest':
         return 'Oldest';
       case 'newest':
@@ -479,6 +491,8 @@ export function BacklogPage() {
               <DropdownMenuItem onClick={() => setEpicSort('tickets-asc')}>Fewest tickets</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEpicSort('name-asc')}>Name A-Z</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEpicSort('name-desc')}>Name Z-A</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('workload-desc')}>Most workload</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('workload-asc')}>Least workload</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button className="shadow-sm" onClick={() => {
