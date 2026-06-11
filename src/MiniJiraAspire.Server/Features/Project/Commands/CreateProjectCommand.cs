@@ -15,11 +15,11 @@ public class CreateProjectHandler(IProjectRepository repository) : IRequestHandl
             CreatedById = request.CreatedById
         };
 
-        if (request.CreatedById is not null)
+        if (request.CreatedById is { } creatorId && creatorId != Guid.Empty)
         {
             project.Members.Add(new ProjectMember
             {
-                UserId = request.CreatedById.Value
+                UserId = creatorId
             });
         }
 
