@@ -3,7 +3,6 @@ import { Badge } from '@/components/ui/badge';
 import { formatEstimate } from '@/lib/estimate';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 
 type BacklogTicket = {
   id: string;
@@ -26,7 +25,6 @@ type EpicBacklogCardProps = {
   onEdit: () => void;
   onDelete: () => void;
   onRemoveTicket: (ticketId: string) => void;
-  showSeparator?: boolean;
 };
 
 const totalEstimate = (tickets: BacklogTicket[]): string => {
@@ -41,12 +39,9 @@ export function EpicBacklogCard({
   onEdit,
   onDelete,
   onRemoveTicket,
-  showSeparator = false,
 }: EpicBacklogCardProps) {
   return (
-    <div>
-      {showSeparator ? <Separator className="mb-5" /> : null}
-      <Card className="space-y-4 rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
+    <Card className="space-y-4 rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -107,6 +102,5 @@ export function EpicBacklogCard({
           )}
         </div>
       </Card>
-    </div>
   );
 }
