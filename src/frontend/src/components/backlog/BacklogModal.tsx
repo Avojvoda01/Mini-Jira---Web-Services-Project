@@ -12,6 +12,8 @@ export function BacklogModal({ onClose, children, cardClassName }: BacklogModalP
 
   useEffect(() => {
     overlayRef.current?.focus();
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
   }, []);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -31,7 +33,7 @@ export function BacklogModal({ onClose, children, cardClassName }: BacklogModalP
       onClick={onClose}
       onKeyDown={handleKeyDown}
     >
-      <Card className={cardClassName} onClick={(event) => event.stopPropagation()}>
+      <Card className={`flex max-h-[90dvh] flex-col overflow-hidden ${cardClassName}`} onClick={(event) => event.stopPropagation()}>
         {children}
       </Card>
     </div>

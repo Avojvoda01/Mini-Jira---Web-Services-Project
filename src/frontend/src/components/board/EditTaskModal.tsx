@@ -182,7 +182,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
         <CardTitle>Edit ticket</CardTitle>
         <CardDescription>Update details, status, and priority for this ticket.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="overflow-y-auto space-y-5">
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground" htmlFor="edit-task-title">
             Title
