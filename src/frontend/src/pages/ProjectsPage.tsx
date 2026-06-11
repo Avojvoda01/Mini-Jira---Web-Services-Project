@@ -263,7 +263,7 @@ export function ProjectsPage() {
                           </div>
                           <FolderKanban className="h-5 w-5 text-muted-foreground" />
                         </div>
-                        <CardDescription>{project.description}</CardDescription>
+                        <CardDescription className="line-clamp-4">{project.description}</CardDescription>
                       </CardHeader>
                       <CardContent className="mt-auto space-y-3 text-sm text-muted-foreground">
                         <Button asChild className="w-full shadow-sm">
@@ -306,7 +306,7 @@ export function ProjectsPage() {
                           </div>
                           <FolderKanban className="h-5 w-5 text-muted-foreground" />
                         </div>
-                        <CardDescription>{project.description}</CardDescription>
+                        <CardDescription className="line-clamp-4">{project.description}</CardDescription>
                       </CardHeader>
                       <CardContent className="mt-auto space-y-3 text-sm text-muted-foreground">
                         <Button asChild className="w-full shadow-sm">
@@ -342,7 +342,7 @@ export function ProjectsPage() {
                           </div>
                           <FolderKanban className="h-5 w-5 text-muted-foreground" />
                         </div>
-                        <CardDescription>{project.description}</CardDescription>
+                        <CardDescription className="line-clamp-4">{project.description}</CardDescription>
                       </CardHeader>
                       <CardContent className="mt-auto space-y-3 text-sm text-muted-foreground">
                         <Button asChild className="w-full shadow-sm">
