@@ -360,7 +360,7 @@ export function BoardPage() {
   useEffect(() => {
     setContent({
       title: 'Board',
-      description: 'A structured Kanban surface for prioritization, flow management, and delivery review.',
+      description: 'Move tickets through your workflow and keep the team aligned.',
       meta: (
         <>
           <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
