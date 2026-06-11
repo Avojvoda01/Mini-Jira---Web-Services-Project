@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useAtomValue } from 'jotai';
 import { useParams } from 'react-router-dom';
@@ -112,6 +112,28 @@ const columnStatusMap: Record<BoardColumn['id'], string> = {
   review: 'Review',
   done: 'Done',
 };
+
+function ColumnContent({ children }: { children: ReactNode }) {
+  const [scrolling, setScrolling] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  const handleScroll = () => {
+    setScrolling(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setScrolling(false), 2500);
+  };
+
+  return (
+    <CardContent
+      className={cn('space-y-3 xl:flex-1 xl:overflow-y-auto xl:min-h-0 board-col-scroll', scrolling && 'is-scrolling')}
+      onScroll={handleScroll}
+    >
+      {children}
+    </CardContent>
+  );
+}
 
 const MAX_TASK_DESCRIPTION_LENGTH = 145;
 
@@ -841,10 +863,10 @@ export function BoardPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4 xl:h-[calc(100dvh-11rem)]">
         {boardColumns.map((column) => (
-          <Card key={column.title} className="border-border/70 bg-muted/20 shadow-sm">
-            <CardHeader className="space-y-3 pb-4">
+          <Card key={column.title} className="border-border/70 bg-muted/20 shadow-sm xl:flex xl:flex-col xl:h-full xl:overflow-hidden">
+            <CardHeader className="space-y-3 pb-4 xl:shrink-0">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <CardTitle>{column.title}</CardTitle>
@@ -868,7 +890,7 @@ export function BoardPage() {
               <Separator />
             </CardHeader>
 
-            <CardContent className="space-y-3">
+            <ColumnContent>
               {isLoading ? (
                 <div
                   className="flex items-center justify-center rounded-2xl border border-dashed border-border/70 bg-background/60 p-6"
@@ -925,7 +947,7 @@ export function BoardPage() {
                   </button>
                 ))
               )}
-            </CardContent>
+            </ColumnContent>
           </Card>
         ))}
       </div>
