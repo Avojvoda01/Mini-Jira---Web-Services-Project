@@ -127,7 +127,7 @@ function ColumnContent({ children }: { children: ReactNode }) {
 
   return (
     <CardContent
-      className={cn('space-y-3 xl:flex-1 xl:overflow-y-auto xl:min-h-0 board-col-scroll', scrolling && 'is-scrolling')}
+      className={cn('space-y-3 pb-3 xl:flex-1 xl:overflow-y-auto xl:min-h-0 board-col-scroll', scrolling && 'is-scrolling')}
       onScroll={handleScroll}
     >
       {children}
@@ -390,6 +390,11 @@ export function BoardPage() {
 
     return () => setContent({});
   }, [boardColumns.length, inProgressCount, setContent, totalTasks]);
+
+  useEffect(() => {
+    document.documentElement.classList.add('board-no-scroll');
+    return () => document.documentElement.classList.remove('board-no-scroll');
+  }, []);
 
   useEffect(() => {
     setEditingCommentId(null);

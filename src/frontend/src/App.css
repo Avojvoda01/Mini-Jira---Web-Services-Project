@@ -120,6 +120,12 @@ body {
   min-width: 0;
 }
 
+@media (min-width: 1280px) {
+  html.board-no-scroll {
+    overflow: hidden;
+  }
+}
+
 .board-col-scroll {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
