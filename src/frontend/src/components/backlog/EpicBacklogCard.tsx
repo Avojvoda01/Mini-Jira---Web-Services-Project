@@ -1,5 +1,6 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { formatEstimate } from '@/lib/estimate';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,6 +11,8 @@ type BacklogTicket = {
   title: string;
   estimate: string;
   estimateMinutes: number | null;
+  priority: 'High' | 'Medium' | 'Low';
+  assigneeName: string | null;
 };
 
 type EpicBacklogCardProps = {
@@ -93,9 +96,20 @@ export function EpicBacklogCard({
                     </p>
                     <p className="text-xs text-muted-foreground">{ticket.estimate}</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => onRemoveTicket(ticket.id)}>
-                    Remove
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className={cn('text-xs font-medium', ticket.priority === 'High' ? 'bg-rose-500/10 text-rose-700' : ticket.priority === 'Medium' ? 'bg-amber-500/10 text-amber-700' : 'bg-blue-500/10 text-blue-700')}>
+                      {ticket.priority}
+                    </Badge>
+                    {ticket.assigneeName ? (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <User className="h-3 w-3" />
+                        {ticket.assigneeName}
+                      </span>
+                    ) : null}
+                    <Button variant="outline" size="sm" onClick={() => onRemoveTicket(ticket.id)}>
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

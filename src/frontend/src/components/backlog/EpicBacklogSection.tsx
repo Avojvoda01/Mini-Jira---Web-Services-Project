@@ -7,6 +7,8 @@ type BacklogTicket = {
   title: string;
   estimate: string;
   estimateMinutes: number | null;
+  priority: 'High' | 'Medium' | 'Low';
+  assigneeName: string | null;
 };
 
 type Epic = {
