@@ -276,7 +276,7 @@ export function SettingsPage() {
                                 <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-72">
+                            <DropdownMenuContent align="start" side="bottom" sideOffset={4} className="w-72 max-h-56 overflow-y-auto">
                               {eligibleMembers.map((u) => (
                                 <DropdownMenuItem
                                   key={u.id}
