@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { useParams } from 'react-router-dom';
 import { ArrowLeftRight, Bot, Check, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
@@ -17,7 +29,7 @@ import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import { useCommentsQuery, useCreateCommentMutation, useDeleteCommentMutation, useUpdateCommentMutation } from '@/features/comments';
 import { useEpicsQuery } from '@/features/epics';
 import { useProjectQuery } from '@/features/projects';
-import { useAssignUserMutation, useDeleteTaskMutation, useSetEstimateMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
+import { taskQueryKeys, useAssignUserMutation, useChangeTaskStatusMutation, useDeleteTaskMutation, useSetEstimateMutation, useTasksQuery, type TaskItem, type TaskPriority } from '@/features/tasks';
 import { useUsersQuery } from '@/features/users';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { formatEstimate, minutesToEditValue, parseEstimate } from '@/lib/estimate';
@@ -113,9 +125,23 @@ const columnStatusMap: Record<BoardColumn['id'], string> = {
   done: 'Done',
 };
 
-function ColumnContent({ children }: { children: ReactNode }) {
+const columnTaskStatusMap: Record<BoardColumn['id'], TaskItem['status']> = {
+  ready: 'todo',
+  'in-progress': 'in-progress',
+  review: 'review',
+  done: 'done',
+};
+
+const statusColumnId = (status: TaskItem['status']): BoardColumn['id'] =>
+  status === 'done' ? 'done'
+  : status === 'in-progress' ? 'in-progress'
+  : status === 'review' ? 'review'
+  : 'ready';
+
+function ColumnContent({ columnId, children }: { columnId: BoardColumn['id']; children: ReactNode }) {
   const [scrolling, setScrolling] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { setNodeRef, isOver } = useDroppable({ id: columnId });
 
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
@@ -127,7 +153,12 @@ function ColumnContent({ children }: { children: ReactNode }) {
 
   return (
     <CardContent
-      className={cn('space-y-3 pb-3 xl:flex-1 xl:overflow-y-auto xl:min-h-0 board-col-scroll', scrolling && 'is-scrolling')}
+      ref={setNodeRef}
+      className={cn(
+        'space-y-3 pb-3 xl:flex-1 xl:overflow-y-auto xl:min-h-0 board-col-scroll',
+        scrolling && 'is-scrolling',
+        isOver && 'bg-primary/5',
+      )}
       onScroll={handleScroll}
     >
       {children}
@@ -146,6 +177,60 @@ const truncateText = (value: string, maxLength: number) => {
   return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trimEnd()}...`;
 };
 
+const taskCardClass = (priority: TaskCard['priority']) =>
+  cn(
+    'w-full cursor-pointer rounded-xl border border-l-4 border-border/40 p-4 text-left',
+    'bg-white dark:bg-card',
+    'shadow-md transition-all duration-150',
+    'hover:-translate-y-0.5 hover:shadow-lg',
+    priorityBorderClass(priority),
+  );
+
+function TaskCardBody({ task }: { task: TaskCard }) {
+  return (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-2">
+          <Badge variant="outline" className="border-border/70 bg-background/70 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
+            {task.ticket}
+          </Badge>
+          <h3 className="text-sm font-medium leading-6 text-foreground">{task.title}</h3>
+          {task.description ? (
+            <p className="max-w-full text-xs leading-5 text-muted-foreground break-words">
+              {task.description}
+            </p>
+          ) : null}
+        </div>
+        <Badge className={priorityBadgeClass(task.priority)}>
+          {task.priority}
+        </Badge>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span>{task.owner}</span>
+        <span>{task.estimate}</span>
+      </div>
+    </>
+  );
+}
+
+function DraggableTaskCard({ task, onOpen }: { task: TaskCard; onOpen: () => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.taskId });
+
+  return (
+    <button
+      ref={setNodeRef}
+      type="button"
+      className={cn(taskCardClass(task.priority), isDragging && 'opacity-40 hover:translate-y-0')}
+      onClick={onOpen}
+      {...attributes}
+      {...listeners}
+    >
+      <TaskCardBody task={task} />
+    </button>
+  );
+}
+
 export function BoardPage() {
   const session = useAtomValue(authSessionAtom);
   const { setContent } = usePageHeader();
@@ -162,6 +247,10 @@ export function BoardPage() {
   const deleteTaskMutation = useDeleteTaskMutation();
   const assignUserMutation = useAssignUserMutation();
   const setEstimateMutation = useSetEstimateMutation();
+  const changeStatusMutation = useChangeTaskStatusMutation();
+  const queryClient = useQueryClient();
+  const dragSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const [activeDragTask, setActiveDragTask] = useState<TaskCard | null>(null);
   const [createColumnId, setCreateColumnId] = useState<BoardColumn['id'] | null>(null);
   const [editTaskId, setEditTaskId] = useState<string | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
@@ -288,12 +377,7 @@ export function BoardPage() {
     ]);
 
     tasks.forEach((task) => {
-      const target =
-        task.status === 'done' ? 'done'
-        : task.status === 'in-progress' ? 'in-progress'
-        : task.status === 'review' ? 'review'
-        : 'ready';
-      byColumn.get(target)?.push(toCard(task));
+      byColumn.get(statusColumnId(task.status))?.push(toCard(task));
     });
 
     return columnConfig.map((column) => ({
@@ -348,6 +432,29 @@ export function BoardPage() {
     } catch (error) {
       setAssigneeError(error instanceof Error ? error.message : 'Unable to update assignee.');
     }
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const card = boardColumns.flatMap((column) => column.tasks).find((task) => task.taskId === event.active.id);
+    setActiveDragTask(card ?? null);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDragTask(null);
+
+    const targetColumnId = event.over?.id as BoardColumn['id'] | undefined;
+    const task = taskById.get(String(event.active.id));
+    if (!targetColumnId || !task || statusColumnId(task.status) === targetColumnId) {
+      return;
+    }
+
+    queryClient.setQueriesData<TaskItem[]>({ queryKey: taskQueryKeys.all }, (current) =>
+      current?.map((item) => (item.id === task.id ? { ...item, status: columnTaskStatusMap[targetColumnId] } : item)),
+    );
+    changeStatusMutation.mutate(
+      { taskId: task.id, status: columnStatusMap[targetColumnId] },
+      { onError: () => queryClient.invalidateQueries({ queryKey: taskQueryKeys.all }) },
+    );
   };
 
   const totalTasks = boardColumns.reduce((total, column) => total + column.tasks.length, 0);
@@ -865,7 +972,13 @@ export function BoardPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4 xl:h-[calc(100dvh-11rem)]">
+      <DndContext
+        sensors={dragSensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveDragTask(null)}
+      >
+      <div className="mt-2 grid gap-4 lg:grid-cols-2 xl:grid-cols-4 xl:h-[calc(100dvh-11.5rem)]">
         {boardColumns.map((column) => (
           <Card key={column.title} className="border-border/70 bg-muted/20 shadow-sm xl:flex xl:flex-col xl:h-full xl:overflow-hidden">
             <CardHeader className="space-y-3 pb-4 xl:shrink-0">
@@ -892,7 +1005,7 @@ export function BoardPage() {
               <Separator />
             </CardHeader>
 
-            <ColumnContent>
+            <ColumnContent columnId={column.id}>
               {isLoading ? (
                 <div
                   className="flex items-center justify-center rounded-2xl border border-dashed border-border/70 bg-background/60 p-6"
@@ -912,47 +1025,25 @@ export function BoardPage() {
                 </div>
               ) : (
                 column.tasks.map((task) => (
-                  <button
-                    key={task.taskId}
-                    type="button"
-                    className={cn(
-                      'w-full cursor-pointer rounded-xl border border-l-4 border-border/40 p-4 text-left',
-                      'bg-white dark:bg-card',
-                      'shadow-md transition-all duration-150',
-                      'hover:-translate-y-0.5 hover:shadow-lg',
-                      priorityBorderClass(task.priority),
-                    )}
-                    onClick={() => setDetailTaskId(task.taskId)}
-                  >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1 space-y-2">
-                          <Badge variant="outline" className="border-border/70 bg-background/70 text-[0.68rem] uppercase tracking-[0.18em] text-muted-foreground">
-                            {task.ticket}
-                          </Badge>
-                          <h3 className="text-sm font-medium leading-6 text-foreground">{task.title}</h3>
-                          {task.description ? (
-                            <p className="max-w-full text-xs leading-5 text-muted-foreground break-words">
-                              {task.description}
-                            </p>
-                          ) : null}
-                        </div>
-                        <Badge className={priorityBadgeClass(task.priority)}>
-                          {task.priority}
-                        </Badge>
-                      </div>
-
-                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                        <span>{task.owner}</span>
-                        <span>{task.estimate}</span>
-                      </div>
-
-                  </button>
+                  <DraggableTaskCard key={task.taskId} task={task} onOpen={() => setDetailTaskId(task.taskId)} />
                 ))
               )}
             </ColumnContent>
           </Card>
         ))}
       </div>
+
+      {createPortal(
+        <DragOverlay>
+          {activeDragTask ? (
+            <div className={cn(taskCardClass(activeDragTask.priority), 'cursor-grabbing shadow-xl')}>
+              <TaskCardBody task={activeDragTask} />
+            </div>
+          ) : null}
+        </DragOverlay>,
+        document.body,
+      )}
+      </DndContext>
 
       <div className="fixed bottom-5 right-5 z-30 sm:bottom-6 sm:right-6">
         {isAssistantOpen ? (
