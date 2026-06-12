@@ -14,7 +14,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { useParams } from 'react-router-dom';
-import { ArrowLeftRight, Bot, Check, Minus, Pencil, Plus, SendHorizontal, UserPlus, X } from 'lucide-react';
+import { ArrowLeftRight, Check, Minus, Pencil, Plus, UserPlus, X } from 'lucide-react';
+import { AiAssistant } from '@/components/common/AiAssistant';
 import { CreateTaskModal } from '@/components/board/CreateTaskModal';
 import { DeleteCommentModal } from '@/components/board/DeleteCommentModal';
 import { DeleteTaskModal } from '@/components/board/DeleteTaskModal';
@@ -35,12 +36,6 @@ import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { formatEstimate, minutesToEditValue, parseEstimate } from '@/lib/estimate';
 import { cn } from '@/lib/utils';
 import { authSessionAtom } from '@/store/authAtoms';
-
-type ChatMessage = {
-  id: number;
-  role: 'user' | 'assistant';
-  text: string;
-};
 
 type TaskCard = {
   taskId: string;
@@ -259,62 +254,11 @@ export function BoardPage() {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [commentEditDrafts, setCommentEditDrafts] = useState<Record<string, string>>({});
   const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
-  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isAssigneePickerOpen, setIsAssigneePickerOpen] = useState(false);
   const [assigneeError, setAssigneeError] = useState<string | null>(null);
   const [isEstimateEditing, setIsEstimateEditing] = useState(false);
   const [estimateDraft, setEstimateDraft] = useState('');
   const [estimateError, setEstimateError] = useState<string | null>(null);
-  const [input, setInput] = useState('');
-  const nextMessageIdRef = useRef(2);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 1,
-      role: 'assistant',
-      text: 'I can help sort tasks, spot blockers, or summarize this board once the data is connected.',
-    },
-  ]);
-
-    const sendMessage = async () => {
-        const text = input.trim();
-        if (!text) return;
-
-        setMessages((current) => [
-            ...current,
-            {
-                id: nextMessageIdRef.current++,
-                role: "user",
-                text,
-            },
-        ]);
-
-        setInput("");
-
-        const response = await fetch("/api/chats", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${session?.token}`, // change token name if different
-            },
-            body: JSON.stringify({
-                message: text,
-            }),
-        });
-
-        const data = await response.json();
-
-        console.log("chat response:", data);
-
-        setMessages((current) => [
-            ...current,
-            {
-                id: nextMessageIdRef.current++,
-                role: "assistant",
-                text: data.answer ?? data.message ?? "No response text found.", 
-            },
-        ]);
-    };
-
   const taskDisplayIds = useMemo(() => {
     const sorted = [...tasks].sort((left, right) => {
       const leftDate = Date.parse(left.createdAtUtc);
@@ -1045,75 +989,10 @@ export function BoardPage() {
       )}
       </DndContext>
 
-      <div className="fixed bottom-5 right-5 z-30 sm:bottom-6 sm:right-6">
-        {isAssistantOpen ? (
-          <Card id="board-ai-chat" className="mb-3 w-[min(92vw,360px)] border-border/70 bg-card/95 shadow-xl backdrop-blur-sm">
-            <CardHeader className="space-y-3 pb-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bot className="h-4 w-4 text-muted-foreground" />
-                    AI Assistant
-                  </CardTitle>
-                  <CardDescription className="mt-1">Useful for summaries, grouping, and quick board questions.</CardDescription>
-                </div>
-                <Badge variant="secondary" className="border border-border/60 bg-background/80 text-foreground">
-                  Ready
-                </Badge>
-              </div>
-              <Separator />
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <div className="max-h-56 space-y-3 overflow-y-auto pr-1">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      'max-w-[92%] rounded-2xl border px-3 py-2.5 text-sm leading-6 shadow-sm',
-                      message.role === 'user'
-                        ? 'ml-auto border-primary/20 bg-primary/8 text-foreground'
-                        : 'border-border/70 bg-muted/40 text-foreground',
-                    )}
-                  >
-                    {message.text}
-                  </div>
-                ))}
-              </div>
-
-              <Separator />
-
-              <div className="space-y-3">
-                <Input
-                  value={input}
-                  placeholder="Ask about blockers, priorities, or grouping..."
-                  onChange={(event) => setInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      sendMessage();
-                    }
-                  }}
-                />
-                <Button className="w-full shadow-sm" onClick={sendMessage}>
-                  <SendHorizontal className="mr-2 h-4 w-4" />
-                  Send
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        <Button
-          type="button"
-          aria-expanded={isAssistantOpen}
-          aria-controls="board-ai-chat"
-          className="rounded-full px-4 shadow-lg"
-          onClick={() => setIsAssistantOpen((current) => !current)}
-        >
-          <Bot className="mr-2 h-4 w-4" />
-          {isAssistantOpen ? 'Close assistant' : 'AI Assistant'}
-        </Button>
-      </div>
+      <AiAssistant
+        greeting="I can help sort tasks, spot blockers, or summarize this board once the data is connected."
+        placeholder="Ask about blockers or priorities..."
+      />
     </section>
   );
 }

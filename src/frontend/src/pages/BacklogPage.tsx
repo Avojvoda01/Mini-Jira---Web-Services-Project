@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Filter, Plus } from 'lucide-react';
+import { AiAssistant } from '@/components/common/AiAssistant';
 import { EpicBacklogSection } from '@/components/backlog/EpicBacklogSection';
 import { CreateEpicModal } from '@/components/backlog/CreateEpicModal';
 import { AssignTicketsModal } from '@/components/backlog/AssignTicketsModal';
@@ -601,6 +602,11 @@ export function BacklogPage() {
         onRetryTickets={refetchTickets}
         submitError={createEpicError}
         isAssigning={isCreatingEpicTickets}
+      />
+
+      <AiAssistant
+        greeting="I can help group tickets into epics, balance workload, or summarize progress once the data is connected."
+        placeholder="Ask about epics or workload..."
       />
     </section>
   );
