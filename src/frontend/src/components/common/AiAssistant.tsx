@@ -25,12 +25,28 @@ export function AiAssistant({ greeting, placeholder }: { greeting: string; place
   const [input, setInput] = useAtom(draftAtom);
   const [messages, setMessages] = useAtom(messagesAtom);
   const messagesRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [messages, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [isOpen]);
 
   const sendMessage = () => {
     const text = input.trim();
@@ -54,11 +70,11 @@ export function AiAssistant({ greeting, placeholder }: { greeting: string; place
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-30 flex flex-col items-end sm:bottom-6 sm:right-6">
+    <div ref={containerRef} className="fixed bottom-5 right-5 z-30 flex flex-col items-end sm:bottom-6 sm:right-6">
       {isOpen ? (
         <div
           id="ai-assistant-window"
-          className="mb-3 flex w-[min(92vw,380px)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl ring-1 ring-foreground/10"
+          className="mb-3 flex w-[min(92vw,440px)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl ring-1 ring-foreground/10"
         >
           <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/60 px-4 py-3">
             <div className="flex items-center gap-2.5">
@@ -98,7 +114,7 @@ export function AiAssistant({ greeting, placeholder }: { greeting: string; place
             </div>
           </div>
 
-          <div ref={messagesRef} className="h-72 space-y-3 overflow-y-auto p-4">
+          <div ref={messagesRef} className="h-[26rem] max-h-[55vh] space-y-3 overflow-y-auto p-4">
             <div className="mr-auto max-w-[85%] rounded-2xl rounded-bl-md border border-border/60 bg-muted px-3.5 py-2.5 text-sm leading-6 text-foreground shadow-sm">
               {greeting}
             </div>
