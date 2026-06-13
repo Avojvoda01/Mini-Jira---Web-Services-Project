@@ -26,8 +26,18 @@ These are supported by a number of additional patterns and practices:
 > **Note on the codebase layout:** The patterns below describe *logical* layers.
 > In this project they are **not** split across separate assemblies — everything
 > lives in the single `MiniJiraAspire.Server` project and the separation is
-> enforced by folder structure (`Models/`, `Features/`, `Persistence/`,
-> `Endpoints/`) rather than by project boundaries.
+> enforced by folder structure rather than by project boundaries:
+>
+> | Folder            | Responsibility                                              |
+> | ----------------- | ----------------------------------------------------------- |
+> | `Models/`         | Domain entities, DTOs, command/query/request/response types |
+> | `Features/`       | MediatR command & query handlers (vertical slices)          |
+> | `Endpoints/`      | Minimal API endpoints that dispatch to MediatR              |
+> | `Persistence/`    | Repository ports & EF Core adapters                         |
+> | `Services/`       | Cross-cutting services (e.g. `Services/Auth` JWT)           |
+> | `Data/`           | `AppDbContext`, entity configurations, DB seeder            |
+> | `Migrations/`     | EF Core code-first migrations                               |
+> | `Chatbot/`        | Self-contained AI assistant feature (see below)             |
 
 ---
 
@@ -183,9 +193,11 @@ injected via the constructor.
 
 ### EF Core Code-First & Seeding
 
-The database schema is defined in code. Migrations live in `Migrations/`, the
-`AppDbContext` configures entities, and `DbSeeder.MigrateAndSeedAsync` applies
-migrations and seeds initial data on startup.
+The database schema is defined in code. Migrations live in `Migrations/`, entity
+type configurations live as `IEntityTypeConfiguration` classes in
+`Data/Configurations/` (the `AppDbContext` applies them), and
+`DbSeeder.MigrateAndSeedAsync` applies migrations and seeds initial data on
+startup.
 
 ### JWT Authentication
 
@@ -197,3 +209,44 @@ configured as middleware in `Program.cs`.
 
 The `MiniJiraAspire.AppHost` project orchestrates the server, frontend, and
 PostgreSQL database for local development.
+
+### Chatbot / AI Assistant
+
+The in-app AI assistant lives in its own folder (`Chatbot/`) and is a
+**deliberate exception** to the Endpoint → MediatR → Feature flow described
+above. `ChatbotEndpoints` is a thicker minimal-API handler that injects the
+repositories directly rather than dispatching commands/queries through MediatR —
+it orchestrates an LLM rather than performing a single write/read use case, so a
+self-contained module is the simpler fit. It still goes through the repository
+ports, so it never touches the database directly, and the endpoint requires
+authorization.
+
+It talks to a **local LM Studio** instance (an OpenAI-compatible chat-completions
+API) via two ports:
+
+```text
+ChatbotEndpoints  (POST /api/chats, requires auth)
+    |
+    ├── ILmStudioChatClient        ← Port (LLM access)
+    |       └── LmStudioChatClient  ← Adapter (HttpClient → LM Studio)
+    |
+    └── IMiniJiraKnowledgeProvider ← Port (static app knowledge)
+            └── MiniJiraKnowledgeProvider ← Adapter (reads Knowledge/*.txt)
+```
+
+Request flow:
+
+1. **Classify intent** — the question is sent to the LLM, which returns a
+   structured `ChatbotIntent` (intent name plus optional project/epic/search/
+   status/priority slots).
+2. **`general_help`** → retrieve relevant text from `Knowledge/*.txt` and let the
+   LLM answer using only that context (a lightweight RAG approach).
+3. **Live-data intents** (`get_my_tasks`, `summarize_project`, `list_project_epics`,
+   …) → query the repositories, build a plain-text data context, and let the LLM
+   phrase the answer.
+
+Visibility is enforced before any data reaches the model: admins see all
+projects, other users only their own/member projects (and the epics within
+them). Configuration (`BaseUrl`, `Model`, `MaxTokens`, `Enabled`) is bound from
+the `LmStudio` settings section via `ChatbotOptions`; if LM Studio is
+unreachable the endpoint returns `503`.
