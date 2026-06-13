@@ -400,6 +400,18 @@ public class DbSeeder
             );
         }
 
+        // Spread task creation dates around the 13.06.2026 reference so they
+        // don't all share the seed run's timestamp. Each newly added task gets a
+        // random offset of up to two weeks before the reference. The fixed RNG
+        // seed keeps the spread reproducible across reseeds.
+        var taskReferenceDate = new DateTime(2026, 6, 13, 9, 0, 0, DateTimeKind.Utc);
+        var taskDateRng = new Random(20260613);
+        foreach (var entry in db.ChangeTracker.Entries<TaskItem>())
+        {
+            if (entry.State == EntityState.Added)
+                entry.Entity.CreatedAtUtc = taskReferenceDate.AddMinutes(-taskDateRng.Next(0, 14 * 24 * 60));
+        }
+
         await db.SaveChangesAsync();
 
         // ── 6. COMMENTS (1–2 per task) ────────────────────────────────────────

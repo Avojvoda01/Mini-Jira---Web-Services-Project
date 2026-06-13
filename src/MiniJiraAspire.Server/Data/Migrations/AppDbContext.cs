@@ -20,7 +20,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         var now = DateTime.UtcNow;
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
-            if (entry.State == EntityState.Added)
+            if (entry.State == EntityState.Added && entry.Entity.CreatedAtUtc == default)
                 entry.Entity.CreatedAtUtc = now;
             else if (entry.State == EntityState.Modified)
                 entry.Entity.UpdatedAtUtc = now;
