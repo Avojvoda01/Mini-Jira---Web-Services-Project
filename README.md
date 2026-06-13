@@ -126,6 +126,5 @@ src/
 
 * **Architecture:** [`docs/arc.md`](docs/arc.md)
 * **Use cases:** [`docs/Mini_Jira_UseCases_EN.pdf`](docs/Mini_Jira_UseCases_EN.pdf)
-* **Presentation (Google Slides):** _https://docs.google.com/presentation/d/17-K0ufjfCULsIcsmB2qXo_lFSg7qK2RFB5pVyEQm0Lk/edit?usp=sharing_
 
 
