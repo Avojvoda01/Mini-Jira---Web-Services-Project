@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { atomWithStorage, createJSONStorage } from 'jotai/utils';
 import { Bot, RotateCcw, SendHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { authSessionAtom } from '@/store/authAtoms';
 
 type ChatMessage = {
   id: number;
@@ -24,6 +25,8 @@ export function AiAssistant({ greeting, placeholder }: { greeting: string; place
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useAtom(draftAtom);
   const [messages, setMessages] = useAtom(messagesAtom);
+  const [isSending, setIsSending] = useState(false);
+  const session = useAtomValue(authSessionAtom);
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -48,25 +51,40 @@ export function AiAssistant({ greeting, placeholder }: { greeting: string; place
     return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, [isOpen]);
 
-  const sendMessage = () => {
+  const appendMessage = (role: ChatMessage['role'], text: string) => {
+    setMessages((current) => {
+      const nextId = current.reduce((max, message) => Math.max(max, message.id), 0) + 1;
+      return [...current, { id: nextId, role, text }];
+    });
+  };
+
+  const sendMessage = async () => {
     const text = input.trim();
-    if (!text) {
+    if (!text || isSending) {
       return;
     }
 
-    setMessages((current) => {
-      const nextId = current.reduce((max, message) => Math.max(max, message.id), 0) + 1;
-      return [
-        ...current,
-        { id: nextId, role: 'user', text },
-        {
-          id: nextId + 1,
-          role: 'assistant',
-          text: 'Noted. This assistant will later connect to a real workflow endpoint.',
-        },
-      ];
-    });
+    appendMessage('user', text);
     setInput('');
+    setIsSending(true);
+
+    try {
+      const response = await fetch('/api/chats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
+        },
+        body: JSON.stringify({ message: text }),
+      });
+
+      const data = (await response.json()) as { answer?: string; message?: string };
+      appendMessage('assistant', data.answer ?? data.message ?? 'No response text found.');
+    } catch {
+      appendMessage('assistant', 'I could not reach the assistant. Please make sure LM Studio is running and try again.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -137,16 +155,23 @@ export function AiAssistant({ greeting, placeholder }: { greeting: string; place
             className="flex items-center gap-2 border-t border-border bg-muted/40 p-3"
             onSubmit={(event) => {
               event.preventDefault();
-              sendMessage();
+              void sendMessage();
             }}
           >
             <Input
               value={input}
               placeholder={placeholder}
               onChange={(event) => setInput(event.target.value)}
+              disabled={isSending}
               className="bg-background"
             />
-            <Button type="submit" size="icon" className="shrink-0 shadow-sm" disabled={!input.trim()} aria-label="Send message">
+            <Button
+              type="submit"
+              size="icon"
+              className="shrink-0 shadow-sm"
+              disabled={!input.trim() || isSending}
+              aria-label="Send message"
+            >
               <SendHorizontal className="h-4 w-4" />
             </Button>
           </form>
