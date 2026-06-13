@@ -991,7 +991,7 @@ export function BoardPage() {
 
       <AiAssistant
         greeting="I can help sort tasks, spot blockers, or summarize this board once the data is connected."
-        placeholder="Ask about blockers or priorities..."
+        placeholder="Ask about your tasks, priorities, or project..."
       />
     </section>
   );
