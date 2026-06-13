@@ -1,0 +1,26 @@
+Tasks are individual work items in Mini Jira.
+
+A task belongs to a project.
+A task can have a title, description, status, priority, assignee, comments, and optionally an epic.
+
+Where users find tasks in the app:
+Tasks are mainly found inside a project workspace on the Board page.
+To find tasks, sign in, open Projects, choose a project with Open project, then click Board in the left sidebar.
+
+What users can do with tasks on Board:
+- see tasks grouped into board columns
+- add a ticket with Add ticket
+- click a task card to open task details
+- view task status, priority, assignee, and description
+- change or clear the assignee
+- delete a task
+- read and write comments on the task details panel
+
+Tasks can also appear on the Backlog page when assigning tickets to epics.
+
+Users may see task filters or sorting options such as:
+- search
+- status
+- priority
+- assignee
+- epic

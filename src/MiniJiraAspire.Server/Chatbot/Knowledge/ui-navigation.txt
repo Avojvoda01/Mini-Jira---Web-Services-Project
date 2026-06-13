@@ -1,0 +1,57 @@
+Mini Jira user interface navigation:
+
+From the home page, users can choose View projects, Sign in, or Create account.
+
+Users must sign in before using the main app.
+
+After sign in, the main app starts on the Projects page.
+The Projects page is the entry point for the application.
+On the Projects page, users can:
+- view all projects
+- sort projects by newest, oldest, name A-Z, or name Z-A
+- create a project with the Create project button
+- show project members
+- edit a project
+- delete a project
+- open a project with the Open project button
+
+When a user opens a project, the project workspace has a left sidebar.
+The sidebar contains:
+- Dashboard
+- Board
+- Backlog
+- Settings
+- Back to projects
+- Sign out
+
+Dashboard is for project overview and metrics.
+Dashboard shows totals such as total tasks, open tasks, in-progress tasks, completed tasks, total epics, medium priority tasks, high priority tasks, and team members.
+
+Board is for working with tasks/tickets.
+On Board, users can:
+- see task columns
+- add a ticket with Add ticket
+- open a task by clicking the task card
+- see task details
+- change or clear the assignee
+- read comments
+- add comments
+- edit comments
+- delete comments
+- delete a task
+- open the AI Assistant button in the bottom-right corner
+
+Backlog is where epics are shown and managed.
+On Backlog, users can:
+- view epics for the current project
+- sort epics by newest, oldest, recently updated, most tickets, fewest tickets, name A-Z, or name Z-A
+- create an epic with the Create epic button
+- edit an epic
+- delete an epic
+- assign unassigned tickets to an epic
+- remove tickets from an epic
+
+Settings is for workspace and assistant preferences.
+
+When answering user questions about where to find something in the app, answer with UI navigation.
+Do not mention API endpoints, backend routes, HTTP methods, database fields, ids, tokens, DTOs, or server implementation details.

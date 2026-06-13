@@ -1,0 +1,16 @@
+Comments are notes or discussion messages attached to tasks.
+
+Comments belong to tasks.
+Comments help teammates discuss details, progress, or questions about a task.
+
+Where users find comments in the app:
+Comments are found on the Board page inside a task's detail panel.
+To find comments, open a project, go to Board, click a task card, then look for the Comments section.
+
+What users can do with comments:
+- read comments on a task
+- add a comment using the Add comment input
+- edit an existing comment
+- delete a comment
+
+Comments are useful for discussing details, progress, or questions about a task.

@@ -1,0 +1,18 @@
+Projects are top-level work areas in Mini Jira.
+
+Where users find projects in the app:
+Projects are found on the Projects page after signing in.
+Users can also return there from a project workspace by clicking Back to projects in the sidebar.
+
+What users can do on the Projects page:
+- view all projects
+- sort projects
+- create a new project with Create project
+- show project members
+- edit a project
+- delete a project
+- open a project with Open project
+
+When a user opens a project, they enter that project's workspace with Dashboard, Board, Backlog, and Settings.
+
+Projects are useful because tasks and epics belong to a project.

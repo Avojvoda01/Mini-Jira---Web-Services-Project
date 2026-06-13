@@ -160,28 +160,45 @@ export function BoardPage() {
     },
   ]);
 
-  const sendMessage = () => {
-    const text = input.trim();
-    if (!text) {
-      return;
-    }
+    const sendMessage = async () => {
+        const text = input.trim();
+        if (!text) return;
 
-    const userMessageId = nextMessageIdRef.current;
-    nextMessageIdRef.current += 1;
-    const assistantMessageId = nextMessageIdRef.current;
-    nextMessageIdRef.current += 1;
+        setMessages((current) => [
+            ...current,
+            {
+                id: nextMessageIdRef.current++,
+                role: "user",
+                text,
+            },
+        ]);
 
-    setMessages((current) => [
-      ...current,
-      { id: userMessageId, role: 'user', text },
-      {
-        id: assistantMessageId,
-        role: 'assistant',
-        text: 'Noted. This board assistant will later connect to a real workflow endpoint.',
-      },
-    ]);
-    setInput('');
-  };
+        setInput("");
+
+        const response = await fetch("/api/chats", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session?.token}`, // change token name if different
+            },
+            body: JSON.stringify({
+                message: text,
+            }),
+        });
+
+        const data = await response.json();
+
+        console.log("chat response:", data);
+
+        setMessages((current) => [
+            ...current,
+            {
+                id: nextMessageIdRef.current++,
+                role: "assistant",
+                text: data.answer ?? data.message ?? "No response text found.", 
+            },
+        ]);
+    };
 
   const taskDisplayIds = useMemo(() => {
     const sorted = [...tasks].sort((left, right) => {

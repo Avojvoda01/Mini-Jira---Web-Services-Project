@@ -1,0 +1,17 @@
+Mini Jira has users and admin user management.
+
+Known roles:
+- Admin
+- Project Manager
+- Project Member
+
+Where users sign in or register:
+Users sign in from the Sign in page.
+Users create an account from the Create account page.
+The home page has Sign in and Create account buttons.
+
+Where users see their signed-in identity:
+Inside a project workspace, the left sidebar shows Signed in as, display name, and email.
+The same sidebar has Sign out.
+
+The normal visible app flow is sign in, create account, projects, project workspace, and sign out.

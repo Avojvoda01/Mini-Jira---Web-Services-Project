@@ -44,4 +44,10 @@
   <ItemGroup>
     <Compile Remove="Features\Project\ProjectCommands.cs" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Chatbot\Knowledge\*.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>
