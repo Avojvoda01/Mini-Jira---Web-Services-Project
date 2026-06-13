@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -227,6 +228,20 @@ public class DbSeeder
             );
         }
 
+        // Spread epic and task creation across 15–19.06.2026, business hours 08:00–18:00.
+        // Fixed RNG seed keeps the spread reproducible across reseeds.
+        var createdDateRng = new Random(15062026);
+        DateTime RandomBusinessDate() =>
+            new DateTime(2026, 6, 15, 8, 0, 0, DateTimeKind.Utc)
+                .AddDays(createdDateRng.Next(0, 5))        // 15.–19.06.2026
+                .AddMinutes(createdDateRng.Next(0, 10 * 60 + 1)); // 08:00–18:00
+
+        foreach (var entry in db.ChangeTracker.Entries<Epic>())
+        {
+            if (entry.State == EntityState.Added)
+                entry.Entity.CreatedAtUtc = RandomBusinessDate();
+        }
+
         await db.SaveChangesAsync();
 
         // ── 5. TASKS (20 per project) ─────────────────────────────────────────
@@ -400,16 +415,11 @@ public class DbSeeder
             );
         }
 
-        // Spread task creation dates around the 13.06.2026 reference so they
-        // don't all share the seed run's timestamp. Each newly added task gets a
-        // random offset of up to two weeks before the reference. The fixed RNG
-        // seed keeps the spread reproducible across reseeds.
-        var taskReferenceDate = new DateTime(2026, 6, 13, 9, 0, 0, DateTimeKind.Utc);
-        var taskDateRng = new Random(20260613);
+        // Spread task creation across the same 15–19.06.2026 business-hours window.
         foreach (var entry in db.ChangeTracker.Entries<TaskItem>())
         {
             if (entry.State == EntityState.Added)
-                entry.Entity.CreatedAtUtc = taskReferenceDate.AddMinutes(-taskDateRng.Next(0, 14 * 24 * 60));
+                entry.Entity.CreatedAtUtc = RandomBusinessDate();
         }
 
         await db.SaveChangesAsync();
@@ -421,11 +431,25 @@ public class DbSeeder
         {
             var tasksByTitle = await db.TaskItems.ToDictionaryAsync(t => t.Title);
 
+            // Each comment is created some time after its task (and after any
+            // earlier comment on the same task), capped at the reference day so
+            // nothing lands in the future. Fixed RNG seed keeps it reproducible.
+            var commentDateRng = new Random(13062026);
+            var commentCeiling = new DateTime(2026, 6, 22, 18, 0, 0, DateTimeKind.Utc);
+            var lastCommentTime = new Dictionary<string, DateTime>();
+
             void AddComment(string taskTitle, User? author, string content)
             {
                 if (author is null || !tasksByTitle.TryGetValue(taskTitle, out var task))
                     return;
-                db.Comments.Add(new Comment { TaskId = task.Id.ToString(), UserId = author.Id, Content = content });
+
+                var earliest = lastCommentTime.TryGetValue(taskTitle, out var prev) ? prev : task.CreatedAtUtc;
+                // 2 hours to 3 days after the task creation or the previous comment.
+                var createdAt = earliest.AddMinutes(commentDateRng.Next(120, 3 * 24 * 60));
+                if (createdAt > commentCeiling) createdAt = commentCeiling;
+                lastCommentTime[taskTitle] = createdAt;
+
+                db.Comments.Add(new Comment { TaskId = task.Id.ToString(), UserId = author.Id, Content = content, CreatedAtUtc = createdAt });
             }
 
             // --- P1: Nexus Platform ---
