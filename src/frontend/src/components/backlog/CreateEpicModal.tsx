@@ -69,7 +69,7 @@ export function CreateEpicModal({
         <CardDescription>Create an epic and optionally attach unassigned tickets.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground" htmlFor="epic-name">
               Epic name

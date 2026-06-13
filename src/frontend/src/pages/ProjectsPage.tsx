@@ -6,10 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
 import { ModeToggle } from '@/components/common/ModeToggle';
 import { CreateProjectForm } from '@/components/projects/CreateProjectForm';
 import { useProjectsQuery, type ProjectDto } from '@/features/projects';
-import { useAdminUsersQuery } from '@/features/users';
+import { useUsersQuery } from '@/features/users';
 import { authSessionAtom } from '@/store/authAtoms';
 
 type ProjectSortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
@@ -32,7 +33,7 @@ export function ProjectsPage() {
     navigate('/', { replace: true });
   };
   const { data: allProjects = [], isError, isLoading, error, refetch } = useProjectsQuery();
-  const { data: users = [] } = useAdminUsersQuery();
+  const { data: users = [] } = useUsersQuery();
 
   const projects = useMemo(() => {
     if (!currentUserId) return [];
@@ -46,10 +47,6 @@ export function ProjectsPage() {
 
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [projectSort, setProjectSort] = useState<ProjectSortOption>('newest');
-
-  const describedCount = useMemo(() => {
-    return projects.filter((project) => project.description.trim().length > 0).length;
-  }, [projects]);
 
   const sortedProjects = useMemo(() => {
     const next = [...projects];
@@ -93,9 +90,30 @@ export function ProjectsPage() {
     }
   }, [projectSort]);
 
+  const ownProjects = useMemo(() => {
+    return sortedProjects.filter((p) => p.createdById?.toLowerCase() === currentUserId);
+  }, [sortedProjects, currentUserId]);
+
+  const joinedProjects = useMemo(() => {
+    return sortedProjects.filter(
+      (p) =>
+        p.createdById?.toLowerCase() !== currentUserId &&
+        (p.memberIds ?? []).some((id) => id.toLowerCase() === currentUserId),
+    );
+  }, [sortedProjects, currentUserId]);
+
+  const otherProjects = useMemo(() => {
+    if (session?.role !== 'Admin') return [];
+    return sortedProjects.filter(
+      (p) =>
+        p.createdById?.toLowerCase() !== currentUserId &&
+        !(p.memberIds ?? []).some((id) => id.toLowerCase() === currentUserId),
+    );
+  }, [sortedProjects, currentUserId, session?.role]);
+
   return (
     <section className="space-y-6">
-      <div className="relative overflow-hidden rounded-b-3xl rounded-t-none border border-border/70 bg-gradient-to-br from-card via-card to-muted/45 p-6 shadow-sm sm:p-8">
+      <div className="sticky top-0 z-10 relative overflow-hidden rounded-b-3xl rounded-t-none border border-border/70 bg-gradient-to-br from-card via-card to-card/95 p-6 shadow-sm backdrop-blur-md sm:p-8">
         <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
           <ModeToggle className="h-11 w-11" />
           <DropdownMenu>
@@ -148,7 +166,7 @@ export function ProjectsPage() {
                 Select or Create a Project
               </h1>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                This is the entry layer before dashboard and board views. Pick a project to open its dedicated workspace context.
+                Manage your projects, track progress, and collaborate with your team. Open a project to access its board, backlog, and settings.
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <DropdownMenu>
@@ -181,71 +199,165 @@ export function ProjectsPage() {
               <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{projects.length}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Described</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{describedCount}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Own</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{ownProjects.length}</p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Showing</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{sortedProjects.length}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Joined</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{joinedProjects.length}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-2 grid gap-4 lg:mx-4 lg:grid-cols-3">
+      <div className="mx-2 space-y-8 lg:mx-4">
         {isLoading ? (
-          <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-xl tracking-tight">Loading projects...</CardTitle>
-              <CardDescription>Fetching your project list.</CardDescription>
-            </CardHeader>
-          </Card>
-        ) : isError ? (
-          <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-            <CardHeader className="space-y-3">
-              <div>
-                <CardTitle className="text-xl tracking-tight">Unable to load projects</CardTitle>
-                <CardDescription>{error instanceof Error ? error.message : 'Try again in a moment.'}</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
-                Retry
-              </Button>
-            </CardHeader>
-          </Card>
-        ) : projects.length === 0 ? (
-          <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-xl tracking-tight">No projects yet</CardTitle>
-              <CardDescription>Create your first project to get started.</CardDescription>
-            </CardHeader>
-          </Card>
-        ) : (
-          sortedProjects.map((project) => (
-            <Card key={project.id} className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
-              <CardHeader className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-2">
-                    <Badge variant="secondary" className="w-fit border border-border/60 bg-background/80 text-foreground">
-                      <LayoutGrid className="mr-1.5 h-3.5 w-3.5" />
-                      Project
-                    </Badge>
-                    <CardTitle className="text-xl tracking-tight">{project.name}</CardTitle>
-                  </div>
-                  <FolderKanban className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <CardDescription>{project.description}</CardDescription>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-xl tracking-tight">Loading projects...</CardTitle>
+                <CardDescription>Fetching your project list.</CardDescription>
               </CardHeader>
-
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <Button asChild className="w-full shadow-sm">
-                  <Link to={`/app/project/${project.id}/dashboard`}>
-                    Open project
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
             </Card>
-          ))
+          </div>
+        ) : isError ? (
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+              <CardHeader className="space-y-3">
+                <div>
+                  <CardTitle className="text-xl tracking-tight">Unable to load projects</CardTitle>
+                  <CardDescription>{error instanceof Error ? error.message : 'Try again in a moment.'}</CardDescription>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  Retry
+                </Button>
+              </CardHeader>
+            </Card>
+          </div>
+        ) : (
+          <>
+            <div>
+              <div className="mb-4 flex items-center gap-3">
+                <h2 className="shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Your Projects</h2>
+                <Separator className="flex-1" />
+              </div>
+              <div className="grid gap-4 lg:grid-cols-3">
+                {ownProjects.length === 0 ? (
+                  <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+                    <CardHeader>
+                      <CardTitle className="text-xl tracking-tight">No own projects yet</CardTitle>
+                      <CardDescription>Create one to get started.</CardDescription>
+                    </CardHeader>
+                  </Card>
+                ) : (
+                  ownProjects.map((project) => (
+                    <Card key={project.id} className="flex flex-col border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+                      <CardHeader className="space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-2">
+                            <Badge variant="secondary" className="w-fit border border-border/60 bg-background/80 text-foreground">
+                              <LayoutGrid className="mr-1.5 h-3.5 w-3.5" />
+                              Project
+                            </Badge>
+                            <CardTitle className="text-xl tracking-tight">{project.name}</CardTitle>
+                          </div>
+                          <FolderKanban className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <CardDescription className="line-clamp-4">{project.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="mt-auto space-y-3 text-sm text-muted-foreground">
+                        <Button asChild className="w-full shadow-sm">
+                          <Link to={`/app/project/${project.id}/dashboard`}>
+                            Open project
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-4 flex items-center gap-3">
+                <h2 className="shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Joined Projects</h2>
+                <Separator className="flex-1" />
+              </div>
+              <div className="grid gap-4 lg:grid-cols-3">
+                {joinedProjects.length === 0 ? (
+                  <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+                    <CardHeader>
+                      <CardTitle className="text-xl tracking-tight">Not part of any project yet</CardTitle>
+                      <CardDescription>Ask a project owner to add you as a member.</CardDescription>
+                    </CardHeader>
+                  </Card>
+                ) : (
+                  joinedProjects.map((project) => (
+                    <Card key={project.id} className="flex flex-col border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+                      <CardHeader className="space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-2">
+                            <Badge variant="secondary" className="w-fit border border-border/60 bg-background/80 text-foreground">
+                              <LayoutGrid className="mr-1.5 h-3.5 w-3.5" />
+                              Project
+                            </Badge>
+                            <CardTitle className="text-xl tracking-tight">{project.name}</CardTitle>
+                          </div>
+                          <FolderKanban className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <CardDescription className="line-clamp-4">{project.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="mt-auto space-y-3 text-sm text-muted-foreground">
+                        <Button asChild className="w-full shadow-sm">
+                          <Link to={`/app/project/${project.id}/dashboard`}>
+                            Open project
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {session?.role === 'Admin' && otherProjects.length > 0 && (
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <h2 className="shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">All Projects</h2>
+                  <Separator className="flex-1" />
+                </div>
+                <div className="grid gap-4 lg:grid-cols-3">
+                  {otherProjects.map((project) => (
+                    <Card key={project.id} className="flex flex-col border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+                      <CardHeader className="space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-2">
+                            <Badge variant="secondary" className="w-fit border border-border/60 bg-background/80 text-foreground">
+                              <LayoutGrid className="mr-1.5 h-3.5 w-3.5" />
+                              Project
+                            </Badge>
+                            <CardTitle className="text-xl tracking-tight">{project.name}</CardTitle>
+                          </div>
+                          <FolderKanban className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <CardDescription className="line-clamp-4">{project.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="mt-auto space-y-3 text-sm text-muted-foreground">
+                        <Button asChild className="w-full shadow-sm">
+                          <Link to={`/app/project/${project.id}/dashboard`}>
+                            Open project
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

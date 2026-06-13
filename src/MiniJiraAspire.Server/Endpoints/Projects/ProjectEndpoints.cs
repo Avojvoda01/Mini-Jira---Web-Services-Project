@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
+using MiniJiraAspire.Server.Features.Project.Queries;
 using MiniJiraAspire.Server.Models;
 
 namespace MiniJiraAspire.Server.Endpoints.Projects;
@@ -45,15 +46,17 @@ public static class ProjectEndpoints
 
         group.MapPost("/{projectId:guid}/members", AddProjectMember)
             .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("AddProjectMember")
-            .WithSummary("Assign a member to a project");
+            .WithSummary("Assign a member to a project (owner or admin only)");
 
         group.MapDelete("/{projectId:guid}/members/{userId}", RemoveProjectMember)
             .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("RemoveProjectMember")
-            .WithSummary("Remove a member from a project");
+            .WithSummary("Remove a member from a project (owner or admin only)");
 
         group.MapPatch("/{id:guid}/owner", ChangeProjectOwner)
             .Produces(StatusCodes.Status204NoContent)
@@ -126,21 +129,39 @@ public static class ProjectEndpoints
     private static async Task<Results<NoContent, ProblemHttpResult>> AddProjectMember(
         Guid projectId,
         AddProjectMemberCommand command,
+        ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct)
     {
+        var project = await mediator.Send(new GetProjectByIdQuery(projectId), ct);
+        if (project is null)
+            return TypedResults.Problem("Project not found", statusCode: StatusCodes.Status404NotFound);
+
+        var callerId = GetUserId(user);
+        if (!user.IsInRole("Admin") && project.CreatedById != callerId)
+            return TypedResults.Problem("Only the project owner or an admin can manage members.", statusCode: StatusCodes.Status403Forbidden);
+
         var added = await mediator.Send(command with { ProjectId = projectId.ToString() }, ct);
         return added
             ? TypedResults.NoContent()
-            : TypedResults.Problem("Project or user not found", statusCode: StatusCodes.Status404NotFound);
+            : TypedResults.Problem("User not found", statusCode: StatusCodes.Status404NotFound);
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> RemoveProjectMember(
         Guid projectId,
         string userId,
+        ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken ct)
     {
+        var project = await mediator.Send(new GetProjectByIdQuery(projectId), ct);
+        if (project is null)
+            return TypedResults.Problem("Project not found", statusCode: StatusCodes.Status404NotFound);
+
+        var callerId = GetUserId(user);
+        if (!user.IsInRole("Admin") && project.CreatedById != callerId)
+            return TypedResults.Problem("Only the project owner or an admin can manage members.", statusCode: StatusCodes.Status403Forbidden);
+
         var removed = await mediator.Send(new RemoveProjectMemberCommand(projectId.ToString(), userId), ct);
         return removed
             ? TypedResults.NoContent()

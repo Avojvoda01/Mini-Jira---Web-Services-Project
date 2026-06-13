@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle2, Clock3, Flame, ListTodo, Sparkles, Users, Zap } from 'lucide-react';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,9 +7,32 @@ import { usePageHeader } from '@/components/layout/PageHeaderContext';
 import { useTasksQuery } from '@/features/tasks';
 import { useEpicsQuery } from '@/features/epics';
 import { useProjectQuery } from '@/features/projects';
-import { useAdminUsersQuery } from '@/features/users';
+import { useUsersQuery } from '@/features/users';
+import { cn } from '@/lib/utils';
 
 const RECENT_LIMIT = 5;
+
+type RecentMode = 'created' | 'edited';
+
+function RecentModeSwitch({ value, onChange }: { value: RecentMode; onChange: (mode: RecentMode) => void }) {
+  return (
+    <div className="flex items-center rounded-full border border-border/60 bg-muted/60 p-0.5 text-xs font-medium">
+      {(['created', 'edited'] as const).map((mode) => (
+        <button
+          key={mode}
+          type="button"
+          onClick={() => onChange(mode)}
+          className={cn(
+            'rounded-full px-2.5 py-1 capitalize transition-colors',
+            value === mode ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {mode}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function DashboardPage() {
   const { setContent } = usePageHeader();
@@ -18,7 +41,7 @@ export function DashboardPage() {
   const { data: tasks = [] } = useTasksQuery({ projectId: projectId ?? null });
   const { data: epics = [] } = useEpicsQuery({ projectId: projectId ?? null });
   const { data: project } = useProjectQuery(projectId ?? null);
-  const { data: users = [] } = useAdminUsersQuery();
+  const { data: users = [] } = useUsersQuery();
 
   const stats = useMemo(() => {
     const totalTasks = tasks.length;
@@ -41,21 +64,22 @@ export function DashboardPage() {
     [users],
   );
 
-  const recentTasks = useMemo(
-    () =>
-      [...tasks]
-        .sort((a, b) => Date.parse(b.createdAtUtc) - Date.parse(a.createdAtUtc))
-        .slice(0, RECENT_LIMIT),
-    [tasks],
-  );
+  const [taskMode, setTaskMode] = useState<RecentMode>('created');
+  const [epicMode, setEpicMode] = useState<RecentMode>('created');
 
-  const recentEpics = useMemo(
-    () =>
-      [...epics]
-        .sort((a, b) => Date.parse(b.createdAtUtc) - Date.parse(a.createdAtUtc))
-        .slice(0, RECENT_LIMIT),
-    [epics],
-  );
+  const recentTasks = useMemo(() => {
+    const items = taskMode === 'edited' ? tasks.filter((task) => task.updatedAtUtc) : tasks;
+    const sortDate = (item: (typeof tasks)[number]) =>
+      Date.parse(taskMode === 'edited' ? (item.updatedAtUtc ?? item.createdAtUtc) : item.createdAtUtc);
+    return [...items].sort((a, b) => sortDate(b) - sortDate(a)).slice(0, RECENT_LIMIT);
+  }, [tasks, taskMode]);
+
+  const recentEpics = useMemo(() => {
+    const items = epicMode === 'edited' ? epics.filter((epic) => epic.updatedAtUtc) : epics;
+    const sortDate = (item: (typeof epics)[number]) =>
+      Date.parse(epicMode === 'edited' ? (item.updatedAtUtc ?? item.createdAtUtc) : item.createdAtUtc);
+    return [...items].sort((a, b) => sortDate(b) - sortDate(a)).slice(0, RECENT_LIMIT);
+  }, [epics, epicMode]);
 
   const resolveUser = (id: string | null | undefined) => {
     if (!id) return null;
@@ -103,20 +127,29 @@ export function DashboardPage() {
         {/* Recent tasks */}
         <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-base font-semibold">Recent Tasks</CardTitle>
-              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                {recentTasks.length}
-              </span>
+              <div className="flex items-center gap-2">
+                <RecentModeSwitch value={taskMode} onChange={setTaskMode} />
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  {recentTasks.length}
+                </span>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-1 pb-4">
             {recentTasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No tasks yet.</p>
+              <p className="text-sm text-muted-foreground">
+                {taskMode === 'edited' ? 'No edited tasks yet.' : 'No tasks yet.'}
+              </p>
             ) : (
               recentTasks.map((task) => {
-                const creator = resolveUser(task.createdById);
-                const initials = creator?.displayName?.slice(0, 2).toUpperCase() ?? '?';
+                const person =
+                  taskMode === 'edited'
+                    ? (resolveUser(task.updatedById) ?? resolveUser(task.createdById))
+                    : resolveUser(task.createdById);
+                const date = taskMode === 'edited' ? (task.updatedAtUtc ?? task.createdAtUtc) : task.createdAtUtc;
+                const initials = person?.displayName?.slice(0, 2).toUpperCase() ?? '?';
                 return (
                   <div key={task.id} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/50">
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
@@ -124,7 +157,7 @@ export function DashboardPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
-                      <p className="text-xs text-muted-foreground">{creator?.displayName ?? 'Unknown'} · {formatDate(task.createdAtUtc)}</p>
+                      <p className="text-xs text-muted-foreground">{person?.displayName ?? 'Unknown'} · {formatDate(date)}</p>
                     </div>
                     <Badge className={`shrink-0 text-[10px] font-medium hover:opacity-100 ${statusBadgeClass(task.status)}`}>
                       {statusLabel(task.status)}
@@ -139,19 +172,25 @@ export function DashboardPage() {
         {/* Recent epics */}
         <Card className="border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-base font-semibold">Recent Epics</CardTitle>
-              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                {recentEpics.length}
-              </span>
+              <div className="flex items-center gap-2">
+                <RecentModeSwitch value={epicMode} onChange={setEpicMode} />
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  {recentEpics.length}
+                </span>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-1 pb-4">
             {recentEpics.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No epics yet.</p>
+              <p className="text-sm text-muted-foreground">
+                {epicMode === 'edited' ? 'No edited epics yet.' : 'No epics yet.'}
+              </p>
             ) : (
               recentEpics.map((epic) => {
                 const creator = resolveUser(epic.createdById);
+                const date = epicMode === 'edited' ? (epic.updatedAtUtc ?? epic.createdAtUtc) : epic.createdAtUtc;
                 const initials = creator?.displayName?.slice(0, 2).toUpperCase() ?? '?';
                 return (
                   <div key={epic.id} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/50">
@@ -160,7 +199,7 @@ export function DashboardPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{epic.name}</p>
-                      <p className="text-xs text-muted-foreground">{creator?.displayName ?? 'Unknown'} · {formatDate(epic.createdAtUtc)}</p>
+                      <p className="text-xs text-muted-foreground">{creator?.displayName ?? 'Unknown'} · {formatDate(date)}</p>
                     </div>
                     {epic.description?.trim() && (
                       <p className="hidden max-w-[120px] truncate text-xs text-muted-foreground sm:block">

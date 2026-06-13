@@ -147,7 +147,7 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
         <CardTitle>New ticket</CardTitle>
         <CardDescription>Create a ticket in {columnLabel}. Status will start as {defaultStatus}.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="overflow-y-auto space-y-5">
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground" htmlFor="task-title">
             Title

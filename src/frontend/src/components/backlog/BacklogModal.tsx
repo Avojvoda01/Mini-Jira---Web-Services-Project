@@ -1,4 +1,5 @@
 import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Card } from '@/components/ui/card';
 
 type BacklogModalProps = {
@@ -12,6 +13,8 @@ export function BacklogModal({ onClose, children, cardClassName }: BacklogModalP
 
   useEffect(() => {
     overlayRef.current?.focus();
+    document.documentElement.style.overflow = 'hidden';
+    return () => { document.documentElement.style.overflow = ''; };
   }, []);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -21,7 +24,7 @@ export function BacklogModal({ onClose, children, cardClassName }: BacklogModalP
     }
   };
 
-  return (
+  return createPortal(
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-4 py-6"
@@ -31,9 +34,10 @@ export function BacklogModal({ onClose, children, cardClassName }: BacklogModalP
       onClick={onClose}
       onKeyDown={handleKeyDown}
     >
-      <Card className={cardClassName} onClick={(event) => event.stopPropagation()}>
+      <Card className={`flex max-h-[90dvh] flex-col overflow-hidden ${cardClassName}`} onClick={(event) => event.stopPropagation()}>
         {children}
       </Card>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -1,9 +1,9 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { formatEstimate } from '@/lib/estimate';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 
 type BacklogTicket = {
   id: string;
@@ -11,6 +11,8 @@ type BacklogTicket = {
   title: string;
   estimate: string;
   estimateMinutes: number | null;
+  priority: 'High' | 'Medium' | 'Low';
+  assigneeName: string | null;
 };
 
 type EpicBacklogCardProps = {
@@ -26,7 +28,6 @@ type EpicBacklogCardProps = {
   onEdit: () => void;
   onDelete: () => void;
   onRemoveTicket: (ticketId: string) => void;
-  showSeparator?: boolean;
 };
 
 const totalEstimate = (tickets: BacklogTicket[]): string => {
@@ -41,12 +42,9 @@ export function EpicBacklogCard({
   onEdit,
   onDelete,
   onRemoveTicket,
-  showSeparator = false,
 }: EpicBacklogCardProps) {
   return (
-    <div>
-      {showSeparator ? <Separator className="mb-5" /> : null}
-      <Card className="space-y-4 rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
+    <Card className="space-y-4 rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -91,22 +89,32 @@ export function EpicBacklogCard({
           ) : (
             <div className="grid gap-2">
               {assignedTickets.map((ticket) => (
-                <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-sm">
+                <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-muted p-3 text-sm">
                   <div>
                     <p className="font-medium text-foreground">
                       {ticket.displayId} - {ticket.title}
                     </p>
                     <p className="text-xs text-muted-foreground">{ticket.estimate}</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => onRemoveTicket(ticket.id)}>
-                    Remove
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className={cn('text-xs font-medium', ticket.priority === 'High' ? 'bg-rose-500/10 text-rose-700' : ticket.priority === 'Medium' ? 'bg-amber-500/10 text-amber-700' : 'bg-blue-500/10 text-blue-700')}>
+                      {ticket.priority}
+                    </Badge>
+                    {ticket.assigneeName ? (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <User className="h-3 w-3" />
+                        {ticket.assigneeName}
+                      </span>
+                    ) : null}
+                    <Button variant="outline" size="sm" onClick={() => onRemoveTicket(ticket.id)}>
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </Card>
-    </div>
   );
 }

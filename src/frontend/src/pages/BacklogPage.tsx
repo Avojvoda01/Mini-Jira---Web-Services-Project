@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Filter, Plus } from 'lucide-react';
+import { AiAssistant } from '@/components/common/AiAssistant';
 import { EpicBacklogSection } from '@/components/backlog/EpicBacklogSection';
 import { CreateEpicModal } from '@/components/backlog/CreateEpicModal';
 import { AssignTicketsModal } from '@/components/backlog/AssignTicketsModal';
@@ -18,6 +19,7 @@ import {
   type EpicDto,
 } from '@/features/epics';
 import { useAssignEpicMutation, useTasksQuery, type TaskItem, type TaskPriority, type TaskStatus } from '@/features/tasks';
+import { useUsersQuery } from '@/features/users';
 import { formatEstimate } from '@/lib/estimate';
 
 type BacklogTicket = {
@@ -29,6 +31,7 @@ type BacklogTicket = {
   status: string;
   estimate: string;
   estimateMinutes: number | null;
+  assigneeName: string | null;
 };
 
 type Epic = EpicDto & {
@@ -37,7 +40,7 @@ type Epic = EpicDto & {
 
 type EpicSummary = Pick<Epic, 'id' | 'name' | 'description' | 'ticketIds'>;
 
-type EpicSortOption = 'newest' | 'oldest' | 'recently-updated' | 'tickets-desc' | 'tickets-asc' | 'name-asc' | 'name-desc';
+type EpicSortOption = 'newest' | 'oldest' | 'recently-updated' | 'tickets-desc' | 'tickets-asc' | 'name-asc' | 'name-desc' | 'workload-desc' | 'workload-asc';
 
 const priorityLabelMap: Record<TaskPriority, BacklogTicket['priority']> = {
   high: 'High',
@@ -54,7 +57,7 @@ const statusLabelMap: Record<TaskStatus, string> = {
   unknown: 'Open',
 };
 
-const mapTaskToTicket = (task: TaskItem, displayId: string): BacklogTicket => ({
+const mapTaskToTicket = (task: TaskItem, displayId: string, userById: Map<string, string>): BacklogTicket => ({
   id: task.id,
   displayId,
   title: task.title,
@@ -63,6 +66,7 @@ const mapTaskToTicket = (task: TaskItem, displayId: string): BacklogTicket => ({
   status: statusLabelMap[task.status],
   estimate: formatEstimate(task.estimateMinutes),
   estimateMinutes: task.estimateMinutes,
+  assigneeName: task.assigneeId ? (userById.get(task.assigneeId) ?? null) : null,
 });
 
 export function BacklogPage() {
@@ -80,6 +84,9 @@ export function BacklogPage() {
   } = useTasksQuery({
     projectId: projectId ?? null,
   });
+  const { data: users = [] } = useUsersQuery();
+  const userById = useMemo(() => new Map(users.map((u) => [u.id, u.displayName])), [users]);
+
   const createEpicMutation = useCreateEpicMutation();
   const updateEpicMutation = useUpdateEpicMutation();
   const deleteEpicMutation = useDeleteEpicMutation();
@@ -157,6 +164,14 @@ export function BacklogPage() {
     }));
   }, [scopedEpicDtos, ticketsByEpicId]);
 
+  const backlogTickets = useMemo(() => {
+    return scopedTasks.map((task) => mapTaskToTicket(task, taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`, userById));
+  }, [scopedTasks, taskDisplayIds, userById]);
+
+  const ticketById = useMemo(() => {
+    return new Map(backlogTickets.map((ticket) => [ticket.id, ticket]));
+  }, [backlogTickets]);
+
   const sortedEpics = useMemo(() => {
     const next = [...epics];
 
@@ -169,6 +184,8 @@ export function BacklogPage() {
       const value = Date.parse(epic.updatedAtUtc ?? epic.createdAtUtc);
       return Number.isNaN(value) ? 0 : value;
     };
+    const getWorkload = (epic: Epic) =>
+      epic.ticketIds.reduce((sum, id) => sum + (ticketById.get(id)?.estimateMinutes ?? 0), 0);
 
     switch (epicSort) {
       case 'tickets-desc':
@@ -176,6 +193,12 @@ export function BacklogPage() {
         break;
       case 'tickets-asc':
         next.sort((left, right) => left.ticketIds.length - right.ticketIds.length);
+        break;
+      case 'workload-desc':
+        next.sort((left, right) => getWorkload(right) - getWorkload(left));
+        break;
+      case 'workload-asc':
+        next.sort((left, right) => getWorkload(left) - getWorkload(right));
         break;
       case 'name-asc':
         next.sort(compareByName);
@@ -196,15 +219,7 @@ export function BacklogPage() {
     }
 
     return next;
-  }, [epics, epicSort]);
-
-  const backlogTickets = useMemo(() => {
-    return scopedTasks.map((task) => mapTaskToTicket(task, taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`));
-  }, [scopedTasks, taskDisplayIds]);
-
-  const ticketById = useMemo(() => {
-    return new Map(backlogTickets.map((ticket) => [ticket.id, ticket]));
-  }, [backlogTickets]);
+  }, [epics, epicSort, ticketById]);
 
   const activeAssignEpic = useMemo(() => {
     if (assignEpicId === null) {
@@ -233,8 +248,8 @@ export function BacklogPage() {
   const unassignedTickets = useMemo(() => {
     return scopedTasks
       .filter((task) => !task.epicId)
-      .map((task) => mapTaskToTicket(task, taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`));
-  }, [scopedTasks, taskDisplayIds]);
+      .map((task) => mapTaskToTicket(task, taskDisplayIds.get(task.id) ?? `TASK-${task.id.slice(0, 6).toUpperCase()}`, userById));
+  }, [scopedTasks, taskDisplayIds, userById]);
 
   const createEpicFilteredTickets = useMemo(() => {
     const normalizedSearch = createEpicSearch.trim().toLowerCase();
@@ -450,6 +465,10 @@ export function BacklogPage() {
         return 'Name A-Z';
       case 'name-desc':
         return 'Name Z-A';
+      case 'workload-desc':
+        return 'Most workload';
+      case 'workload-asc':
+        return 'Least workload';
       case 'oldest':
         return 'Oldest';
       case 'newest':
@@ -479,6 +498,8 @@ export function BacklogPage() {
               <DropdownMenuItem onClick={() => setEpicSort('tickets-asc')}>Fewest tickets</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEpicSort('name-asc')}>Name A-Z</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setEpicSort('name-desc')}>Name Z-A</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('workload-desc')}>Most workload</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEpicSort('workload-asc')}>Least workload</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button className="shadow-sm" onClick={() => {
@@ -581,6 +602,11 @@ export function BacklogPage() {
         onRetryTickets={refetchTickets}
         submitError={createEpicError}
         isAssigning={isCreatingEpicTickets}
+      />
+
+      <AiAssistant
+        greeting="I can help group tickets into epics, balance workload, or summarize progress once the data is connected."
+        placeholder="Ask about epics or workload..."
       />
     </section>
   );
