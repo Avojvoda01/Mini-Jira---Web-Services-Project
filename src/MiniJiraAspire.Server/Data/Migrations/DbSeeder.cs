@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -227,6 +228,20 @@ public class DbSeeder
             );
         }
 
+        // Spread epic and task creation across 15–19.06.2026, business hours 08:00–18:00.
+        // Fixed RNG seed keeps the spread reproducible across reseeds.
+        var createdDateRng = new Random(15062026);
+        DateTime RandomBusinessDate() =>
+            new DateTime(2026, 6, 15, 8, 0, 0, DateTimeKind.Utc)
+                .AddDays(createdDateRng.Next(0, 5))        // 15.–19.06.2026
+                .AddMinutes(createdDateRng.Next(0, 10 * 60 + 1)); // 08:00–18:00
+
+        foreach (var entry in db.ChangeTracker.Entries<Epic>())
+        {
+            if (entry.State == EntityState.Added)
+                entry.Entity.CreatedAtUtc = RandomBusinessDate();
+        }
+
         await db.SaveChangesAsync();
 
         // ── 5. TASKS (20 per project) ─────────────────────────────────────────
@@ -400,6 +415,138 @@ public class DbSeeder
             );
         }
 
+        // Spread task creation across the same 15–19.06.2026 business-hours window.
+        foreach (var entry in db.ChangeTracker.Entries<TaskItem>())
+        {
+            if (entry.State == EntityState.Added)
+                entry.Entity.CreatedAtUtc = RandomBusinessDate();
+        }
+
         await db.SaveChangesAsync();
+
+        // ── 6. COMMENTS (1–2 per task) ────────────────────────────────────────
+        // Organisational (scheduling, blockers, hand-offs) and technical notes,
+        // authored by project members and keyed to tasks by their unique title.
+        if (!await db.Comments.AnyAsync())
+        {
+            var tasksByTitle = await db.TaskItems.ToDictionaryAsync(t => t.Title);
+
+            // Each comment is created some time after its task (and after any
+            // earlier comment on the same task), capped at the reference day so
+            // nothing lands in the future. Fixed RNG seed keeps it reproducible.
+            var commentDateRng = new Random(13062026);
+            var commentCeiling = new DateTime(2026, 6, 22, 18, 0, 0, DateTimeKind.Utc);
+            var lastCommentTime = new Dictionary<string, DateTime>();
+
+            void AddComment(string taskTitle, User? author, string content)
+            {
+                if (author is null || !tasksByTitle.TryGetValue(taskTitle, out var task))
+                    return;
+
+                var earliest = lastCommentTime.TryGetValue(taskTitle, out var prev) ? prev : task.CreatedAtUtc;
+                // 2 hours to 3 days after the task creation or the previous comment.
+                var createdAt = earliest.AddMinutes(commentDateRng.Next(120, 3 * 24 * 60));
+                if (createdAt > commentCeiling) createdAt = commentCeiling;
+                lastCommentTime[taskTitle] = createdAt;
+
+                db.Comments.Add(new Comment { TaskId = task.Id.ToString(), UserId = author.Id, Content = content, CreatedAtUtc = createdAt });
+            }
+
+            // --- P1: Nexus Platform ---
+            AddComment("Implement OAuth 2.0 login with Google and GitHub", james, "PKCE flow is wired up for Google. Still need to register the GitHub OAuth app and get the client secret from infra.");
+            AddComment("Implement OAuth 2.0 login with Google and GitHub", sophie, "Please whitelist the redirect URIs for the staging domain too, otherwise QA can't test this.");
+            AddComment("Enable TOTP-based two-factor authentication", quirin, "Let's hold this until OAuth login is merged to avoid conflicts in the auth module.");
+            AddComment("Set up role-based access control middleware", lena, "Merged and deployed. Owner/Admin/Member/Viewer policies are documented in the wiki.");
+            AddComment("Add security audit log for sensitive operations", james, "Looks good overall, but please use an append-only table with no UPDATE/DELETE grants so it's genuinely tamper-evident.");
+            AddComment("Integrate Stripe Checkout for subscription plans", sophie, "Checkout sessions work in test mode. Webhook signature verification is next.");
+            AddComment("Integrate Stripe Checkout for subscription plans", mia, "Can we sync on the plan model before this is done? The subscription UI depends on the final field names.");
+            AddComment("Build subscription management UI for customers", mia, "Blocked on the Stripe integration — I need the live plan and invoice data shape first.");
+            AddComment("Implement invoice generation and PDF export", lucas, "Evaluating QuestPDF vs a headless-Chrome render. Leaning QuestPDF for the smaller footprint.");
+            AddComment("Handle failed payment retries with exponential back-off", isabelle, "Low priority for now — let's revisit after the core billing flow ships.");
+            AddComment("Design tenant isolation strategy at the database layer", quirin, "Decision: row-level security on a shared schema. Migration path is documented in docs/arc.md.");
+            AddComment("Design tenant isolation strategy at the database layer", ethan, "This unblocks the per-tenant config API — picking it up now.");
+            AddComment("Build per-tenant configuration management API", ethan, "Feature-flag and branding endpoints are done. Notification preferences still to do.");
+            AddComment("Create tenant onboarding wizard", chloe, "Design mockups are ready. Waiting on the SSO config endpoint before I start the implementation.");
+            AddComment("GDPR-compliant data export and right to erasure", james, "Need legal to confirm the 72-hour anonymisation window before we commit to it in the UI copy.");
+            AddComment("Design and document REST API v2 schema", sophie, "Reviewed — please switch the error envelope to RFC 7807 ProblemDetails for consistency with the rest of the API.");
+            AddComment("Publish interactive Swagger and Scalar API docs", sophie, "Live on /scalar in production. The OpenAPI spec is generated on build.");
+            AddComment("Build TypeScript SDK and publish to npm", lucas, "Core client and auto-retry done. The token-refresh interceptor is flaky under concurrent requests — investigating.");
+            AddComment("Implement webhook delivery with retry and HMAC signing", mia, "Moving this to next sprint — capacity is tight and the SDK work takes priority.");
+            AddComment("Global user management table with search and role filters", quirin, "Shipped. Inline role assignment is admin-only and goes through the audit log.");
+            AddComment("System health monitoring panel with uptime graph", isabelle, "OpenTelemetry data is flowing. Still tuning the p95 latency query — it's slow over large time ranges.");
+            AddComment("Bulk user import via CSV upload", lena, "We should reuse the CSV parsing util from the Horizon CRM contact import rather than rolling our own.");
+            AddComment("Activity feed for admin audit trail", chloe, "Filters work. Pagination needs to be cursor-based instead of offset — the feed grows quickly.");
+
+            // --- P2: Horizon CRM ---
+            AddComment("Implement contact import from CSV and vCard files", oliver, "Shipped with a column-mapping preview step. Handles batches of 500 with a progress bar.");
+            AddComment("Build contact tagging and segmentation system", sarah, "Please make sure dynamic segments recompute when a contact's tags change, not just on the nightly job.");
+            AddComment("Add contact activity timeline view", thomas, "Waiting on the tagging work to land so I can include tag changes in the timeline.");
+            AddComment("Merge duplicate contact detection and resolution", priya, "Prototyping the similarity scoring — Levenshtein on name plus exact email match looks promising.");
+            AddComment("Drag-and-drop Kanban pipeline view", felix, "Live. WIP limits per stage are configurable and the total-value summary row is in.");
+            AddComment("Drag-and-drop Kanban pipeline view", hannah, "The sales team love it — already getting requests for swimlanes by owner.");
+            AddComment("Automated deal stage progression rules", hannah, "Rule-builder UI is done. Hooking up the document-upload trigger next.");
+            AddComment("Revenue forecast chart with close-probability weighting", diego, "Numbers match the spreadsheet the sales team uses today. Ready for a final look.");
+            AddComment("Activity reminders and follow-up scheduling", sarah, "Can we move this up? Follow-up reminders are the top request from reps this quarter.");
+            AddComment("Visual drag-and-drop email template builder", thomas, "Block editor works. Outlook rendering is the usual nightmare — testing with Litmus.");
+            AddComment("Audience segmentation for targeted campaigns", amara, "This depends on the contact segmentation system — let's not duplicate the segment logic across both.");
+            AddComment("A/B testing framework for email subject lines", priya, "We need to define how the winner is picked — open rate after 4 hours, or click rate? Needs product input before building.");
+            AddComment("Unsubscribe handling and CAN-SPAM compliance", sarah, "This is a legal must-have before any campaign goes out. Prioritising the review.");
+            AddComment("Build customisable report builder with drag-and-drop columns", quirin, "Big one. Let's split it into a read-only report viewer first, then add the drag-and-drop builder.");
+            AddComment("Export reports to PDF, Excel and CSV", hannah, "All three formats shipped. Excel keeps the formulas for calculated columns.");
+            AddComment("Real-time dashboard with live deal metrics", diego, "Widgets refresh every 30s over SignalR. Keeping an eye on DB load from the win-rate query.");
+            AddComment("Scheduled report delivery via email", oliver, "Can reuse the scheduling infra from Aurora's scheduled export — already talking to that team.");
+            AddComment("React Native CRM app for iOS and Android", felix, "Expo project scaffolded locally. Need Apple Developer and Play Console accounts from infra before CI builds.");
+            AddComment("Offline contact viewing with background sync", thomas, "Blocked on the app scaffold landing first.");
+            AddComment("Mobile push notifications for deal stage updates", amara, "FCM tokens are registering. The quiet-hours muting is the tricky part.");
+            AddComment("Business card scanner with OCR to contact creation", priya, "Nice-to-have — moving to the backlog until the core mobile app is stable.");
+
+            // --- P3: Voyager Mobile ---
+            AddComment("Design onboarding carousel with five screens", sophie, "Shipped with Lottie animations and a skip-to-sign-in option.");
+            AddComment("Implement biometric authentication (Face ID and fingerprint)", james, "Face ID works on iOS. The Android fingerprint fallback to PIN is wired up but needs more device testing.");
+            AddComment("Implement biometric authentication (Face ID and fingerprint)", lena, "Don't forget the lockout after repeated biometric failures — security flagged it.");
+            AddComment("Add Sign in with Apple and Google Sign-In", noah, "Both flows work. Apple requires the account-linking case when emails match — that's covered, please verify.");
+            AddComment("Password reset with SMS OTP fallback", oliver, "Need a budget decision on the SMS provider (Twilio vs Vonage) before I wire up the fallback.");
+            AddComment("Implement bottom tab navigation with badge counters", marcus, "Five tabs live. Unread badges on Notifications and Tasks update in real time.");
+            AddComment("Deep linking support for push-driven navigation", amara, "The voyager:// scheme is registered. Cold-start deep links need the nav stack ready first — handling that now.");
+            AddComment("Gesture-based swipe actions on list items", felix, "Low priority — parking this until the cold-start performance work is done.");
+            AddComment("Dark mode following the system appearance setting", hannah, "All colours moved to semantic tokens. Switches without a restart.");
+            AddComment("Local SQLite cache for offline task and project data", quirin, "Schema and first-login population done. Working on the migration-safe upgrade path.");
+            AddComment("Conflict resolution strategy for concurrent edits", james, "Last-write-wins is fine for most fields, but status needs the conflict dialog. Depends on the cache landing first.");
+            AddComment("Background sync triggered on network reconnect", noah, "Blocked on the offline cache and conflict resolution — sequencing this after both.");
+            AddComment("Optimistic UI updates with rollback on server error", diego, "Rollback works and the error toast is actionable. Please review the reconciliation logic.");
+            AddComment("Integrate Firebase Cloud Messaging for push delivery", marcus, "FCM is live. Foreground, background and quit-state payloads all route to the right screen.");
+            AddComment("Per-user notification preference settings screen", sophie, "Waiting on the final list of notification categories from product before building the toggles.");
+            AddComment("Rich push notifications with inline action buttons", oliver, "Complete/Snooze actions work on iOS. Android needs a custom notification layout.");
+            AddComment("Notification delivery analytics dashboard (admin)", amara, "Low priority — moving to next sprint, it needs enough delivery data to accumulate first.");
+            AddComment("Profile and reduce app cold start time to under 2 seconds", felix, "Hermes enabled, down to 2.6s. Deferring the analytics SDK init should get us under 2s.");
+            AddComment("Lazy-load images with a blurred progressive placeholder", hannah, "All Image components swapped for the lazy wrapper — noticeable scroll improvement.");
+            AddComment("Integrate Crashlytics for real-time crash reporting", marcus, "Live with Slack alerts for new crash types. Source maps upload on each release build.");
+            AddComment("Automated performance regression tests in CI pipeline", quirin, "Let's gate this behind the cold-start work so we benchmark the optimised build, not the current one.");
+
+            // --- P4: Aurora Analytics ---
+            AddComment("Build connectors for PostgreSQL and MySQL data sources", ethan, "Both connectors live with CDC incremental sync. MySQL needs binlog enabled on the source.");
+            AddComment("Kafka stream ingestion with Confluent Schema Registry", quirin, "Avro deserialisation works against the registry. Tuning consumer lag under high throughput.");
+            AddComment("Kafka stream ingestion with Confluent Schema Registry", isabelle, "Once this is stable I'll point the validation pipeline at its output.");
+            AddComment("REST push endpoint with API key authentication", lucas, "The 10k/min rate limit is in. Please review the batch-receipt ID format before I lock the contract.");
+            AddComment("Data validation pipeline with dead-letter queue", isabelle, "DLQ schema is designed. Need to agree on the rejection-reason taxonomy with the ingestion team.");
+            AddComment("Drag-and-drop widget canvas with responsive grid snapping", chloe, "12-column snapping works and layout persists as JSON. Resize handles are still glitchy on touch.");
+            AddComment("Implement 30+ chart types including heatmaps and Sankey diagrams", mia, "ECharts integrated, 22 types done. Sankey and treemap theming left.");
+            AddComment("Dashboard template library with one-click apply", elena, "Depends on the widget canvas being stable before I can author the starter templates.");
+            AddComment("Share dashboard via public link with optional expiry", thomas, "Security review needed — public links must not leak the underlying raw-data queries.");
+            AddComment("Anomaly detection plugin using Isolation Forest", priya, "Spinning up the scoring micro-service. Need a decision on a Python sidecar vs ONNX in-process.");
+            AddComment("Time-series forecasting with Meta Prophet integration", diego, "Prophet is heavy. Proposing we run it async and cache forecasts rather than computing on every render.");
+            AddComment("AutoML model training UI for business analysts", elena, "Parking this until anomaly detection and forecasting prove out the ML serving infra.");
+            AddComment("Model versioning and A/B deployment support", quirin, "Challenger routing by percentage works. Please review the model-metadata schema.");
+            AddComment("Rule-based alert engine with threshold conditions", ethan, "Live against the streaming pipeline. The 'N consecutive windows' condition is supported.");
+            AddComment("Multi-channel notifications: email, Slack and PagerDuty", isabelle, "Email and Slack done. PagerDuty incident creation is next — waiting on an API key from ops.");
+            AddComment("Alert snooze and acknowledge workflow", lucas, "Straightforward once the alert engine's state model is final — syncing with Ethan.");
+            AddComment("On-call escalation policy with rotation schedule", mia, "Moving to next sprint. Needs the acknowledge workflow in place first to know when to escalate.");
+            AddComment("REST API for querying metrics with time-range and aggregation filters", chloe, "Shipped with cursor pagination and sum/avg/p95 aggregations.");
+            AddComment("Scheduled CSV and Excel export delivered via email", thomas, "Scheduling and CSV done. The Excel export times out on large datasets — chunking it.");
+            AddComment("GraphQL API for flexible data querying", priya, "The schema will be generated from the same metadata layer as REST so the two don't drift.");
+            AddComment("Auto-generate OpenAPI spec and Postman collection", diego, "Low priority. Will hook this into the deploy pipeline once the REST contract is frozen.");
+
+            await db.SaveChangesAsync();
+        }
     }
 }
