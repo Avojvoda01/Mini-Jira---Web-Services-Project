@@ -4,7 +4,7 @@ import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { useAssignEpicMutation, useAssignUserMutation, useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useSetEstimateMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
@@ -329,7 +329,8 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
         </div>
 
         {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
-
+      </CardContent>
+      <CardFooter className="justify-end">
         <FormActionButtons
           onCancel={onClose}
           confirmLabel={
@@ -340,7 +341,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
           onConfirm={handleSave}
           confirmDisabled={updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending || setEstimateMutation.isPending}
         />
-      </CardContent>
+      </CardFooter>
     </BacklogModal>
   );
 }

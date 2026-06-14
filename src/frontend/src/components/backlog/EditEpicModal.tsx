@@ -1,6 +1,6 @@
 import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
 type EditEpicModalProps = {
@@ -34,7 +34,7 @@ export function EditEpicModal({
         <CardTitle>Edit epic</CardTitle>
         <CardDescription>Update the epic details below.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-5 overflow-y-auto">
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground" htmlFor="edit-epic-name">
             Epic name
@@ -63,13 +63,15 @@ export function EditEpicModal({
           />
         </div>
 
+      </CardContent>
+      <CardFooter className="justify-end">
         <FormActionButtons
           onCancel={onClose}
           confirmLabel="Save changes"
           onConfirm={onSave}
           confirmDisabled={epicName.trim().length < 3 || isPending}
         />
-      </CardContent>
+      </CardFooter>
     </BacklogModal>
   );
 }

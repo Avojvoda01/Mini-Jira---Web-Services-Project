@@ -1,7 +1,7 @@
 import { ProjectMemberPicker } from '@/components/projects/ProjectMemberPicker';
 import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { UserDto } from '@/features/users';
 
@@ -45,7 +45,7 @@ export function EditProjectModal({
         <CardTitle>Edit project</CardTitle>
         <CardDescription>Update the project details below.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-5 overflow-y-auto">
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground" htmlFor="edit-project-name">
             Project name
@@ -91,13 +91,15 @@ export function EditProjectModal({
           </p>
         </div>
 
+      </CardContent>
+      <CardFooter className="justify-end">
         <FormActionButtons
           onCancel={onClose}
           confirmLabel="Save changes"
           onConfirm={onSave}
           confirmDisabled={projectName.trim().length < 3 || !projectDescription.trim() || isPending}
         />
-      </CardContent>
+      </CardFooter>
     </BacklogModal>
   );
 }
