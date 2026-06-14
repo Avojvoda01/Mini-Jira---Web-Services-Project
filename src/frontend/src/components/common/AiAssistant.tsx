@@ -11,7 +11,11 @@ type ChatMessage = {
   id: number;
   role: 'user' | 'assistant';
   text: string;
+  timestamp: number;
 };
+
+const formatTime = (timestamp: number) =>
+  new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const messagesStorage = createJSONStorage<ChatMessage[]>(() => sessionStorage);
 const messagesAtom = atomWithStorage<ChatMessage[]>('mini-jira.assistant.messages', [], messagesStorage, {
@@ -54,7 +58,7 @@ export function AiAssistant({ greeting, placeholder }: { greeting: string; place
   const appendMessage = (role: ChatMessage['role'], text: string) => {
     setMessages((current) => {
       const nextId = current.reduce((max, message) => Math.max(max, message.id), 0) + 1;
-      return [...current, { id: nextId, role, text }];
+      return [...current, { id: nextId, role, text, timestamp: Date.now() }];
     });
   };
 
@@ -139,14 +143,19 @@ export function AiAssistant({ greeting, placeholder }: { greeting: string; place
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={cn(
-                  'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-6 shadow-sm',
-                  message.role === 'user'
-                    ? 'ml-auto rounded-br-md bg-primary text-primary-foreground'
-                    : 'mr-auto rounded-bl-md border border-border/60 bg-muted text-foreground',
-                )}
+                className={cn('flex max-w-[85%] flex-col gap-1', message.role === 'user' ? 'ml-auto items-end' : 'mr-auto items-start')}
               >
-                {message.text}
+                <div
+                  className={cn(
+                    'rounded-2xl px-3.5 py-2.5 text-sm leading-6 shadow-sm',
+                    message.role === 'user'
+                      ? 'rounded-br-md bg-primary text-primary-foreground'
+                      : 'rounded-bl-md border border-border/60 bg-muted text-foreground',
+                  )}
+                >
+                  {message.text}
+                </div>
+                {message.timestamp ? <span className="px-1 text-[11px] text-muted-foreground">{formatTime(message.timestamp)}</span> : null}
               </div>
             ))}
           </div>
