@@ -36,7 +36,7 @@ const normalizeStatus = (value: string | null | undefined): TaskStatus => {
   }
 
   const normalized = value.trim().toLowerCase();
-  if (normalized === 'open' || normalized === 'todo' || normalized === 'backlog') {
+  if (normalized === 'ready' || normalized === 'open' || normalized === 'todo' || normalized === 'backlog') {
     return 'todo';
   }
   if (normalized === 'in progress' || normalized === 'in-progress' || normalized === 'progress') {

@@ -29,7 +29,7 @@ public class ChangeStatusHandlerTests
     [Fact]
     public async Task Handle_WithInvalidTaskId_ThrowsFormatException()
     {
-        var command = new ChangeStatusCommand("invalid", "Open");
+        var command = new ChangeStatusCommand("invalid", "Ready");
 
         await Assert.ThrowsAsync<FormatException>(
             () => _handler.Handle(command, CancellationToken.None));

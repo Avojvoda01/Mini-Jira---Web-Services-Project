@@ -112,7 +112,7 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
         projectId,
       });
 
-      if (defaultStatus !== 'Open') {
+      if (defaultStatus !== 'Ready') {
         await changeStatusMutation.mutateAsync({ taskId: created.id, status: defaultStatus });
       }
 

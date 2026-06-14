@@ -50,11 +50,11 @@ const priorityLabelMap: Record<TaskPriority, BacklogTicket['priority']> = {
 };
 
 const statusLabelMap: Record<TaskStatus, string> = {
-  todo: 'Open',
+  todo: 'Ready',
   'in-progress': 'In progress',
   review: 'Review',
   done: 'Done',
-  unknown: 'Open',
+  unknown: 'Ready',
 };
 
 const mapTaskToTicket = (task: TaskItem, displayId: string, userById: Map<string, string>): BacklogTicket => ({

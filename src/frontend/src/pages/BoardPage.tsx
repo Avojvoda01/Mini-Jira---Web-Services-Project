@@ -62,11 +62,11 @@ const priorityLabelMap: Record<TaskPriority, TaskCard['priority']> = {
 };
 
 const statusLabelMap: Record<TaskItem['status'], string> = {
-  todo: 'Open',
+  todo: 'Ready',
   'in-progress': 'In Progress',
   review: 'Review',
   done: 'Done',
-  unknown: 'Open',
+  unknown: 'Ready',
 };
 
 const priorityBorderClass = (priority: TaskCard['priority']) => {
@@ -114,7 +114,7 @@ const columnConfig: Array<Omit<BoardColumn, 'tasks'>> = [
 ];
 
 const columnStatusMap: Record<BoardColumn['id'], string> = {
-  ready: 'Open',
+  ready: 'Ready',
   'in-progress': 'In Progress',
   review: 'Review',
   done: 'Done',
@@ -465,7 +465,7 @@ export function BoardPage() {
         isOpen={createColumnId !== null}
         onClose={() => setCreateColumnId(null)}
         projectId={projectId ?? null}
-        defaultStatus={createColumnId ? columnStatusMap[createColumnId] : 'Open'}
+        defaultStatus={createColumnId ? columnStatusMap[createColumnId] : 'Ready'}
         columnLabel={createColumnId ? columnConfig.find((column) => column.id === createColumnId)?.title ?? 'Ready' : 'Ready'}
         assignableUsers={assignableUsers}
         epics={epics}

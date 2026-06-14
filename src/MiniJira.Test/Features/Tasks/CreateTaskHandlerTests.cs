@@ -26,7 +26,7 @@ public class CreateTaskHandlerTests
             Title = "Test Task",
             Description = "Description",
             ProjectId = projectId,
-            Status = "Open",
+            Status = "Ready",
             Priority = "Medium",
             CreatedAtUtc = DateTime.UtcNow
         };
@@ -39,7 +39,7 @@ public class CreateTaskHandlerTests
         Assert.Equal(createdTask.Id, result.Id);
         Assert.Equal("Test Task", result.Title);
         Assert.Equal("Description", result.Description);
-        Assert.Equal("Open", result.Status);
+        Assert.Equal("Ready", result.Status);
         Assert.Equal(projectId, result.ProjectId);
         _repoMock.Verify(r => r.CreateAsync(It.Is<TaskItem>(t =>
             t.Title == "Test Task" && t.Description == "Description" && t.ProjectId == projectId

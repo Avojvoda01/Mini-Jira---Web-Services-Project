@@ -23,7 +23,7 @@ public class GetTaskHandlerTests
         {
             Id = taskId,
             Title = "Test",
-            Status = "Open",
+            Status = "Ready",
             Priority = "High",
             ProjectId = Guid.NewGuid(),
             CreatedAtUtc = DateTime.UtcNow

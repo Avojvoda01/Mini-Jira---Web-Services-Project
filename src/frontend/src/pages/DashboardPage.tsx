@@ -100,7 +100,7 @@ export function DashboardPage() {
     if (status === 'done') return 'Done';
     if (status === 'in-progress') return 'In Progress';
     if (status === 'review') return 'Review';
-    return 'Open';
+    return 'Ready';
   };
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export function DashboardPage() {
       {/* Stats grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total Tasks" value={stats.totalTasks} icon={<ListTodo className="h-8 w-8 text-muted-foreground" />} />
-        <StatCard label="Open" value={stats.openTasks} icon={<Zap className="h-8 w-8 text-muted-foreground" />} />
+        <StatCard label="Ready" value={stats.openTasks} icon={<Zap className="h-8 w-8 text-muted-foreground" />} />
         <StatCard label="In Progress" value={stats.inProgressTasks} icon={<Clock3 className="h-8 w-8 text-muted-foreground" />} />
         <StatCard label="Completed" value={stats.completedTasks} icon={<CheckCircle2 className="h-8 w-8 text-muted-foreground" />} />
         <StatCard label="Total Epics" value={stats.totalEpics} icon={<Sparkles className="h-8 w-8 text-muted-foreground" />} />

@@ -43,7 +43,7 @@ public class TaskEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         var task = await response.Content.ReadFromJsonAsync<TaskItemDto>();
         Assert.NotNull(task);
         Assert.Equal("Integration Test Task", task!.Title);
-        Assert.Equal("Open", task.Status);
+        Assert.Equal("Ready", task.Status);
         Assert.Equal("Medium", task.Priority);
     }
 

@@ -28,7 +28,7 @@ type EditTaskModalProps = {
 type EditTaskState = {
   title: string;
   description: string;
-  status: 'Open' | 'In Progress' | 'Review' | 'Done';
+  status: 'Ready' | 'In Progress' | 'Review' | 'Done';
   priority: 'Low' | 'Medium' | 'High';
   assigneeId: string;
   epicId: string;
@@ -36,11 +36,11 @@ type EditTaskState = {
 };
 
 const statusLabelMap: Record<TaskItem['status'], EditTaskState['status']> = {
-  todo: 'Open',
+  todo: 'Ready',
   'in-progress': 'In Progress',
   review: 'Review',
   done: 'Done',
-  unknown: 'Open',
+  unknown: 'Ready',
 };
 
 const priorityLabelMap: Record<TaskItem['priority'], EditTaskState['priority']> = {
@@ -66,7 +66,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
   const [form, setForm] = useState<EditTaskState>({
     title: '',
     description: '',
-    status: 'Open',
+    status: 'Ready',
     priority: 'Medium',
     assigneeId: '',
     epicId: '',
@@ -229,7 +229,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[12rem]">
-                {(['Open', 'In Progress', 'Review', 'Done'] as const).map((status) => (
+                {(['Ready', 'In Progress', 'Review', 'Done'] as const).map((status) => (
                   <DropdownMenuItem key={status} className="py-1.5" onClick={() => updateField('status', status)}>
                     {status}
                   </DropdownMenuItem>
