@@ -185,7 +185,7 @@ export function CreateProjectForm({ open, onClose, members, currentUserId }: Cre
       onClick={onClose}
       onKeyDown={handleDialogKeyDown}
     >
-      <Card ref={dialogRef} className="w-full max-w-2xl border-border/70 bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <Card ref={dialogRef} className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden border-border/70 bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
         <CardHeader>
           <CardTitle id="create-project-title" className="text-2xl tracking-tight">
             Create project
@@ -193,7 +193,7 @@ export function CreateProjectForm({ open, onClose, members, currentUserId }: Cre
           <CardDescription>Fill out the project details below to add a new workspace.</CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="overflow-y-auto">
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground" htmlFor="name">
