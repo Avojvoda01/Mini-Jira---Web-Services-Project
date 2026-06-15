@@ -3,11 +3,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
+using MiniJiraAspire.Server.Features.Chatbot;
 
-namespace MiniJiraAspire.Server.Features.Chatbot;
-
-using Project = MiniJiraAspire.Server.Models.Project;
-using Epic = MiniJiraAspire.Server.Models.Epic;
+namespace MiniJiraAspire.Server.Endpoints.Chatbot;
 
 public static class ChatbotEndpoints
 {
