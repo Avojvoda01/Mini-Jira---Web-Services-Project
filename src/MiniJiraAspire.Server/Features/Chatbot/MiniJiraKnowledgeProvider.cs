@@ -1,12 +1,12 @@
 using System.Text;
 
-namespace MiniJiraAspire.Server.Chatbot;
+namespace MiniJiraAspire.Server.Features.Chatbot;
 
 public class MiniJiraKnowledgeProvider(IWebHostEnvironment environment) : IMiniJiraKnowledgeProvider
 {
     public async Task<string> GetKnowledgeAsync(string question, CancellationToken cancellationToken = default)
     {
-        var knowledgeDirectory = Path.Combine(environment.ContentRootPath, "Chatbot", "Knowledge");
+        var knowledgeDirectory = Path.Combine(environment.ContentRootPath, "Features", "Chatbot", "Knowledge");
 
         if (!Directory.Exists(knowledgeDirectory))
         {

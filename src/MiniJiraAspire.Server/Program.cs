@@ -15,7 +15,7 @@ using MiniJiraAspire.Server.Migrations;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 using MiniJiraAspire.Server.Services.Auth;
-using MiniJiraAspire.Server.Chatbot;
+using MiniJiraAspire.Server.Features.Chatbot;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

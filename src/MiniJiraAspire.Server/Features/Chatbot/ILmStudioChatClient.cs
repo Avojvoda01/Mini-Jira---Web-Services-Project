@@ -1,4 +1,4 @@
-namespace MiniJiraAspire.Server.Chatbot;
+namespace MiniJiraAspire.Server.Features.Chatbot;
 
 public interface ILmStudioChatClient
 {
