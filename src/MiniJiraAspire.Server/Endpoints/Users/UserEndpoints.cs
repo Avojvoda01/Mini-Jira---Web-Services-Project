@@ -24,21 +24,21 @@ public static class UserEndpoints
             .WithName("GetUsers")
             .WithSummary("Get users");
 
-        group.MapGet("/{userId}", GetUser)
+        group.MapGet("/{userId:guid}", GetUser)
             .Produces<UserDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("GetUser")
             .WithSummary("Get user by id");
 
-        group.MapPatch("/{userId}/profile", UpdateUserProfile)
+        group.MapPatch("/{userId:guid}/profile", UpdateUserProfile)
             .WithName("UpdateUserProfile")
             .WithSummary("Update own display name and email");
 
-        group.MapPatch("/{userId}/password", ChangeUserPassword)
+        group.MapPatch("/{userId:guid}/password", ChangeUserPassword)
             .WithName("ChangeUserPassword")
             .WithSummary("Change own password");
 
-        group.MapDelete("/{userId}", DeleteUser)
+        group.MapDelete("/{userId:guid}", DeleteUser)
             .WithName("DeleteUser")
             .WithSummary("Delete a user (self or admin)");
 
@@ -50,7 +50,7 @@ public static class UserEndpoints
             .WithName("CreateUser")
             .WithSummary("Create a new user (admin)");
 
-        adminGroup.MapPatch("/{userId}/role", ChangeUserRole)
+        adminGroup.MapPatch("/{userId:guid}/role", ChangeUserRole)
             .WithName("ChangeUserRole")
             .WithSummary("Change the role of a user (admin)");
     }

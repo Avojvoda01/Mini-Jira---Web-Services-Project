@@ -51,7 +51,7 @@ public static class ProjectEndpoints
             .WithName("AddProjectMember")
             .WithSummary("Assign a member to a project (owner or admin only)");
 
-        group.MapDelete("/{projectId:guid}/members/{userId}", RemoveProjectMember)
+        group.MapDelete("/{projectId:guid}/members/{userId:guid}", RemoveProjectMember)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
