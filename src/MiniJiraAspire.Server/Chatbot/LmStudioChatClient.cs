@@ -189,7 +189,7 @@ public class LmStudioChatClient(HttpClient httpClient, IOptions<ChatbotOptions> 
                     - If the user refers to a visible project, set projectName to the closest exact name from the visible project list.
                     - If the user refers to a visible epic, set epicName to the closest exact name from the visible epic list.
                     - If no visible project or epic is clearly referenced, use null.
-                    - status must be one of Open, In Progress, Review, Completed, or null.
+                    - status must be one of Ready, In Progress, Review, Completed, or null.
                     - priority must be one of Low, Medium, High, or null.
                     - search is only for the search_tasks intent. For get_my_tasks, newest_tasks, summaries, epics, members, or changes, search must be null.
                     """
@@ -291,7 +291,8 @@ public class LmStudioChatClient(HttpClient httpClient, IOptions<ChatbotOptions> 
     private static string? NormalizeStatus(string? status)
         => status?.Trim().ToLowerInvariant() switch
         {
-            "open" => "Open",
+            "ready" => "Ready",
+            "open" => "Ready",
             "in progress" => "In Progress",
             "review" => "Review",
             "completed" => "Completed",

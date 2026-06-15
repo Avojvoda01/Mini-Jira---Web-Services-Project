@@ -50,6 +50,17 @@ public class AuthEndpointsTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Register_DuplicateDisplayName_Returns409()
+    {
+        await RegisterUserAsync("first@test.com", "Password1", "SameName");
+
+        var response = await _client.PostAsJsonAsync("/api/v1/auth/register",
+            new { Email = "second@test.com", Password = "Password1", DisplayName = "SameName" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Register_InvalidEmail_Returns422()
     {
         var response = await _client.PostAsJsonAsync("/api/v1/auth/register",

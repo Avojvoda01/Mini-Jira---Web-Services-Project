@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { ProjectMemberPicker } from '@/components/projects/ProjectMemberPicker';
 import { useAddProjectMemberMutation, useCreateProjectMutation } from '@/features/projects';
@@ -185,7 +185,7 @@ export function CreateProjectForm({ open, onClose, members, currentUserId }: Cre
       onClick={onClose}
       onKeyDown={handleDialogKeyDown}
     >
-      <Card ref={dialogRef} className="w-full max-w-2xl border-border/70 bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <Card ref={dialogRef} className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden border-border/70 bg-card shadow-2xl" onClick={(event) => event.stopPropagation()}>
         <CardHeader>
           <CardTitle id="create-project-title" className="text-2xl tracking-tight">
             Create project
@@ -193,8 +193,8 @@ export function CreateProjectForm({ open, onClose, members, currentUserId }: Cre
           <CardDescription>Fill out the project details below to add a new workspace.</CardDescription>
         </CardHeader>
 
-        <CardContent>
-          <form className="space-y-5" onSubmit={handleSubmit}>
+        <form className="flex min-h-0 flex-1 flex-col overflow-hidden" onSubmit={handleSubmit}>
+          <CardContent className="space-y-5 overflow-y-auto">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground" htmlFor="name">
                 Project name
@@ -245,15 +245,16 @@ export function CreateProjectForm({ open, onClose, members, currentUserId }: Cre
             </div>
 
             {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
-
+          </CardContent>
+          <CardFooter className="justify-end">
             <FormActionButtons
               onCancel={onClose}
               confirmLabel={createProjectMutation.isPending || addProjectMemberMutation.isPending ? 'Creating...' : 'Create'}
               confirmType="submit"
               confirmDisabled={createProjectMutation.isPending || addProjectMemberMutation.isPending}
             />
-          </form>
-        </CardContent>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );

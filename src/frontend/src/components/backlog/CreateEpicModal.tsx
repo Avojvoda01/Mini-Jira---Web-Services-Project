@@ -1,7 +1,7 @@
 import { Search } from 'lucide-react';
 import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Input } from '@/components/ui/input';
 import { SelectableTicketRow } from '@/components/backlog/SelectableTicketRow';
@@ -68,7 +68,7 @@ export function CreateEpicModal({
         <CardTitle>New epic</CardTitle>
         <CardDescription>Create an epic and optionally attach unassigned tickets.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-5 overflow-y-auto">
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground" htmlFor="epic-name">
@@ -138,14 +138,15 @@ export function CreateEpicModal({
         </div>
 
         {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
-
+      </CardContent>
+      <CardFooter className="justify-end">
         <FormActionButtons
           onCancel={onClose}
           confirmLabel={isPending || isAssigning ? 'Creating...' : 'Create epic'}
           onConfirm={onCreate}
           confirmDisabled={newEpicName.trim().length < 3 || isPending || isAssigning || isTicketsLoading || isTicketsError}
         />
-      </CardContent>
+      </CardFooter>
     </BacklogModal>
   );
 }

@@ -46,7 +46,7 @@ public class RegisterUserHandlerTests
     }
 
     [Fact]
-    public async Task Handle_DuplicateDisplayName_ReturnsValidationError()
+    public async Task Handle_DuplicateDisplayName_ReturnsDisplayNameConflict()
     {
         _repoMock.Setup(r => r.DisplayNameExistsAsync("Taken", It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
@@ -54,7 +54,7 @@ public class RegisterUserHandlerTests
 
         Assert.False(result.Succeeded);
         Assert.False(result.EmailConflict);
-        Assert.True(result.Errors.ContainsKey("DisplayName"));
+        Assert.True(result.DisplayNameConflict);
     }
 
     [Fact]

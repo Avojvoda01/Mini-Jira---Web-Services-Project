@@ -18,14 +18,14 @@ public class RegisterUserHandler(
     {
         var errors = ValidateAnnotations(request);
 
-        if (await repository.DisplayNameExistsAsync(request.DisplayName, ct))
-        {
-            AddError(errors, nameof(request.DisplayName), "Display name is already taken.");
-        }
-
         if (errors.Count > 0)
         {
             return RegisterUserResponse.ValidationFailed(errors);
+        }
+
+        if (await repository.DisplayNameExistsAsync(request.DisplayName, ct))
+        {
+            return RegisterUserResponse.DisplayNameAlreadyTaken();
         }
 
         if (await repository.EmailExistsAsync(request.Email, ct))

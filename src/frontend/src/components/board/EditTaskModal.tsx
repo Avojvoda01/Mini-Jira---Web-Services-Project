@@ -4,7 +4,7 @@ import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { useAssignEpicMutation, useAssignUserMutation, useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useSetEstimateMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
@@ -28,7 +28,7 @@ type EditTaskModalProps = {
 type EditTaskState = {
   title: string;
   description: string;
-  status: 'Open' | 'In Progress' | 'Review' | 'Done';
+  status: 'Ready' | 'In Progress' | 'Review' | 'Done';
   priority: 'Low' | 'Medium' | 'High';
   assigneeId: string;
   epicId: string;
@@ -36,11 +36,11 @@ type EditTaskState = {
 };
 
 const statusLabelMap: Record<TaskItem['status'], EditTaskState['status']> = {
-  todo: 'Open',
+  todo: 'Ready',
   'in-progress': 'In Progress',
   review: 'Review',
   done: 'Done',
-  unknown: 'Open',
+  unknown: 'Ready',
 };
 
 const priorityLabelMap: Record<TaskItem['priority'], EditTaskState['priority']> = {
@@ -66,7 +66,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
   const [form, setForm] = useState<EditTaskState>({
     title: '',
     description: '',
-    status: 'Open',
+    status: 'Ready',
     priority: 'Medium',
     assigneeId: '',
     epicId: '',
@@ -229,7 +229,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[12rem]">
-                {(['Open', 'In Progress', 'Review', 'Done'] as const).map((status) => (
+                {(['Ready', 'In Progress', 'Review', 'Done'] as const).map((status) => (
                   <DropdownMenuItem key={status} className="py-1.5" onClick={() => updateField('status', status)}>
                     {status}
                   </DropdownMenuItem>
@@ -329,7 +329,8 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
         </div>
 
         {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
-
+      </CardContent>
+      <CardFooter className="justify-end">
         <FormActionButtons
           onCancel={onClose}
           confirmLabel={
@@ -340,7 +341,7 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
           onConfirm={handleSave}
           confirmDisabled={updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending || setEstimateMutation.isPending}
         />
-      </CardContent>
+      </CardFooter>
     </BacklogModal>
   );
 }

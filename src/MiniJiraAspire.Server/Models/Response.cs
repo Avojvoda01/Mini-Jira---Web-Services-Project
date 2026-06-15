@@ -2,7 +2,7 @@ namespace MiniJiraAspire.Server.Models;
 
 public record LoginResponse(string Token, UserDto User);
 
-public record RegisterUserResponse(UserDto? User, Dictionary<string, string[]> Errors, bool EmailConflict = false)
+public record RegisterUserResponse(UserDto? User, Dictionary<string, string[]> Errors, bool EmailConflict = false, bool DisplayNameConflict = false)
 {
     public bool Succeeded => User is not null;
 
@@ -11,6 +11,8 @@ public record RegisterUserResponse(UserDto? User, Dictionary<string, string[]> E
     public static RegisterUserResponse ValidationFailed(Dictionary<string, string[]> errors) => new(null, errors);
 
     public static RegisterUserResponse EmailAlreadyTaken() => new(null, [], EmailConflict: true);
+
+    public static RegisterUserResponse DisplayNameAlreadyTaken() => new(null, [], DisplayNameConflict: true);
 }
 
 public record CreateUserResponse(UserDto? User, Dictionary<string, string[]> Errors, bool EmailConflict = false)

@@ -4,7 +4,7 @@ import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { MemberAssigneePicker } from '@/components/board/MemberAssigneePicker';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useCreateTaskMutation, useAssignUserMutation, useAssignEpicMutation, useSetEstimateMutation } from '@/features/tasks';
@@ -112,7 +112,7 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
         projectId,
       });
 
-      if (defaultStatus !== 'Open') {
+      if (defaultStatus !== 'Ready') {
         await changeStatusMutation.mutateAsync({ taskId: created.id, status: defaultStatus });
       }
 
@@ -274,14 +274,15 @@ export function CreateTaskModal({ isOpen, onClose, projectId, defaultStatus, col
         </div>
 
         {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
-
+      </CardContent>
+      <CardFooter className="justify-end">
         <FormActionButtons
           onCancel={onClose}
           confirmLabel={isBusy ? 'Creating...' : 'Create ticket'}
           onConfirm={handleCreate}
           confirmDisabled={isBusy}
         />
-      </CardContent>
+      </CardFooter>
     </BacklogModal>
   );
 }

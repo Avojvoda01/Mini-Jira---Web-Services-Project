@@ -44,6 +44,9 @@ public static class AuthEndpoints
             new RegisterUserCommand(request.Email, request.Password, request.DisplayName),
             ct);
 
+        if (result.DisplayNameConflict)
+            return TypedResults.Problem("Display name is already taken.", statusCode: StatusCodes.Status409Conflict);
+
         if (result.EmailConflict)
             return TypedResults.Problem("Email is already taken.", statusCode: StatusCodes.Status409Conflict);
 

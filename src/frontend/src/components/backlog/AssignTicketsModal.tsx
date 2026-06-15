@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { BacklogModal } from '@/components/backlog/BacklogModal';
 import { FormActionButtons } from '@/components/common/FormActionButtons';
 import { Badge } from '@/components/ui/badge';
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Input } from '@/components/ui/input';
 import { SelectableTicketRow } from '@/components/backlog/SelectableTicketRow';
@@ -82,7 +82,7 @@ export function AssignTicketsModal({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 overflow-y-auto">
         {isError ? (
           <ErrorState
             title="Unable to load tickets"
@@ -120,14 +120,15 @@ export function AssignTicketsModal({
         </div>
 
         {submitError ? <p className="text-sm text-rose-700">{submitError}</p> : null}
-
+      </CardContent>
+      <CardFooter className="justify-end">
         <FormActionButtons
           onCancel={onClose}
           confirmLabel={isPending ? 'Saving...' : 'Save assignment'}
           onConfirm={onSave}
           confirmDisabled={isPending || isLoading || isError}
         />
-      </CardContent>
+      </CardFooter>
     </BacklogModal>
   );
 }

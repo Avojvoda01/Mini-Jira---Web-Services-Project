@@ -471,6 +471,7 @@ public static class ChatbotEndpoints
     private static int StatusRank(string status)
         => status.ToLowerInvariant() switch
         {
+            "ready" => 0,
             "open" => 0,
             "in progress" => 1,
             "review" => 2,
