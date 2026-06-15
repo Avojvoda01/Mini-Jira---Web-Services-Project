@@ -171,10 +171,7 @@ v1.MapCommentEndpoints();
 v1.MapEpicEndpoints();
 v1.MapProjectEndpoints();
 v1.MapUserEndpoints();
-
-
-// Chatbot
-app.MapChatbotEndpoints();
+v1.MapChatbotEndpoints();
 
 app.MapDefaultEndpoints();
 

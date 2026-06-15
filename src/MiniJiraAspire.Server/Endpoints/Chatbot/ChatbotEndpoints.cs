@@ -11,11 +11,13 @@ public static class ChatbotEndpoints
 {
     public static void MapChatbotEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/chats", AskChatbot)
-            .WithName("AskChatbot")
+        var group = app.MapGroup("/chats")
             .WithTags("Chatbot")
-            .WithSummary("Ask the Mini Jira chatbot a question")
             .RequireAuthorization();
+
+        group.MapPost("/", AskChatbot)
+            .WithName("AskChatbot")
+            .WithSummary("Ask the Mini Jira chatbot a question");
     }
 
     private static async Task<Results<Ok<ChatResponse>, BadRequest<ChatResponse>, ProblemHttpResult>> AskChatbot(
