@@ -60,3 +60,6 @@ public record ChangeUserPasswordResponse(bool Succeeded, bool InvalidCurrentPass
 
     public static ChangeUserPasswordResponse ValidationFailed(Dictionary<string, string[]> errors) => new(false, false, false, errors);
 }
+
+// Chatbot
+public record ChatResponse(string Answer);

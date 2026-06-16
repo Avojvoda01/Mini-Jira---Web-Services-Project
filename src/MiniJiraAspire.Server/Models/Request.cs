@@ -68,3 +68,7 @@ public record UpdateTaskRequest(
 public record CreateCommentRequest(string Content);
 
 public record UpdateCommentRequest(string Content);
+
+// Chatbot
+public record ChatRequest(
+    [property: Required, MinLength(1)] string Message);

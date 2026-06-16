@@ -16,7 +16,7 @@ public static class CommentEndpoints
 {
     public static void MapCommentEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/tasks/{taskId}/comments")
+        var group = app.MapGroup("/tasks/{taskId:guid}/comments")
             .WithTags("Comments")
             .RequireAuthorization();
 

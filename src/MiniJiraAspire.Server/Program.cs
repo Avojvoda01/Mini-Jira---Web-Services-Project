@@ -15,7 +15,8 @@ using MiniJiraAspire.Server.Migrations;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
 using MiniJiraAspire.Server.Services.Auth;
-using MiniJiraAspire.Server.Chatbot;
+using MiniJiraAspire.Server.Endpoints.Chatbot;
+using MiniJiraAspire.Server.Features.Chatbot;
 using Scalar.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -170,10 +171,7 @@ v1.MapCommentEndpoints();
 v1.MapEpicEndpoints();
 v1.MapProjectEndpoints();
 v1.MapUserEndpoints();
-
-
-// Chatbot
-app.MapChatbotEndpoints();
+v1.MapChatbotEndpoints();
 
 app.MapDefaultEndpoints();
 

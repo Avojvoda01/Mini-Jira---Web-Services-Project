@@ -46,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Chatbot\Knowledge\*.txt">
+    <Content Include="Features\Chatbot\Knowledge\*.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 
-namespace MiniJiraAspire.Server.Chatbot;
+namespace MiniJiraAspire.Server.Features.Chatbot;
 
 public class LmStudioChatClient(HttpClient httpClient, IOptions<ChatbotOptions> options) : ILmStudioChatClient
 {

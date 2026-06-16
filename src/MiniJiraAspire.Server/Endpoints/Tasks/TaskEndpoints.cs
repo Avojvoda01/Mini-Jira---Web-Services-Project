@@ -17,15 +17,15 @@ public static class TaskEndpoints
             .WithName("CreateTask")
             .WithSummary("Create a new task");
 
-        tasks.MapPut("/{taskId}", UpdateTask)
+        tasks.MapPut("/{taskId:guid}", UpdateTask)
             .WithName("UpdateTask")
             .WithSummary("Edit an existing task");
 
-        tasks.MapDelete("/{taskId}", DeleteTask)
+        tasks.MapDelete("/{taskId:guid}", DeleteTask)
             .WithName("DeleteTask")
             .WithSummary("Delete a task");
 
-        tasks.MapGet("/{taskId}", GetTask)
+        tasks.MapGet("/{taskId:guid}", GetTask)
             .Produces<TaskItemDto>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .WithName("GetTask")
@@ -40,23 +40,23 @@ public static class TaskEndpoints
             .WithTags("Task Actions")
             .RequireAuthorization();
 
-        actions.MapPatch("/{taskId}/status", ChangeStatus)
+        actions.MapPatch("/{taskId:guid}/status", ChangeStatus)
             .WithName("ChangeTaskStatus")
             .WithSummary("Change the status of a task");
 
-        actions.MapPatch("/{taskId}/priority", ChangePriority)
+        actions.MapPatch("/{taskId:guid}/priority", ChangePriority)
             .WithName("ChangeTaskPriority")
             .WithSummary("Change the priority of a task");
 
-        actions.MapPatch("/{taskId}/assign-user", AssignUser)
+        actions.MapPatch("/{taskId:guid}/assign-user", AssignUser)
             .WithName("AssignUserToTask")
             .WithSummary("Assign a user to a task");
 
-        actions.MapPatch("/{taskId}/assign-epic", AssignEpic)
+        actions.MapPatch("/{taskId:guid}/assign-epic", AssignEpic)
             .WithName("AssignEpicToTask")
             .WithSummary("Assign an epic to a task");
 
-        actions.MapPatch("/{taskId}/estimate", SetEstimate)
+        actions.MapPatch("/{taskId:guid}/estimate", SetEstimate)
             .WithName("SetTaskEstimate")
             .WithSummary("Set or clear the time estimate for a task");
     }

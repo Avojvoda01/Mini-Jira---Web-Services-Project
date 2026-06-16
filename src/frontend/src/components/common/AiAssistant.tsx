@@ -5,6 +5,7 @@ import { Bot, RotateCcw, SendHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { env } from '@/lib/env';
 import { authSessionAtom } from '@/store/authAtoms';
 
 type ChatMessage = {
@@ -73,7 +74,7 @@ export function AiAssistant({ greeting, placeholder }: { greeting: string; place
     setIsSending(true);
 
     try {
-      const response = await fetch('/api/chats', {
+      const response = await fetch(`${env.apiBaseUrl}/chats`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

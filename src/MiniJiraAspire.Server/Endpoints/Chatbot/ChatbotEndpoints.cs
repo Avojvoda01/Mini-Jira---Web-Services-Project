@@ -3,18 +3,21 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using MiniJiraAspire.Server.Models;
 using MiniJiraAspire.Server.Persistence.Repositories;
+using MiniJiraAspire.Server.Features.Chatbot;
 
-namespace MiniJiraAspire.Server.Chatbot;
+namespace MiniJiraAspire.Server.Endpoints.Chatbot;
 
 public static class ChatbotEndpoints
 {
     public static void MapChatbotEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/chats", AskChatbot)
-            .WithName("AskChatbot")
+        var group = app.MapGroup("/chats")
             .WithTags("Chatbot")
-            .WithSummary("Ask the Mini Jira chatbot a question")
             .RequireAuthorization();
+
+        group.MapPost("/", AskChatbot)
+            .WithName("AskChatbot")
+            .WithSummary("Ask the Mini Jira chatbot a question");
     }
 
     private static async Task<Results<Ok<ChatResponse>, BadRequest<ChatResponse>, ProblemHttpResult>> AskChatbot(
