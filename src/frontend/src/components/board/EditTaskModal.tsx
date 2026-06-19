@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { useAssignEpicMutation, useAssignUserMutation, useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useSetEstimateMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
 import type { EpicDto } from '@/features/epics';
+import { useAssignEpicMutation, useAssignUserMutation, useChangeTaskPriorityMutation, useChangeTaskStatusMutation, useUpdateTaskMutation, type TaskItem } from '@/features/tasks';
 import type { UserDto } from '@/features/users';
 import { isValidEstimate, minutesToEditValue, parseEstimate } from '@/lib/estimate';
 import { cn } from '@/lib/utils';
@@ -62,7 +62,6 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
   const changePriorityMutation = useChangeTaskPriorityMutation();
   const assignUserMutation = useAssignUserMutation();
   const assignEpicMutation = useAssignEpicMutation();
-  const setEstimateMutation = useSetEstimateMutation();
   const [form, setForm] = useState<EditTaskState>({
     title: '',
     description: '',
@@ -136,10 +135,13 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
     setSubmitError(null);
 
     try {
+      const estimateMinutes = form.estimate.trim() ? parseEstimate(form.estimate) : null;
+
       await updateTaskMutation.mutateAsync({
         taskId: task.id,
         title: trimmedTitle,
         description: form.description.trim() ? form.description.trim() : null,
+        estimateMinutes,
       });
 
       const desiredStatus = form.status;
@@ -159,11 +161,6 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
 
       if ((task.epicId ?? '') !== form.epicId) {
         await assignEpicMutation.mutateAsync({ taskId: task.id, epicId: form.epicId || null });
-      }
-
-      const newEstimate = form.estimate.trim() ? parseEstimate(form.estimate) : null;
-      if (newEstimate !== (task.estimateMinutes ?? null)) {
-        await setEstimateMutation.mutateAsync({ taskId: task.id, estimateMinutes: newEstimate });
       }
 
       if (onSave) {
@@ -334,12 +331,12 @@ export function EditTaskModal({ isOpen, onClose, onSave, task, assignableUsers, 
         <FormActionButtons
           onCancel={onClose}
           confirmLabel={
-            updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending || setEstimateMutation.isPending
+            updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending
               ? 'Saving...'
               : 'Save changes'
           }
           onConfirm={handleSave}
-          confirmDisabled={updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending || setEstimateMutation.isPending}
+          confirmDisabled={updateTaskMutation.isPending || changeStatusMutation.isPending || changePriorityMutation.isPending || assignUserMutation.isPending}
         />
       </CardFooter>
     </BacklogModal>
